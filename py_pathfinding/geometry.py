@@ -8,8 +8,8 @@ from abc import ABC, abstractmethod
 
 import a_star
 from nicpy import nic_misc
-nic_misc.logging_setup(Path.cwd(), date.today())
-_logger = logging.getLogger('pathfinding_logger')
+# nic_misc.logging_setup(Path.cwd(), date.today())
+# _logger = logging.getLogger('pathfinding_logger')
 
 SQRT2 = np.sqrt(2)
 
@@ -241,14 +241,14 @@ class SquareGrid(Graph):
         self.maze_array = np.asarray(pd.read_excel(filepath, header=None))
         self.dimensions = self.maze_array.shape
         # TODO: detect blanks and make them walls (0)
-        _logger.info('Loaded maze from {}.'.format(filename))
+        # _logger.info('Loaded maze from {}.'.format(filename))
 
     def generate_random_maze(self, size_y, size_x, wall_prob):
         random_array = np.random.rand(size_y, size_x)
         rounder = np.vectorize(lambda t: 1 if t > 1 - wall_prob else 0)
         self.maze_array = rounder(random_array)
         self.dimensions = self.maze_array.shape
-        _logger.info('No .xlsx maze file specified - generating a random 10x10 maze with wall_prob=0.5.')
+        # _logger.info('No .xlsx maze file specified - generating a random 10x10 maze with wall_prob=0.5.')
 
     def is_accessible(self, label):
         return False if self.maze_array[label] == 0 else True
@@ -282,11 +282,12 @@ class SquareGrid(Graph):
         if self.check_graph():
             self.solution = a_star.run_a_star(self, self.heuristic_type, save_history)
             if isinstance(self.solution, int):
-                _logger.info('Unable to solve the network after {} iterations.'.format(self.solution))
+                a=2
+                # _logger.info('Unable to solve the network after {} iterations.'.format(self.solution))
             else:
                 self.maze_array_solved = copy(self.maze_array)
                 for i, step in enumerate(self.solution[1:-1]): self.maze_array_solved[step] = -i-1
-                _logger.info('Successfully solved the GridMaze with {} steps.'.format(len(self.solution)-1))
+                # _logger.info('Successfully solved the GridMaze with {} steps.'.format(len(self.solution)-1))
 
     def find_neighbours(self, label):
         neighbour_labels = [(label[0] + d[0], label[1] + d[1]) for d in self.straight_coords_deltas
@@ -353,7 +354,7 @@ class SquareGrid(Graph):
 if __name__ == '__main__':
 
     # Prepare and solve a maze geometry
-    maze = SquareGrid('manhattan', 'walls1.xlsx', diagonality=False)
+    maze = SquareGrid('manhattan', 'E:/dev/pathfinding/py_pathfinding/excel_mazes/walls1.xlsx', diagonality=False)
     maze.set_start((2, 0))
     maze.set_end((8, 9))
     check_maze = maze.check_graph()

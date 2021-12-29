@@ -194,41 +194,41 @@ namespace A_star_stolen
             }
         }
 
-        static void Main()
-        {
-            // Make "diagram 4" from main article
-            var grid = new SquareGrid(10, 10);
-            for (var x = 1; x < 4; x++)
-            {
-                for (var y = 7; y < 9; y++)
-                {
-                    grid.walls.Add(new Location(x, y));
-                }
-            }
-            grid.forests = new HashSet<Location>
-            {
-                new Location(3, 4), new Location(3, 5),
-                new Location(4, 1), new Location(4, 2),
-                new Location(4, 3), new Location(4, 4),
-                new Location(4, 5), new Location(4, 6),
-                new Location(4, 7), new Location(4, 8),
-                new Location(5, 1), new Location(5, 2),
-                new Location(5, 3), new Location(5, 4),
-                new Location(5, 5), new Location(5, 6),
-                new Location(5, 7), new Location(5, 8),
-                new Location(6, 2), new Location(6, 3),
-                new Location(6, 4), new Location(6, 5),
-                new Location(6, 6), new Location(6, 7),
-                new Location(7, 3), new Location(7, 4),
-                new Location(7, 5)
-            };
+        //static void Main()
+        //{
+        //    // Make "diagram 4" from main article
+        //    var grid = new SquareGrid(10, 10);
+        //    for (var x = 1; x < 4; x++)
+        //    {
+        //        for (var y = 7; y < 9; y++)
+        //        {
+        //            grid.walls.Add(new Location(x, y));
+        //        }
+        //    }
+        //    grid.forests = new HashSet<Location>
+        //    {
+        //        new Location(3, 4), new Location(3, 5),
+        //        new Location(4, 1), new Location(4, 2),
+        //        new Location(4, 3), new Location(4, 4),
+        //        new Location(4, 5), new Location(4, 6),
+        //        new Location(4, 7), new Location(4, 8),
+        //        new Location(5, 1), new Location(5, 2),
+        //        new Location(5, 3), new Location(5, 4),
+        //        new Location(5, 5), new Location(5, 6),
+        //        new Location(5, 7), new Location(5, 8),
+        //        new Location(6, 2), new Location(6, 3),
+        //        new Location(6, 4), new Location(6, 5),
+        //        new Location(6, 6), new Location(6, 7),
+        //        new Location(7, 3), new Location(7, 4),
+        //        new Location(7, 5)
+        //    };
 
-            // Run A*
-            var astar = new AStarSearch(grid, new Location(1, 4),
-                                        new Location(8, 5));
+        //    // Run A*
+        //    var astar = new AStarSearch(grid, new Location(1, 4),
+        //                                new Location(8, 5));
 
-            DrawGrid(grid, astar);
-        }
+        //    DrawGrid(grid, astar);
+        //}
     }
   
 
@@ -247,8 +247,7 @@ namespace A_star_stolen
     {
         static void Main(string[] args)
         {
-            CSVReader r = new utils.CSVReader();
-            List<int[]> table = r.readRectangularIntCSV(@"E:\dev\python_projects\pathfinding\csv_mazes\walls1.csv");
+            List<int[]> table = CSVReader.ReadRectangularIntCSV(@"E:\dev\python_projects\pathfinding\csv_mazes\walls1.csv");
         }
 
     }
