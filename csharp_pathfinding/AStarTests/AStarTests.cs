@@ -24,6 +24,9 @@ namespace AStarTests
             Assert.IsTrue(gpA.IsNeighbour(gpB));
             Assert.IsTrue(gpB.IsNeighbour(gpA));
             Assert.IsFalse(gpC.IsNeighbour(gpA));
+            Assert.IsFalse(gpC.IsNeighbour(gpB));
+            Assert.IsFalse(gpA.IsNeighbour(gpC));
+            Assert.IsFalse(gpB.IsNeighbour(gpC));
 
             Assert.AreEqual(0, gpC.Neighbours.Count);
             Assert.AreEqual(1, gpB.Neighbours.Count);
@@ -44,12 +47,11 @@ namespace AStarTests
         }
 
         [TestMethod]
-        public void TestGenericPlace_NameRetrieval()
+        public void TestGenericPlace_ToString()
         {
-            // Check name retrieval methods all return the same
-            Assert.AreEqual(gpA.GetLabel(), "A");
-            Assert.AreEqual(gpA.GetLabel(), gpA.ToString());
-            Assert.AreEqual(gpA.GetLabel(), gpA.Name);
+            // Check ToString() method returns the label
+            Assert.AreEqual(gpA.Label, "A");
+            Assert.AreEqual(gpA.Label, gpA.ToString());
         }
 
 
@@ -67,13 +69,7 @@ namespace AStarTests
         [TestMethod]
         public void TestGridCoords2D_GetLabel()
         {
-            Assert.IsTrue(gridCoords2DBase.GetLabel().SequenceEqual(new int[2] { -3, 5 }));
-        }
-
-        [TestMethod]
-        public void TestGridCoords2D_ToString()
-        {
-            Assert.AreEqual("(-3, 5)", gridCoords2DBase.ToString());
+            Assert.IsTrue(gridCoords2DBase.Label.Equals((-3, 5)));
         }
 
         [TestMethod]
@@ -114,6 +110,11 @@ namespace AStarTests
         {
             int[] expectedDelta = new int[2] { (-60)-(-3), 60-5 };
             Assert.IsTrue(gridCoords2DDistant.DeltaFrom(gridCoords2DBase).SequenceEqual(expectedDelta));
+        }
+
+        [TestMethod]
+        public void TestGridCoords2D_ToString() {
+            Assert.AreEqual("(-3, 5)", gridCoords2DBase.ToString());
         }
     }
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using utils;
+using NicUtils;
 
 namespace A_star_stolen
 {
@@ -247,7 +247,7 @@ namespace A_star_stolen
     {
         static void Main(string[] args)
         {
-            List<int[]> table = CSVReader.ReadRectangularIntCSV(@"E:\dev\python_projects\pathfinding\csv_mazes\walls1.csv");
+            List<int[]> table = CSVReader<int>.ReadCSV(@"E:\dev\python_projects\pathfinding\csv_mazes\walls1.csv");
         }
 
     }

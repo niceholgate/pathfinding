@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30330.147
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AStar", "AStar.csproj", "{4D569C87-175E-4289-94DB-F5C33489E8C9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0AD297DE-F885-4141-AA40-BB8246C20375}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AStarTests", "..\AStarTests\AStarTests.csproj", "{3D73B5D9-C520-41C6-A8F3-648EABB3F042}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AStarTests", "..\AStarTests\AStarTests.csproj", "{3D73B5D9-C520-41C6-A8F3-648EABB3F042}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NicUtils", "..\..\..\csharp_projects\NicUtils\NicUtils.csproj", "{B60B19F0-02C6-467D-95F3-4E7A7D63B0E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,6 +25,10 @@ Global
 		{3D73B5D9-C520-41C6-A8F3-648EABB3F042}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D73B5D9-C520-41C6-A8F3-648EABB3F042}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D73B5D9-C520-41C6-A8F3-648EABB3F042}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B60B19F0-02C6-467D-95F3-4E7A7D63B0E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B60B19F0-02C6-467D-95F3-4E7A7D63B0E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B60B19F0-02C6-467D-95F3-4E7A7D63B0E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B60B19F0-02C6-467D-95F3-4E7A7D63B0E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
