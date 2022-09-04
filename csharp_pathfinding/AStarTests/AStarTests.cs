@@ -8,15 +8,15 @@ namespace AStarTests {
 
     [TestClass]
     public class GenericPlaceTests {
-        GenericPlace gpA = new GenericPlace("A", new HashSet<IPlace> { });
-        GenericPlace gpB = new GenericPlace("B", new HashSet<IPlace> { });
-        GenericPlace gpC = new GenericPlace("C", new HashSet<IPlace> { });
+        GenericPlace gpA = new GenericPlace("A", new Dictionary<IPlace, double>());
+        GenericPlace gpB = new GenericPlace("B", new Dictionary<IPlace, double>());
+        GenericPlace gpC = new GenericPlace("C", new Dictionary<IPlace, double>());
 
         [TestMethod]
         public void TestGenericPlace_IsNeighbour() {
             // A and B are neighbours, C is disjoint
-            gpA.ExplicitNeighbours.Add(gpB);
-            gpB.ExplicitNeighbours.Add(gpA);
+            gpA.ExplicitNeighboursWithCosts.Add(gpB, 1.0);
+            gpB.ExplicitNeighboursWithCosts.Add(gpA, 1.0);
 
             Assert.IsTrue(gpA.IsNeighbour(gpB));
             Assert.IsTrue(gpB.IsNeighbour(gpA));
@@ -25,22 +25,16 @@ namespace AStarTests {
             Assert.IsFalse(gpA.IsNeighbour(gpC));
             Assert.IsFalse(gpB.IsNeighbour(gpC));
 
-            Assert.AreEqual(0, gpC.ExplicitNeighbours.Count);
-            Assert.AreEqual(1, gpB.ExplicitNeighbours.Count);
-
-            // Check you cannot add a neighbour multiple times to the Neighbours list (HashSet)
-            gpA.ExplicitNeighbours.Add(gpB);
-            gpA.ExplicitNeighbours.Add(gpB);
-            gpA.ExplicitNeighbours.Add(gpB);
-            Assert.AreEqual(1, gpA.ExplicitNeighbours.Count);
+            Assert.AreEqual(0, gpC.ExplicitNeighboursWithCosts.Count);
+            Assert.AreEqual(1, gpB.ExplicitNeighboursWithCosts.Count);
 
             // Check you can remove a neighbour in the HashSet
-            gpA.ExplicitNeighbours.Remove(gpB);
-            Assert.AreEqual(0, gpA.ExplicitNeighbours.Count);
+            gpA.ExplicitNeighboursWithCosts.Remove(gpB);
+            Assert.AreEqual(0, gpA.ExplicitNeighboursWithCosts.Count);
 
             // Check you cannot remove a non-existent neighbour
-            gpC.ExplicitNeighbours.Remove(gpB);
-            Assert.AreEqual(0, gpC.ExplicitNeighbours.Count);
+            gpC.ExplicitNeighboursWithCosts.Remove(gpB);
+            Assert.AreEqual(0, gpC.ExplicitNeighboursWithCosts.Count);
         }
 
         [TestMethod]
@@ -64,11 +58,11 @@ namespace AStarTests {
         [TestMethod]
         public void TestGridCoords2D_IsNeighbour() {
             // Explicit neighbours with any IPlace (not automatically bidirectional)
-            gridCoords2DDistant.ExplicitNeighbours.Add(genericPlace);
+            gridCoords2DDistant.ExplicitNeighboursWithCosts.Add(genericPlace, 1.0);
             Assert.IsTrue(gridCoords2DDistant.IsNeighbour(genericPlace));
             Assert.IsFalse(genericPlace.IsNeighbour(gridCoords2DDistant));
-            gridCoords2DDistant.ExplicitNeighbours.Add(genericPlace);
-            Assert.IsTrue(gridCoords2DDistant.IsNeighbour(genericPlace));
+            genericPlace.ExplicitNeighboursWithCosts.Add(gridCoords2DDistant, 1.0);
+            Assert.IsTrue(genericPlace.IsNeighbour(gridCoords2DDistant));
 
             // Grid neighbours
             Assert.IsFalse(gridCoords2DBase.IsNeighbour(gridCoords2DDistant));

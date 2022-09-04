@@ -20,6 +20,9 @@ namespace AStarNickNS
      */
     public interface IPlace {
         bool IsNeighbour(IPlace other);
+        // TODO: this could also be a function of the 'agent' and their speed, terrain/flying capabilties etc.
+        // Or these corrections might happen elsewhere. Game-specific logic doesn't belong here.
+        double GetCostToLeave(IPlace neighbour);
     }
 
     /*
@@ -27,39 +30,49 @@ namespace AStarNickNS
      */
     public interface IPlace<out LabelType> : IPlace {
         LabelType Label { get; }
+
+        double TerrainCost { get; }
     }
 
-    /*
-     * A node which can find the cost of getting to any neighbour (even if the neighbour has a different place type)
-     */
-    public interface INode {
-        double GetCostToLeave(INode neighbour);
+    public interface IPlaceAStar<LabelType> : IPlace<LabelType>{
+        double GetHeuristicDist(IPlaceAStar<LabelType> other, Distances2D.HeuristicType heuristicType);
     }
 
-    /*
-     * A node with a particular place type
-     */
-    public interface INode<CoordType> : INode where CoordType : IPlace {
-        CoordType Coord { get; }
-    }
+    ///*
+    // * A node which can find the cost of getting to any neighbour (even if the neighbour has a different place type)
+    // */
+    //public interface INode {
+    //    double GetCostToLeave(INode neighbour);
+    //}
 
-    /*
-     * An AStar node - has heuristic distance calculation ability for its place type
-     */
-    public interface INodeAStar<CoordType> : INode<CoordType> where CoordType : IPlace {
-        double GetHeuristicDist(INodeAStar<CoordType> other, Distances2D.HeuristicType heuristicType);
-    }
+    ///*
+    // * A node with a particular place type
+    // */
+    //public interface INode<CoordType> : INode where CoordType : IPlace {
+    //    CoordType Coord { get; }
+    //}
+
+    ///*
+    // * An AStar node - has heuristic distance calculation ability for its place type
+    // */
+    //public interface INodeAStar<CoordType> : INode<CoordType> where CoordType : IPlace {
+    //    double GetHeuristicDist(INodeAStar<CoordType> other, Distances2D.HeuristicType heuristicType);
+    //}
 
     public abstract class Place : IPlace {
-        public HashSet<IPlace> ExplicitNeighbours { get; }
+        public Dictionary<IPlace, double> ExplicitNeighboursWithCosts { get; }
 
-        protected Place(HashSet<IPlace> explicitNeighbours) {
-            ExplicitNeighbours = explicitNeighbours;
+        protected Place(Dictionary<IPlace, double> explicitNeighboursWithCosts) {
+            ExplicitNeighboursWithCosts = explicitNeighboursWithCosts;
         }
 
         public abstract bool IsNeighbour(IPlace other);
 
-        protected bool IsNeighbourExplicit(IPlace other) { return ExplicitNeighbours.Contains(other); }
+        public abstract double GetCostToLeave(IPlace neighbour);
+
+        public abstract override string ToString();
+
+        protected bool IsNeighbourExplicit(IPlace other) { return ExplicitNeighboursWithCosts.Keys.Contains(other); }
     }
 
     /*
@@ -68,13 +81,23 @@ namespace AStarNickNS
     public class GenericPlace : Place, IPlace<string> {
         public string Label { get; }
 
-        public GenericPlace(string label) : this(label, new HashSet<IPlace>()) { }
+        public double TerrainCost { get {
+                return 1.0; // TODO: replace with access to a terrain map for GenericPlace (e.g. Dictionary<string, double>)
+            }
+        }
 
-        public GenericPlace(string label, HashSet<IPlace> explicitNeighbours) : base(explicitNeighbours) {
+        public GenericPlace(string label) : this(label, new Dictionary<IPlace, double>()) { }
+
+        public GenericPlace(string label,Dictionary<IPlace, double> explicitNeighboursWithCosts) : 
+            base(explicitNeighboursWithCosts) {
             Label = label;
         }
 
         public override bool IsNeighbour(IPlace other) { return IsNeighbourExplicit(other); }
+
+        public override double GetCostToLeave(IPlace neighbour) {
+            return ExplicitNeighboursWithCosts[neighbour];
+        }
 
         public override string ToString() => Label;
     }
@@ -83,25 +106,49 @@ namespace AStarNickNS
      * A place on a 2D grid
      */
     public class GridCoords2D : Place, IPlace<(int, int)> {
-        public GridCoords2D((int, int) label) : this(label, new HashSet<IPlace>()) { }
+        public (int, int) Label { get; }
 
-        public GridCoords2D((int, int) label, HashSet<IPlace> explicitNeighbours) : base(explicitNeighbours) {
+        public double TerrainCost {
+            get {
+                return 1.0; // TODO: replace with access to a terrain map for GenericPlace (e.g. Dictionary<(int, int), double>)
+                //return TerrainMap[Label];
+            }
+        }
+
+        public static readonly double SQRT2 = Math.Sqrt(2.0);
+
+        public GridCoords2D((int, int) label) : this(label, new Dictionary<IPlace, double>()) { }
+
+        public GridCoords2D((int, int) label, Dictionary<IPlace, double> explicitNeighboursWithCosts) : 
+            base(explicitNeighboursWithCosts) {
             Label = label;
         }
 
-        public (int, int) Label { get; }
-
         public override bool IsNeighbour(IPlace other) {
-            if (IsNeighbourExplicit(other)) { return true; }
-            if (other is GridCoords2D) { return IsNeighbourGrid((GridCoords2D)other); }
-            return false;
+            return IsNeighbourExplicit(other) || IsNeighbourGrid(other);
         }
 
-        private bool IsNeighbourExplicit(IPlace other) {
-            return ExplicitNeighbours.Contains(other);
+        public override double GetCostToLeave(IPlace other) {
+            if (IsNeighbourGrid(other)) {
+                GridCoords2D otherAsGrid = (GridCoords2D)other;
+                double distance = IsDiagonalNeighbour(otherAsGrid) ? SQRT2 : 1.0;
+                return otherAsGrid.TerrainCost * distance;
+            } else if (IsNeighbourExplicit(other)) {
+                return ExplicitNeighboursWithCosts[other];
+            } else {
+                // Return a nonsense cost if the place is not actually a neighbour
+                return -1.0;
+            }
         }
 
-        private bool IsNeighbourGrid(GridCoords2D other) { return IsDiagonalNeighbour(other) || IsStraightNeighbour(other); }
+        public override string ToString() => Label.ToString();
+
+        public int[] DeltaFrom(GridCoords2D other) { return new int[] { this.Label.Item1 - other.Label.Item1, this.Label.Item2 - other.Label.Item2 }; }
+
+        private bool IsNeighbourGrid(IPlace other) {
+            if (other is not GridCoords2D) { return false; }
+            return IsDiagonalNeighbour((GridCoords2D)other) || IsStraightNeighbour((GridCoords2D)other);
+        }
 
         private bool IsDiagonalNeighbour(GridCoords2D other) {
             int[] delta = DeltaFrom(other);
@@ -112,10 +159,6 @@ namespace AStarNickNS
             int[] delta = DeltaFrom(other);
             return Math.Abs(delta[0]) + Math.Abs(delta[1]) == 1;
         }
-
-        public int[] DeltaFrom(GridCoords2D other) { return new int[] { this.Label.Item1 - other.Label.Item1, this.Label.Item2 - other.Label.Item2 }; }
-
-        public override string ToString() => Label.ToString();
     }
 
     //abstract class Node<CoordType> : INode<CoordType> where CoordType : IPlace {
@@ -126,6 +169,26 @@ namespace AStarNickNS
     //    public IDictionary<INode<CoordType>, double> GetNeighboursCosts() { return this.neighboursCosts; }
 
     //    public virtual double GetCostToLeave(INode neighbour) { return neighboursCosts[neighbour]; }
+    //}
+
+    //public class GenericNode : INode<GenericPlace> {
+    //    public GenericPlace Coord { get; }
+
+    //    private Dictionary<INode, double> costsToReachExplicitNeighbours = new Dictionary<INode, double>();
+
+    //    public GenericNode(GenericPlace coord) {
+    //        Coord = coord;
+    //        foreach (IPlace neighbour in Coord.ExplicitNeighbours) {
+    //            costsToReachExplicitNeighbours[neighbour] = 10;
+    //        }
+    //    }
+
+    //    public double GetCostToLeave(INode neighbour) {
+    //        return costsToReachExplicitNeighbours[neighbour];
+    //    }
+
+
+
     //}
 
     //public class Square : Node<GridCoords2D>, INodeAStar<GridCoords2D> {
