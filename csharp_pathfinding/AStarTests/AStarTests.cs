@@ -3,6 +3,7 @@ using System;
 using AStarNickNS;
 using System.Collections.Generic;
 using System.Linq;
+using FibonacciHeap;
 
 namespace AStarTests {
 
@@ -13,7 +14,7 @@ namespace AStarTests {
         GenericPlace gpC = new GenericPlace("C", new Dictionary<IPlace, double>());
 
         [TestMethod]
-        public void TestGenericPlace_IsNeighbour() {
+        public void TestIsNeighbour() {
             // A and B are neighbours, C is disjoint
             gpA.ExplicitNeighboursWithCosts.Add(gpB, 1.0);
             gpB.ExplicitNeighboursWithCosts.Add(gpA, 1.0);
@@ -38,7 +39,7 @@ namespace AStarTests {
         }
 
         [TestMethod]
-        public void TestGenericPlace_ToString() {
+        public void TestToString() {
             // Check ToString() method returns the label
             Assert.AreEqual(gpA.Label, "A");
             Assert.AreEqual(gpA.Label, gpA.ToString());
@@ -56,7 +57,7 @@ namespace AStarTests {
         
 
         [TestMethod]
-        public void TestGridCoords2D_IsNeighbour() {
+        public void TestIsNeighbour() {
             // Explicit neighbours with any IPlace (not automatically bidirectional)
             gridCoords2DDistant.ExplicitNeighboursWithCosts.Add(genericPlace, 1.0);
             Assert.IsTrue(gridCoords2DDistant.IsNeighbour(genericPlace));
@@ -74,17 +75,31 @@ namespace AStarTests {
         }
 
         [TestMethod]
-        public void TestGridCoords2D_DeltaFrom() {
+        public void TestDeltaFrom() {
             int[] expectedDelta = new int[2] { (-60)-(-3), 60-5 };
             Assert.IsTrue(gridCoords2DDistant.DeltaFrom(gridCoords2DBase).SequenceEqual(expectedDelta));
         }
 
         [TestMethod]
-        public void TestGridCoords2D_ToString() {
+        public void TestToString() {
             Assert.AreEqual("(-3, 5)", gridCoords2DBase.ToString());
         }
     }
 
+    [TestClass]
+    public class PriorityQueueFibonacciHeapTests {
+        [TestMethod]
+        public void TestBasic() {
+            var heap = new FibonacciHeap<string, int>(0);
+            heap.Insert(new FibonacciHeapNode<string, int>("hello5", 5));
+            heap.Insert(new FibonacciHeapNode<string, int>("hello3", 3));
+            heap.Insert(new FibonacciHeapNode<string, int>("hello4", 4));
+            heap.Insert(new FibonacciHeapNode<string, int>("hello-4", -4));
+            FibonacciHeapNode<string, int> min = heap.Min();
+            Assert.AreEqual(min.Key, -4);
+            Assert.AreEqual(min.Data, "hello-4");
+        }
+    }
     //[TestClass]
     //public class NodeTests {
     //    static GenericPlace placeA = new GenericPlace("A", new HashSet<IPlace<string>> { });
