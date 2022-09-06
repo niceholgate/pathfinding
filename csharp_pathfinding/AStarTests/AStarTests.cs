@@ -9,9 +9,9 @@ namespace AStarTests {
 
     [TestClass]
     public class GenericPlaceTests {
-        GenericPlace gpA = new GenericPlace("A", new Dictionary<IPlace, double>());
-        GenericPlace gpB = new GenericPlace("B", new Dictionary<IPlace, double>());
-        GenericPlace gpC = new GenericPlace("C", new Dictionary<IPlace, double>());
+        GenericPlace gpA = new("A", new Dictionary<IPlace, double>());
+        GenericPlace gpB = new("B", new Dictionary<IPlace, double>());
+        GenericPlace gpC = new("C", new Dictionary<IPlace, double>());
 
         [TestMethod]
         public void TestIsNeighbour() {
@@ -47,121 +47,164 @@ namespace AStarTests {
     }
 
     [TestClass]
-    public class GridCoords2DTests {
+    public class GridPlaceTests {
         //Assert.ThrowsException<System.ArgumentOutOfRangeException>(() => account.Debit(debitAmount));
-        GridCoords2D gridCoords2DBase = new GridCoords2D((-3, 5));
-        GridCoords2D gridCoords2DDiag = new GridCoords2D((-4, 6));
-        GridCoords2D gridCoords2DStra = new GridCoords2D((-3, 6));
-        GridCoords2D gridCoords2DDistant = new GridCoords2D((-60, 60));
-        GenericPlace genericPlace = new GenericPlace("GenericPlace");
+        GridPlace gridPlaceBase = new((-3, 5));
+        GridPlace gridPlaceDiag = new((-4, 6));
+        GridPlace gridPlaceStra = new((-3, 6));
+        GridPlace gridPlaceDistant = new((-60, 60));
         
 
         [TestMethod]
         public void TestIsNeighbour() {
-            // Explicit neighbours with any IPlace (not automatically bidirectional)
-            gridCoords2DDistant.ExplicitNeighboursWithCosts.Add(genericPlace, 1.0);
-            Assert.IsTrue(gridCoords2DDistant.IsNeighbour(genericPlace));
-            Assert.IsFalse(genericPlace.IsNeighbour(gridCoords2DDistant));
-            genericPlace.ExplicitNeighboursWithCosts.Add(gridCoords2DDistant, 1.0);
-            Assert.IsTrue(genericPlace.IsNeighbour(gridCoords2DDistant));
+            // Explicit neighbours (not automatically bidirectional)
+            gridPlaceDistant.ExplicitNeighboursWithCosts.Add(gridPlaceBase, 1.0);
+            Assert.IsTrue(gridPlaceDistant.IsNeighbour(gridPlaceBase));
+            Assert.IsFalse(gridPlaceBase.IsNeighbour(gridPlaceDistant));
+            gridPlaceBase.ExplicitNeighboursWithCosts.Add(gridPlaceDistant, 1.0);
+            Assert.IsTrue(gridPlaceBase.IsNeighbour(gridPlaceDistant));
 
-            // Grid neighbours
-            Assert.IsFalse(gridCoords2DBase.IsNeighbour(gridCoords2DDistant));
+            // Grid neighbours (remove the above explicit neighbours first)
+            gridPlaceBase.ExplicitNeighboursWithCosts.Remove(gridPlaceDistant);
+            gridPlaceDistant.ExplicitNeighboursWithCosts.Remove(gridPlaceBase);
+            Assert.IsFalse(gridPlaceBase.IsNeighbour(gridPlaceDistant));
 
-            Assert.IsTrue(gridCoords2DBase.IsNeighbour(gridCoords2DDiag));
-            Assert.IsTrue(gridCoords2DBase.IsNeighbour(gridCoords2DStra));
-            Assert.IsTrue(gridCoords2DDiag.IsNeighbour(gridCoords2DBase));
-            Assert.IsTrue(gridCoords2DStra.IsNeighbour(gridCoords2DBase));
+            Assert.IsTrue(gridPlaceBase.IsNeighbour(gridPlaceDiag));
+            Assert.IsTrue(gridPlaceBase.IsNeighbour(gridPlaceStra));
+            Assert.IsTrue(gridPlaceDiag.IsNeighbour(gridPlaceBase));
+            Assert.IsTrue(gridPlaceStra.IsNeighbour(gridPlaceBase));
         }
 
         [TestMethod]
         public void TestDeltaFrom() {
             int[] expectedDelta = new int[2] { (-60)-(-3), 60-5 };
-            Assert.IsTrue(gridCoords2DDistant.DeltaFrom(gridCoords2DBase).SequenceEqual(expectedDelta));
+            Assert.IsTrue(gridPlaceDistant.DeltaFrom(gridPlaceBase).SequenceEqual(expectedDelta));
         }
 
         [TestMethod]
         public void TestToString() {
-            Assert.AreEqual("(-3, 5)", gridCoords2DBase.ToString());
+            Assert.AreEqual("(-3, 5)", gridPlaceBase.ToString());
         }
     }
 
     [TestClass]
     public class PriorityQueueFibonacciHeapTests {
+        private readonly FibonacciHeap<string, int> _heap = new(0);
+
+        [TestInitialize]
+        public void TestFixtureSetup() {
+            _heap.Insert(new FibonacciHeapNode<string, int>("E", 5));
+            _heap.Insert(new FibonacciHeapNode<string, int>("C", 3));
+            _heap.Insert(new FibonacciHeapNode<string, int>("Z", 26));
+            _heap.Insert(new FibonacciHeapNode<string, int>("D", 4));
+            _heap.Insert(new FibonacciHeapNode<string, int>("B", 2));
+        }
+
         [TestMethod]
-        public void TestBasic() {
-            var heap = new FibonacciHeap<string, int>(0);
-            heap.Insert(new FibonacciHeapNode<string, int>("hello5", 5));
-            heap.Insert(new FibonacciHeapNode<string, int>("hello3", 3));
-            heap.Insert(new FibonacciHeapNode<string, int>("hello4", 4));
-            heap.Insert(new FibonacciHeapNode<string, int>("hello-4", -4));
-            FibonacciHeapNode<string, int> min = heap.Min();
-            Assert.AreEqual(min.Key, -4);
-            Assert.AreEqual(min.Data, "hello-4");
+        public void TestNodeExaminationAndRemoval() {
+            // Examination
+            Assert.AreEqual(_heap.Size(), 5);
+            Assert.AreEqual(_heap.Min().Data, "B");
+            
+            // Examination + removal
+            Assert.AreEqual(_heap.RemoveMin().Data, "B");
+            Assert.AreEqual(_heap.Size(), 4);
+            
+            // Empty heap behaviour
+            for (int i = 0; i < 4; i++) {
+                _heap.RemoveMin();
+            }
+            Assert.AreEqual(_heap.Size(), 0);
+            Assert.IsTrue(_heap.IsEmpty());
+            Assert.IsNull(_heap.Min());
+            Assert.IsNull(_heap.RemoveMin());
+        }
+
+        [TestMethod]
+        public void TestExpectedDequeueOrder() {
+            string[] expectedDataOrder = new string[5] { "B", "C", "D", "E", "Z" };
+
+            List<string> nodeDataInOrderRetrieved = new List<string>();
+            while (!_heap.IsEmpty()) {
+                nodeDataInOrderRetrieved.Add(_heap.RemoveMin().Data);
+            }
+            Assert.IsTrue(nodeDataInOrderRetrieved.SequenceEqual(expectedDataOrder));
         }
     }
-    //[TestClass]
-    //public class NodeTests {
-    //    static GenericPlace placeA = new GenericPlace("A", new HashSet<IPlace<string>> { });
-    //    static GenericPlace placeB = new GenericPlace("B", new HashSet<IPlace<string>> { });
-    //    static GridCoords2D placeC = new GridCoords2D(-3, 2);
 
-    //    Node<GenericPlace> nodeA = new Node<GenericPlace>(placeA);
-    //    Node<GenericPlace> nodeB = new Node<GenericPlace>(placeB);
-    //    Node<GridCoords2D> nodeC = new Node<GridCoords2D>(placeC);
+    [TestClass]
+    public class GenericPlaceDijkstra {
 
-    //    public void SetupNodes() {
-    //        Dictionary<Node<GenericPlace>, double> costDictA = new Dictionary<Node<GenericPlace>, double> { { nodeB, 4.0 } };
-    //        foreach (Node<GenericPlace> node in costDictA.Keys) {
-    //            nodeA.Coord.Neighbours.Add(node.Coord);
-    //        }
+        private readonly GenericPlace A = new("A");
+        private readonly GenericPlace B = new("B");
+        private readonly GenericPlace C = new("C");
+        private readonly GenericPlace D = new("D");
+        private readonly GenericPlace E = new("E");
+        private readonly GenericPlace F = new("F");
+        private readonly GenericPlace G = new("G");
+        private DijkstraSolver<GenericPlace> _sut;
 
-    //        Dictionary<Node<GenericPlace>, double> costDictB = new Dictionary<Node<GenericPlace>, double> { { nodeA, 4.0 } };
-    //        foreach (Node<GenericPlace> node in costDictB.Keys) {
-    //            nodeB.Coord.Neighbours.Add(node.Coord);
-    //        }
-    //    }
+        [TestInitialize]
+        public void TestFixtureSetup() {
+            A.ExplicitNeighboursWithCosts.Add(B, 2.0);
+            B.ExplicitNeighboursWithCosts.Add(A, 2.0);
+            B.ExplicitNeighboursWithCosts.Add(C, 5.0);
+            B.ExplicitNeighboursWithCosts.Add(E, 2.0);
+            C.ExplicitNeighboursWithCosts.Add(B, 5.0);
+            C.ExplicitNeighboursWithCosts.Add(D, 2.0);
+            D.ExplicitNeighboursWithCosts.Add(C, 2.0);
+            D.ExplicitNeighboursWithCosts.Add(G, 2.0);
+            E.ExplicitNeighboursWithCosts.Add(B, 2.0);
+            E.ExplicitNeighboursWithCosts.Add(F, 3.0);
+            F.ExplicitNeighboursWithCosts.Add(E, 3.0);
+            F.ExplicitNeighboursWithCosts.Add(G, 3.0);
+            G.ExplicitNeighboursWithCosts.Add(D, 2.0);
+            G.ExplicitNeighboursWithCosts.Add(F, 3.0);
+            _sut = new(A, G);
+        }
 
-    //    [TestMethod]
-    //    public void TestNode_GetLabel() {
-    //        SetupNodes();
-    //        Console.WriteLine(gpA.Neighbours);
-    //        int a = 2;
-    //        //Assert.IsTrue(gridCoords2DBase.GetLabel().SequenceEqual(new int[2] { -3, 5 }));
-    //    }
+        [TestMethod]
+        public void TestFindsBestPath() {
+            /*               E -3- F -3- G (END)
+                *               |           |
+                *               2           2
+                *               |           |
+                * A (START) -2- B -5- C -2- D 
+                * 
+                * A->B->E->F->G takes 10 (should pick this path)
+                * A->B->C->D->G takes 11
+                */
+            string[] expectedOptimalPathLabels = new string[5] { "A", "B", "E", "F", "G" };
 
-    //}
+            _sut.Solve();
+            IEnumerable<IPlace<string>> optimalPath = _sut.ReconstructPath();
+            //IEnumerable<GenericPlace> optimalPath = _sut.ReconstructPath();
+            List<String> optimalPathLabels = optimalPath.Select(place => place.Label).ToList();
+            Assert.IsTrue(optimalPathLabels.SequenceEqual(expectedOptimalPathLabels));
+        }
 
-    // test Node<GenericPlace> ? 
-    //[TestClass]
-    //public class NodeTests {
-    //    static GenericPlace placeA = new GenericPlace("A", new HashSet<IPlace<string>> { });
-    //    static GenericPlace placeB = new GenericPlace("B", new HashSet<IPlace<string>> { });
-    //    static GridCoords2D placeC = new GridCoords2D(-3, 2);
+        [TestMethod]
+        public void TestNullPathIfNoSolutionFound() {
+            /*               E     F -3- G (END)
+                *               |           |
+                *               2           2
+                *               |           |
+                * A (START) -2- B -5- C     D 
+                * 
+                * There should be no path
+                */
+            C.ExplicitNeighboursWithCosts.Remove(D);
+            D.ExplicitNeighboursWithCosts.Remove(C);
+            E.ExplicitNeighboursWithCosts.Remove(F);
+            F.ExplicitNeighboursWithCosts.Remove(E);
 
-    //    Node<GenericPlace> nodeA = new Node<GenericPlace>(placeA);
-    //    Node<GenericPlace> nodeB = new Node<GenericPlace>(placeB);
-    //    Node<GridCoords2D> nodeC = new Node<GridCoords2D>(placeC);
+            _sut.Solve();
+            Assert.IsNull(_sut.ReconstructPath());
+        }
 
-    //    public void SetupNodes() {
-    //        Dictionary<Node<GenericPlace>, double> costDictA = new Dictionary<Node<GenericPlace>, double> { { nodeB, 4.0 } };
-    //        foreach (Node<GenericPlace> node in costDictA.Keys) {
-    //            nodeA.Coord.Neighbours.Add(node.Coord);
-    //        }
-
-    //        Dictionary<Node<GenericPlace>, double> costDictB = new Dictionary<Node<GenericPlace>, double> { { nodeA, 4.0 } };
-    //        foreach (Node<GenericPlace> node in costDictB.Keys) {
-    //            nodeB.Coord.Neighbours.Add(node.Coord);
-    //        }
-    //    }
-
-    //    [TestMethod]
-    //    public void TestNode_GetLabel() {
-    //        SetupNodes();
-    //        Console.WriteLine(gpA.Neighbours);
-    //        int a = 2;
-    //        //Assert.IsTrue(gridCoords2DBase.GetLabel().SequenceEqual(new int[2] { -3, 5 }));
-    //    }
-
-    //}
+        [TestMethod]
+        public void TestNullPathIfNotYetRun() {
+            Assert.IsNull(_sut.ReconstructPath());
+        }
+    }
 }

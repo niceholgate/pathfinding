@@ -6,97 +6,81 @@ using System.Text;
 using FibonacciHeap;
 using NicUtils;
 
-namespace AStarNickNS
-{
-
-    //public abstract class Place<LabelType> {
-    //    LabelType Label { get; }
-
-    //    bool IsNeighbour(IPlace<LabelType> other);
-    //}
+namespace AStarNickNS {
 
     //////////// INTERFACES
-    /*
-     * A place which can check if any other place is a neighbour
-     */
+
     public interface IPlace {
-        bool IsNeighbour(IPlace other);
-        // TODO: this could also be a function of the 'agent' and their speed, terrain/flying capabilties etc.
-        // Or these corrections might happen elsewhere. Game-specific logic doesn't belong here.
-        double GetCostToLeave(IPlace neighbour);
+        Dictionary<IPlace, double> ExplicitNeighboursWithCosts { get; }
     }
 
     /*
-     * A place with a descriptive type e.g. a string name, or a grid coordinate
+     * A place with a descriptive type (e.g. a string name, or a grid coordinate) and a terrain cost for moving onto it.
+     * It can check if a peer is a neighbour and get the cost of going to a neighbour.
      */
     public interface IPlace<LabelType> : IPlace {
         LabelType Label { get; }
 
         double TerrainCost { get; }
+
+        bool IsNeighbour(IPlace<LabelType> other);
+        // TODO: this could also be a function of the 'agent' and their speed, terrain/flying capabilties etc.
+        // Or these corrections might happen elsewhere. Game-specific logic doesn't belong here.
+        double GetCostToLeave(IPlace<LabelType> other);
     }
 
-    public interface IPlaceAStar<LabelType> : IPlace<LabelType>{
+    public interface IPlaceAStar<LabelType> : IPlace<LabelType> {
         double GetHeuristicDist(IPlaceAStar<LabelType> other, Distances2D.HeuristicType heuristicType);
     }
 
-    ///*
-    // * A node which can find the cost of getting to any neighbour (even if the neighbour has a different place type)
-    // */
-    //public interface INode {
-    //    double GetCostToLeave(INode neighbour);
-    //}
+    public abstract class Place<LabelType> : IPlace<LabelType> {
+        public LabelType Label { get; }
 
-    ///*
-    // * A node with a particular place type
-    // */
-    //public interface INode<CoordType> : INode where CoordType : IPlace {
-    //    CoordType Coord { get; }
-    //}
+        public double TerrainCost {
+            get {
+                return 1.0; // TODO: replace with access to a terrain map for GenericPlace (e.g. Dictionary<string, double>)
+            }
+        }
 
-    ///*
-    // * An AStar node - has heuristic distance calculation ability for its place type
-    // */
-    //public interface INodeAStar<CoordType> : INode<CoordType> where CoordType : IPlace {
-    //    double GetHeuristicDist(INodeAStar<CoordType> other, Distances2D.HeuristicType heuristicType);
-    //}
-
-    public abstract class Place : IPlace {
         public Dictionary<IPlace, double> ExplicitNeighboursWithCosts { get; }
 
-        protected Place(Dictionary<IPlace, double> explicitNeighboursWithCosts) {
+        protected Place(LabelType label) : this(label, new Dictionary<IPlace, double>()) { }
+
+        protected Place(LabelType label, Dictionary<IPlace, double> explicitNeighboursWithCosts) {
+            Label = label;
             ExplicitNeighboursWithCosts = explicitNeighboursWithCosts;
         }
 
-        public abstract bool IsNeighbour(IPlace other);
+        public abstract bool IsNeighbour(IPlace<LabelType> other);
 
-        public abstract double GetCostToLeave(IPlace neighbour);
+        public abstract double GetCostToLeave(IPlace<LabelType> neighbour);
 
         public abstract override string ToString();
 
-        protected bool IsNeighbourExplicit(IPlace other) { return ExplicitNeighboursWithCosts.Keys.Contains(other); }
+        public override bool Equals(Object obj) {
+            //Check for null and compare run-time types.
+            if ((obj == null) || !this.GetType().Equals(obj.GetType())) {
+                return false;
+            } else {
+                Place<LabelType> p = (Place<LabelType>)obj;
+                return Label.Equals(p.Label);
+            }
+        }
+
+        protected bool IsNeighbourExplicit(IPlace<LabelType> other) { return ExplicitNeighboursWithCosts.Keys.Contains(other); }
     }
 
     /*
      * A place with no defining geometry, just explicitly specified neighbours
      */
-    public class GenericPlace : Place, IPlace<string> {
-        public string Label { get; }
+    public class GenericPlace : Place<string> {
+        public GenericPlace(string label) : base(label) { }
 
-        public double TerrainCost { get {
-                return 1.0; // TODO: replace with access to a terrain map for GenericPlace (e.g. Dictionary<string, double>)
-            }
-        }
+        public GenericPlace(string label, Dictionary<IPlace, double> explicitNeighboursWithCosts) : base(label, explicitNeighboursWithCosts) { }
 
-        public GenericPlace(string label) : this(label, new Dictionary<IPlace, double>()) { }
+        public override bool IsNeighbour(IPlace<string> other) { return IsNeighbourExplicit(other); }
 
-        public GenericPlace(string label,Dictionary<IPlace, double> explicitNeighboursWithCosts) : 
-            base(explicitNeighboursWithCosts) {
-            Label = label;
-        }
-
-        public override bool IsNeighbour(IPlace other) { return IsNeighbourExplicit(other); }
-
-        public override double GetCostToLeave(IPlace neighbour) {
+        public override double GetCostToLeave(IPlace<string> neighbour) {
             return ExplicitNeighboursWithCosts[neighbour];
         }
 
@@ -106,34 +90,21 @@ namespace AStarNickNS
     /*
      * A place on a 2D grid
      */
-    public class GridCoords2D : Place, IPlace<(int, int)> {
-        public (int, int) Label { get; }
-
-        public double TerrainCost {
-            get {
-                return 1.0; // TODO: replace with access to a terrain map for GenericPlace (e.g. Dictionary<(int, int), double>)
-                //return TerrainMap[Label];
-            }
-        }
-
+    public class GridPlace : Place<(int, int)>, IPlaceAStar<(int, int)> {
         public static readonly double SQRT2 = Math.Sqrt(2.0);
 
-        public GridCoords2D((int, int) label) : this(label, new Dictionary<IPlace, double>()) { }
+        public GridPlace((int, int) label) : base(label) { }
 
-        public GridCoords2D((int, int) label, Dictionary<IPlace, double> explicitNeighboursWithCosts) : 
-            base(explicitNeighboursWithCosts) {
-            Label = label;
-        }
+        public GridPlace((int, int) label, Dictionary<IPlace, double> explicitNeighboursWithCosts) : base(label, explicitNeighboursWithCosts) { }
 
-        public override bool IsNeighbour(IPlace other) {
+        public override bool IsNeighbour(IPlace<(int, int)> other) {
             return IsNeighbourExplicit(other) || IsNeighbourGrid(other);
         }
 
-        public override double GetCostToLeave(IPlace other) {
+        public override double GetCostToLeave(IPlace<(int, int)> other) {
             if (IsNeighbourGrid(other)) {
-                GridCoords2D otherAsGrid = (GridCoords2D)other;
-                double distance = IsDiagonalNeighbour(otherAsGrid) ? SQRT2 : 1.0;
-                return otherAsGrid.TerrainCost * distance;
+                double distance = IsDiagonalNeighbour(other) ? SQRT2 : 1.0;
+                return other.TerrainCost * distance;
             } else if (IsNeighbourExplicit(other)) {
                 return ExplicitNeighboursWithCosts[other];
             } else {
@@ -142,25 +113,90 @@ namespace AStarNickNS
             }
         }
 
-        public override string ToString() => Label.ToString();
-
-        public int[] DeltaFrom(GridCoords2D other) { return new int[] { this.Label.Item1 - other.Label.Item1, this.Label.Item2 - other.Label.Item2 }; }
-
-        private bool IsNeighbourGrid(IPlace other) {
-            if (other is GridCoords2D otherAsGridCoords2D) {
-                return IsDiagonalNeighbour(otherAsGridCoords2D) || IsStraightNeighbour(otherAsGridCoords2D);
-            }
-            return false;
+        public double GetHeuristicDist(IPlaceAStar<(int, int)> other, Distances2D.HeuristicType heuristicType) {
+            double[] thisLabelAsDoubles = { Label.Item1, Label.Item2 };
+            double[] otherLabelAsDoubles = { other.Label.Item1, other.Label.Item2 };
+            return Distances2D.GetDistance(thisLabelAsDoubles, otherLabelAsDoubles, heuristicType);
         }
 
-        private bool IsDiagonalNeighbour(GridCoords2D other) {
+        public override string ToString() => Label.ToString();
+
+        public int[] DeltaFrom(IPlace<(int, int)> other) { return new int[] { Label.Item1 - other.Label.Item1, Label.Item2 - other.Label.Item2 }; }
+
+        private bool IsNeighbourGrid(IPlace<(int, int)> other) {
+            return IsDiagonalNeighbour(other) || IsStraightNeighbour(other);
+        }
+
+        private bool IsDiagonalNeighbour(IPlace<(int, int)> other) {
             int[] delta = DeltaFrom(other);
             return delta[0] * delta[0] + delta[1] * delta[1] == 2;
         }
 
-        private bool IsStraightNeighbour(GridCoords2D other) {
+        private bool IsStraightNeighbour(IPlace<(int, int)> other) {
             int[] delta = DeltaFrom(other);
             return Math.Abs(delta[0]) + Math.Abs(delta[1]) == 1;
+        }
+    }
+
+
+    // TODO: can the generics and interfaces be improved?
+    // TODO: catch path not found appropriately and test
+    interface IDijkstraSolver<out IPlace> {
+        IEnumerable<IPlace> ReconstructPath();
+    }
+
+    public class DijkstraSolver<TPlace> : IDijkstraSolver<TPlace> where TPlace : class, IPlace {
+        private readonly TPlace _start;
+        private readonly TPlace _target;
+        private TPlace _current;
+        private double _newCost;
+        private Dictionary<TPlace, TPlace> _cameFrom;
+        private Dictionary<TPlace, double> _costSoFar;
+        private bool _hasRun = false;
+        private bool _foundPath = false;
+
+        public DijkstraSolver(TPlace start, TPlace target) {
+            _start = start;
+            _target = target;
+        }
+
+        public void Solve() {
+            _hasRun = true;
+            FibonacciHeap<TPlace, double> frontier = new FibonacciHeap<TPlace, double>(0);
+            frontier.Insert(new FibonacciHeapNode<TPlace, double>(_start, 0));
+            _cameFrom = new Dictionary<TPlace, TPlace>() { { _start, null } };
+            _costSoFar = new Dictionary<TPlace, double>() { { _start, 0.0 } };
+
+            while (!frontier.IsEmpty()) {
+                _current = frontier.RemoveMin().Data;
+                if (_current.Equals(_target)) {
+                    _foundPath = true;
+                    break;
+                }
+                foreach (TPlace neighbour in _current.ExplicitNeighboursWithCosts.Keys) {
+                    _newCost = _costSoFar[_current] + _current.ExplicitNeighboursWithCosts[neighbour];
+                    if (!_costSoFar.ContainsKey(neighbour) || _newCost < _costSoFar[neighbour]) {
+                        _costSoFar[neighbour] = _newCost;
+                        frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour, _newCost));
+                        _cameFrom[neighbour] = _current;
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<TPlace> ReconstructPath() {
+            if (_hasRun && _foundPath) {
+                _current = _target;
+                List<TPlace> path = new List<TPlace>();
+                while (!_current.Equals(_start)) {
+                    path.Add(_current);
+                    _current = _cameFrom[_current];
+                }
+                path.Add(_start);
+                path.Reverse();
+                return path;
+            }
+            return null;
         }
     }
 
