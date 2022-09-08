@@ -6,12 +6,34 @@ using System.Text;
 using FibonacciHeap;
 using NicUtils;
 
+// https://stackoverflow.com/questions/150479/order-of-items-in-classes-fields-properties-constructors-methods
 namespace AStarNickNS {
 
-    //////////// INTERFACES
+    // Ability to get the terrain cost should depend on how smart the agent finding a path is. i.e. should they be planning according to player's slow debuffs?
+    public abstract class PlaceGraph<LabelType> {
+        private Dictionary<LabelType, double> _terrainCosts;
+
+        public Dictionary<LabelType, Place<LabelType>> Places;
+
+        public bool IsBlocked(LabelType label) { return GetTerrainCost(label) < 0;  }
+
+        public double GetTerrainCost(LabelType label) { return _terrainCosts[label]; }
+
+        public void SetTerrainCost(LabelType label, double cost) { _terrainCosts[label] = cost; }
+        
+        // public abstract void Build(string dataFile);
+    }
+
+    public class GenericPlaceGraph : PlaceGraph<string> {
+
+    }
+
+    public class GridPlaceGraph : PlaceGraph<(int, int)> {
+
+    }
 
     public interface IPlace {
-        Dictionary<IPlace, double> ExplicitNeighboursWithCosts { get; }
+        Dictionary<IPlace, double> NeighboursWithCosts { get; }
     }
 
     /*
@@ -34,38 +56,44 @@ namespace AStarNickNS {
     }
 
     public abstract class Place<LabelType> : IPlace<LabelType> {
+
+        protected readonly PlaceGraph<LabelType> _graph;
+
+        protected Place(LabelType label, PlaceGraph<LabelType> graph) : this(label, graph, new Dictionary<IPlace<LabelType>, double>()) { }
+
+        protected Place(LabelType label, PlaceGraph<LabelType> graph, Dictionary<IPlace<LabelType>, double> explicitNeighboursWithCosts) {
+            Label = label;
+            _graph = graph;
+            ExplicitNeighboursWithCosts = explicitNeighboursWithCosts;
+        }
+
         public LabelType Label { get; }
 
         public double TerrainCost {
             get {
-                return 1.0; // TODO: replace with access to a terrain map for GenericPlace (e.g. Dictionary<string, double>)
+                return _graph.GetTerrainCost(Label);
             }
         }
 
         public Dictionary<IPlace, double> ExplicitNeighboursWithCosts { get; }
 
-        protected Place(LabelType label) : this(label, new Dictionary<IPlace, double>()) { }
-
-        protected Place(LabelType label, Dictionary<IPlace, double> explicitNeighboursWithCosts) {
-            Label = label;
-            ExplicitNeighboursWithCosts = explicitNeighboursWithCosts;
+        public Dictionary<IPlace, double> NeighboursWithCosts {
+            get {
+                var merge = new Dictionary<TKey, TValue>(ExplicitNeighboursWithCosts);
+                foreach (var item in keyValuePairs) {
+                    dictionaryMerge[item.Key] = item.Value;
+                }
+                return merge;
+            }
         }
+
+        public abstract IEnumerable<IPlace<LabelType>> ImplicitNeighbours { get; }
 
         public abstract bool IsNeighbour(IPlace<LabelType> other);
 
         public abstract double GetCostToLeave(IPlace<LabelType> neighbour);
 
         public abstract override string ToString();
-
-        public override bool Equals(Object obj) {
-            //Check for null and compare run-time types.
-            if ((obj == null) || !this.GetType().Equals(obj.GetType())) {
-                return false;
-            } else {
-                Place<LabelType> p = (Place<LabelType>)obj;
-                return Label.Equals(p.Label);
-            }
-        }
 
         protected bool IsNeighbourExplicit(IPlace<LabelType> other) { return ExplicitNeighboursWithCosts.Keys.Contains(other); }
     }
@@ -74,9 +102,12 @@ namespace AStarNickNS {
      * A place with no defining geometry, just explicitly specified neighbours
      */
     public class GenericPlace : Place<string> {
-        public GenericPlace(string label) : base(label) { }
+        public GenericPlace(string label, GenericPlaceGraph graph) : base(label, graph) { }
 
-        public GenericPlace(string label, Dictionary<IPlace, double> explicitNeighboursWithCosts) : base(label, explicitNeighboursWithCosts) { }
+        public GenericPlace(string label, GenericPlaceGraph graph, Dictionary<IPlace<string>, double> explicitNeighboursWithCosts)
+            : base(label, graph, explicitNeighboursWithCosts) { }
+
+        public override List<IPlace<string>> ImplicitNeighbours { get { return new List<IPlace<string>>(); } }
 
         public override bool IsNeighbour(IPlace<string> other) { return IsNeighbourExplicit(other); }
 
@@ -93,9 +124,25 @@ namespace AStarNickNS {
     public class GridPlace : Place<(int, int)>, IPlaceAStar<(int, int)> {
         public static readonly double SQRT2 = Math.Sqrt(2.0);
 
-        public GridPlace((int, int) label) : base(label) { }
+        public GridPlace((int, int) label, GridPlaceGraph graph) : base(label, graph) { }
 
-        public GridPlace((int, int) label, Dictionary<IPlace, double> explicitNeighboursWithCosts) : base(label, explicitNeighboursWithCosts) { }
+        public GridPlace((int, int) label, GridPlaceGraph graph, Dictionary<IPlace<(int, int)>, double> explicitNeighboursWithCosts)
+            : base(label, graph, explicitNeighboursWithCosts) { }
+
+        // Initially will treat all adjacent squares as neighbours, and check downstream if it's blocked, off the map, or diagonal moves not allowed etc.
+        public override List<IPlace<(int, int)>> ImplicitNeighbours { 
+            get {
+                List<IPlace<(int, int)>> gridNeighbours = new List<IPlace<(int, int)>>();
+                foreach (int i in new int[3] { -1, 0, 1 }) {
+                    foreach (int j in new int[3] { -1, 0, 1 }) {
+                        if (!(i == 0 && j == 0)) {
+                            gridNeighbours.Add(_graph.Places[(i, j)]);
+                        }
+                    }
+                }
+                return gridNeighbours;
+            }
+        }
 
         public override bool IsNeighbour(IPlace<(int, int)> other) {
             return IsNeighbourExplicit(other) || IsNeighbourGrid(other);
@@ -141,11 +188,12 @@ namespace AStarNickNS {
 
     // TODO: can the generics and interfaces be improved?
     // TODO: catch path not found appropriately and test
-    interface IDijkstraSolver<out IPlace> {
-        IEnumerable<IPlace> ReconstructPath();
-    }
+    // TODO: should not refer to ExplicitNeighbours directly - then can remove from interface
+    //interface IDijkstraSolver<out IPlace> {
+    //    IEnumerable<IPlace> ReconstructPath();
+    //}
 
-    public class DijkstraSolver<TPlace> : IDijkstraSolver<TPlace> where TPlace : class, IPlace {
+    public class DijkstraSolver<TPlace> where TPlace : class, IPlace { 
         private readonly TPlace _start;
         private readonly TPlace _target;
         private TPlace _current;
@@ -162,7 +210,7 @@ namespace AStarNickNS {
 
         public void Solve() {
             _hasRun = true;
-            FibonacciHeap<TPlace, double> frontier = new FibonacciHeap<TPlace, double>(0);
+            FibonacciHeap<TPlace, double> frontier = new(0);
             frontier.Insert(new FibonacciHeapNode<TPlace, double>(_start, 0));
             _cameFrom = new Dictionary<TPlace, TPlace>() { { _start, null } };
             _costSoFar = new Dictionary<TPlace, double>() { { _start, 0.0 } };
@@ -173,8 +221,8 @@ namespace AStarNickNS {
                     _foundPath = true;
                     break;
                 }
-                foreach (TPlace neighbour in _current.ExplicitNeighboursWithCosts.Keys) {
-                    _newCost = _costSoFar[_current] + _current.ExplicitNeighboursWithCosts[neighbour];
+                foreach (TPlace neighbour in _current.NeighboursWithCosts.Keys) {
+                    _newCost = _costSoFar[_current] + _current.NeighboursWithCosts[neighbour];
                     if (!_costSoFar.ContainsKey(neighbour) || _newCost < _costSoFar[neighbour]) {
                         _costSoFar[neighbour] = _newCost;
                         frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour, _newCost));
