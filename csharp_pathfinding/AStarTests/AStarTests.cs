@@ -142,7 +142,7 @@ namespace AStarTests {
         private readonly GenericPlace E = new("E");
         private readonly GenericPlace F = new("F");
         private readonly GenericPlace G = new("G");
-        private DijkstraSolver<GenericPlace> _sut;
+        private DijkstraSolver<Place<string>, string> _sut;
 
         [TestInitialize]
         public void TestFixtureSetup() {

@@ -36,6 +36,10 @@ namespace AStarNickNS {
         Dictionary<IPlace, double> NeighboursWithCosts { get; }
     }
 
+    public interface IPlaceAStar : IPlace {
+        double GetHeuristicDist(IPlaceAStar other, Distances2D.HeuristicType heuristicType);
+    }
+
     /*
      * A place with a descriptive type (e.g. a string name, or a grid coordinate) and a terrain cost for moving onto it.
      * It can check if a peer is a neighbour and get the cost of going to a neighbour.
@@ -51,9 +55,7 @@ namespace AStarNickNS {
         double GetCostToLeave(IPlace<LabelType> other);
     }
 
-    public interface IPlaceAStar<LabelType> : IPlace<LabelType> {
-        double GetHeuristicDist(IPlaceAStar<LabelType> other, Distances2D.HeuristicType heuristicType);
-    }
+    
 
     public abstract class Place<LabelType> : IPlace<LabelType> {
 
@@ -248,97 +250,103 @@ namespace AStarNickNS {
         }
     }
 
+    public class AStarSolver<TPlace> : DijkstraSolver<TPlace> where TPlace : IPlaceAStar {
+        public AStarSolver(TPlace start, TPlace target) : base(start, target) {
+
+        }
+    }
+
     //abstract class Node<CoordType> : INode<CoordType> where CoordType : IPlace {
     //    public Node(CoordType coord) { this.Coord = coord; }
 
-    //    public CoordType Coord { get; }
+        //    public CoordType Coord { get; }
 
-    //    public IDictionary<INode<CoordType>, double> GetNeighboursCosts() { return this.neighboursCosts; }
+        //    public IDictionary<INode<CoordType>, double> GetNeighboursCosts() { return this.neighboursCosts; }
 
-    //    public virtual double GetCostToLeave(INode neighbour) { return neighboursCosts[neighbour]; }
-    //}
+        //    public virtual double GetCostToLeave(INode neighbour) { return neighboursCosts[neighbour]; }
+        //}
 
-    //public class GenericNode : INode<GenericPlace> {
-    //    public GenericPlace Coord { get; }
+        //public class GenericNode : INode<GenericPlace> {
+        //    public GenericPlace Coord { get; }
 
-    //    private Dictionary<INode, double> costsToReachExplicitNeighbours = new Dictionary<INode, double>();
+        //    private Dictionary<INode, double> costsToReachExplicitNeighbours = new Dictionary<INode, double>();
 
-    //    public GenericNode(GenericPlace coord) {
-    //        Coord = coord;
-    //        foreach (IPlace neighbour in Coord.ExplicitNeighbours) {
-    //            costsToReachExplicitNeighbours[neighbour] = 10;
-    //        }
-    //    }
+        //    public GenericNode(GenericPlace coord) {
+        //        Coord = coord;
+        //        foreach (IPlace neighbour in Coord.ExplicitNeighbours) {
+        //            costsToReachExplicitNeighbours[neighbour] = 10;
+        //        }
+        //    }
 
-    //    public double GetCostToLeave(INode neighbour) {
-    //        return costsToReachExplicitNeighbours[neighbour];
-    //    }
-
-
-
-    //}
-
-    //public class Square : Node<GridCoords2D>, INodeAStar<GridCoords2D> {
-    //    public static readonly double SQRT2 = Math.Sqrt(2.0);
-
-    //    public Square(GridCoords2D coord) : base(coord) { }
-
-    //    public double GetCostToLeave(Square neighbour) {
-    //        double distance = neighbour.IsDiagonalNeighbour(this) ? SQRT2 : 1.0;
-    //        return neighboursCosts[neighbour] * distance;
-    //    }
-
-    //    private bool IsDiagonalNeighbour(Square other) { return Coord.IsDiagonalNeighbour(other.Coord); }
-
-    //    public double GetHeuristicDist(INodeAStar<GridCoords2D> other, Distances2D.HeuristicType heuristicType) {
-    //        double[] thisLabelAsDoubles = { Coord.Label.Item1 , Coord.Label.Item2 };
-    //        double[] otherLabelAsDoubles = { other.Coord.Label.Item1, other.Coord.Label.Item2 };
-    //        return Distances2D.GetDistance(thisLabelAsDoubles, otherLabelAsDoubles, heuristicType);
-    //    }
-    //}
+        //    public double GetCostToLeave(INode neighbour) {
+        //        return costsToReachExplicitNeighbours[neighbour];
+        //    }
 
 
-    //class Hex : Node<HexCoords2D>, INodeAStar<HexCoords2D>
-    //{
-    //    interface_method(Hex hex)
-    //}
 
-    //class A_star {
-    //    static void Main(string[] args) {
-    //        var heap = new FibonacciHeap<string, int>(0);
-    //        heap.Insert(new FibonacciHeapNode<string, int>("hello", 5));
-    //        FibonacciHeapNode<string, int> min = heap.Min();
-    //        //List<int[]> listInt = new List<int[]> { new int[] { 1, 2 }, new int[] { 0, -1 }, new int[] { 0, 1 }, new int[] { 1, 0 } };
-    //        //int[] searchArrayInt = { 1, 2 };
+        //}
 
-    //        //List<double[]> listDouble = new List<double[]> { new double[] { 1, 2 }, new double[] { 0, -1 }, new double[] { 0, 1 }, new double[] { 1, 0 } };
-    //        //double[] searchArrayDouble = { 1.1, 2.0 };
+        //public class Square : Node<GridCoords2D>, INodeAStar<GridCoords2D> {
+        //    public static readonly double SQRT2 = Math.Sqrt(2.0);
 
-    //        //List<int>[] arrayInt = new List<int>[] { new List<int> { 1, 2 }, new List<int> { 0, -1 }, new List<int> { 0, 1 }, new List<int> { 1, 0 } };
-    //        //List<int> searchListInt = new List<int> { 1, 2 };
+        //    public Square(GridCoords2D coord) : base(coord) { }
 
-    //        //bool cont = Enumerables<int>.ContainsEnumerable(listInt, searchArrayInt);
-    //        //bool cont2 = Enumerables<double>.ContainsEnumerable(listDouble, searchArrayDouble);
-    //        //bool cont3 = Enumerables<int>.ContainsEnumerable(arrayInt, searchListInt);
+        //    public double GetCostToLeave(Square neighbour) {
+        //        double distance = neighbour.IsDiagonalNeighbour(this) ? SQRT2 : 1.0;
+        //        return neighboursCosts[neighbour] * distance;
+        //    }
 
-    //        //double d = Distances2D.GetDistance(new double[2] { 3.0, 1.0 }, new double[2] { 6.0, 5.0 }, Distances2D.HeuristicType.Euclidian);
-    //        //Console.WriteLine(d);
+        //    private bool IsDiagonalNeighbour(Square other) { return Coord.IsDiagonalNeighbour(other.Coord); }
 
-    //        //Square squareTest1 = new Square(new GridCoords2D(0, 0));
-    //        //Square squareTestDiag = new Square(new GridCoords2D(1, 1));
-    //        //Square squareTestStra = new Square(new GridCoords2D(1, 0));
-    //        //double hd = squareTest1.GetHeuristicDist(squareTestDiag, Distances2D.HeuristicType.Euclidian);
+        //    public double GetHeuristicDist(INodeAStar<GridCoords2D> other, Distances2D.HeuristicType heuristicType) {
+        //        double[] thisLabelAsDoubles = { Coord.Label.Item1 , Coord.Label.Item2 };
+        //        double[] otherLabelAsDoubles = { other.Coord.Label.Item1, other.Coord.Label.Item2 };
+        //        return Distances2D.GetDistance(thisLabelAsDoubles, otherLabelAsDoubles, heuristicType);
+        //    }
+        //}
 
-    //        //var costsDict = new Dictionary<INode<GridCoords2D>, double>();
-    //        //costsDict.Add(squareTestDiag, 1);
-    //        //costsDict.Add(squareTestStra, 1);
-    //        //var costsDict2 = new Dictionary<INode<GridCoords2D>, double> { { squareTestDiag, 2 }, { squareTestStra, 4 } };
 
-    //        //squareTest1.neighboursCosts = costsDict;
-    //        //double costDiag = squareTest1.GetCostToLeave(squareTestDiag);
-    //        //double costStra = squareTest1.GetCostToLeave(squareTestStra);
+        //class Hex : Node<HexCoords2D>, INodeAStar<HexCoords2D>
+        //{
+        //    interface_method(Hex hex)
+        //}
 
-    //        //Console.WriteLine(hd);
-    //    }
-    //}
+        //class A_star {
+        //    static void Main(string[] args) {
+        //        var heap = new FibonacciHeap<string, int>(0);
+        //        heap.Insert(new FibonacciHeapNode<string, int>("hello", 5));
+        //        FibonacciHeapNode<string, int> min = heap.Min();
+        //        //List<int[]> listInt = new List<int[]> { new int[] { 1, 2 }, new int[] { 0, -1 }, new int[] { 0, 1 }, new int[] { 1, 0 } };
+        //        //int[] searchArrayInt = { 1, 2 };
+
+        //        //List<double[]> listDouble = new List<double[]> { new double[] { 1, 2 }, new double[] { 0, -1 }, new double[] { 0, 1 }, new double[] { 1, 0 } };
+        //        //double[] searchArrayDouble = { 1.1, 2.0 };
+
+        //        //List<int>[] arrayInt = new List<int>[] { new List<int> { 1, 2 }, new List<int> { 0, -1 }, new List<int> { 0, 1 }, new List<int> { 1, 0 } };
+        //        //List<int> searchListInt = new List<int> { 1, 2 };
+
+        //        //bool cont = Enumerables<int>.ContainsEnumerable(listInt, searchArrayInt);
+        //        //bool cont2 = Enumerables<double>.ContainsEnumerable(listDouble, searchArrayDouble);
+        //        //bool cont3 = Enumerables<int>.ContainsEnumerable(arrayInt, searchListInt);
+
+        //        //double d = Distances2D.GetDistance(new double[2] { 3.0, 1.0 }, new double[2] { 6.0, 5.0 }, Distances2D.HeuristicType.Euclidian);
+        //        //Console.WriteLine(d);
+
+        //        //Square squareTest1 = new Square(new GridCoords2D(0, 0));
+        //        //Square squareTestDiag = new Square(new GridCoords2D(1, 1));
+        //        //Square squareTestStra = new Square(new GridCoords2D(1, 0));
+        //        //double hd = squareTest1.GetHeuristicDist(squareTestDiag, Distances2D.HeuristicType.Euclidian);
+
+        //        //var costsDict = new Dictionary<INode<GridCoords2D>, double>();
+        //        //costsDict.Add(squareTestDiag, 1);
+        //        //costsDict.Add(squareTestStra, 1);
+        //        //var costsDict2 = new Dictionary<INode<GridCoords2D>, double> { { squareTestDiag, 2 }, { squareTestStra, 4 } };
+
+        //        //squareTest1.neighboursCosts = costsDict;
+        //        //double costDiag = squareTest1.GetCostToLeave(squareTestDiag);
+        //        //double costStra = squareTest1.GetCostToLeave(squareTestStra);
+
+        //        //Console.WriteLine(hd);
+        //    }
+        //}
 }
