@@ -354,7 +354,7 @@ class SquareGrid(Graph):
 if __name__ == '__main__':
 
     # Prepare and solve a maze geometry
-    maze = SquareGrid('manhattan', 'E:/dev/pathfinding/py_pathfinding/excel_mazes/walls1.xlsx', diagonality=False)
+    maze = SquareGrid('manhattan', 'C:/dev/pathfinding/py_pathfinding/excel_mazes/walls1.xlsx', diagonality=False)
     maze.set_start((2, 0))
     maze.set_end((8, 9))
     check_maze = maze.check_graph()
