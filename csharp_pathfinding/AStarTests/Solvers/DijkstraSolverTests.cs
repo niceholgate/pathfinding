@@ -1,0 +1,85 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using AStarNickNS;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace AStarTests {
+    [TestClass]
+    public class GenericPlaceDijkstra {
+
+        private static GenericPlaceGraph _genericPlaceGraph = new();
+        private readonly GenericPlace A = new("A", _genericPlaceGraph);
+        private readonly GenericPlace B = new("B", _genericPlaceGraph);
+        private readonly GenericPlace C = new("C", _genericPlaceGraph);
+        private readonly GenericPlace D = new("D", _genericPlaceGraph);
+        private readonly GenericPlace E = new("E", _genericPlaceGraph);
+        private readonly GenericPlace F = new("F", _genericPlaceGraph);
+        private readonly GenericPlace G = new("G", _genericPlaceGraph);
+        private DijkstraSolver<Place<string>> _sut;
+
+        /*               E -3- F -3- G (END)
+         *               |           |
+         *               2           2
+         *               |           |
+         * A (START) -2- B -5- C -2- D 
+         * 
+         * A->B->E->F->G takes 10 (should pick this path)
+         * A->B->C->D->G takes 11
+         */
+        [TestInitialize]
+        public void TestFixtureSetup() {
+            A.ExplicitNeighboursWithCosts.Add(B, 2.0);
+            B.ExplicitNeighboursWithCosts.Add(A, 2.0);
+            B.ExplicitNeighboursWithCosts.Add(C, 5.0);
+            B.ExplicitNeighboursWithCosts.Add(E, 2.0);
+            C.ExplicitNeighboursWithCosts.Add(B, 5.0);
+            C.ExplicitNeighboursWithCosts.Add(D, 2.0);
+            D.ExplicitNeighboursWithCosts.Add(C, 2.0);
+            D.ExplicitNeighboursWithCosts.Add(G, 2.0);
+            E.ExplicitNeighboursWithCosts.Add(B, 2.0);
+            E.ExplicitNeighboursWithCosts.Add(F, 3.0);
+            F.ExplicitNeighboursWithCosts.Add(E, 3.0);
+            F.ExplicitNeighboursWithCosts.Add(G, 3.0);
+            G.ExplicitNeighboursWithCosts.Add(D, 2.0);
+            G.ExplicitNeighboursWithCosts.Add(F, 3.0);
+            _sut = new(A, G);
+        }
+
+        [TestMethod]
+        public void TestFindsBestPath() {
+           
+            string[] expectedOptimalPathLabels = new string[5] { "A", "B", "E", "F", "G" };
+
+            _sut.Solve();
+            IEnumerable<IPlace<string>> optimalPath = _sut.ReconstructPath();
+            //IEnumerable<GenericPlace> optimalPath = _sut.ReconstructPath();
+            List<String> optimalPathLabels = optimalPath.Select(place => place.Label).ToList();
+            Assert.IsTrue(optimalPathLabels.SequenceEqual(expectedOptimalPathLabels));
+        }
+
+        [TestMethod]
+        public void TestNullPathIfNoSolutionFound() {
+            /*               E     F -3- G (END)
+                *               |           |
+                *               2           2
+                *               |           |
+                * A (START) -2- B -5- C     D 
+                * 
+                * There should be no path
+                */
+            C.ExplicitNeighboursWithCosts.Remove(D);
+            D.ExplicitNeighboursWithCosts.Remove(C);
+            E.ExplicitNeighboursWithCosts.Remove(F);
+            F.ExplicitNeighboursWithCosts.Remove(E);
+
+            _sut.Solve();
+            Assert.IsNull(_sut.ReconstructPath());
+        }
+
+        [TestMethod]
+        public void TestNullPathIfNotYetRun() {
+            Assert.IsNull(_sut.ReconstructPath());
+        }
+    }
+}
