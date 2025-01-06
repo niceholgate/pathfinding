@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using NicUtils;
 
 namespace AStarNickNS {
-    public class GenericPlaceGraph : PlaceGraph<string> {
+    public partial class GenericPlaceGraph : PlaceGraph<string> {
 
-        private Dictionary<(string, string), double> _costs = new Dictionary<(string, string), double>();
+        private readonly Dictionary<PlacePair, double> _costs = new();
 
         public GenericPlaceGraph() {
 
@@ -14,31 +17,79 @@ namespace AStarNickNS {
             return new Dictionary<Place<string>, double>();
         }
 
-        public bool BuildFromTables(List<(string, string, double)> neighbourPairsCosts) {
-            for (int i = 0; i < neighbourPairsCosts.Count; i++) {
-                (string, string) neighbourPair = (neighbourPairsCosts[i].Item1, neighbourPairsCosts[i].Item2);
-                double cost = neighbourPairsCosts[i].Item3;
-                // cannot have a negative input cost
-                if (cost < 0.0) return false; 
-                // cannot add a cost if it has already been added 
-                if (GetCost(neighbourPair) > 0.0) { return false; }
-                _costs[neighbourPair] = cost;
-                Places[neighbourPair.Item1] = new GenericPlace(neighbourPair.Item1, this);
-                Places[neighbourPair.Item2] = new GenericPlace(neighbourPair.Item2, this);
-            }
-            return true;
-        }
-        
-        private double GetCost((string, string) neighbourPair) {
-            if (_costs.ContainsKey((neighbourPair.Item1, neighbourPair.Item2))) return _costs[(neighbourPair.Item1, neighbourPair.Item2)];
-            if (_costs.ContainsKey((neighbourPair.Item2, neighbourPair.Item1))) return _costs[(neighbourPair.Item2, neighbourPair.Item1)];
-            return -1.0;
+        public override void Build(string dataFile) {
+            List<string> mermaidLines = new TextLineReader(dataFile).GetData();
+            BuildFromMermaid(mermaidLines);
         }
 
-        public override void Build(string dataFile) {
-            List<string[]> nodes = new NicUtils.CSVReader(dataFile).GetData();
-            List<int[]> costs = NicUtils.CSVReader.ReadCSV(dataFile);
-            int a = 2;
+        private void BuildFromMermaid(List<string> mermaidLines) {
+            List<(PlacePair, double)> placePairsWithCosts = mermaidLines
+                // TODO: can probably replace this with a single regex pattern that grabs the 3 variables if it succeeds
+                .Where(str => {
+                    return ArrowRegex().Matches(str).Count == 1 && ColonRegex().Matches(str).Count == 1;
+                })
+                .Select(str => {
+                    string[] split1 = str.Split(ArrowRegex().ToString());
+                    string place1 = split1[0].Trim();
+                    string[] split2 = split1[1].Split(ColonRegex().ToString());
+                    string place2 = split2[0].Trim();
+                    double cost = Double.Parse(split2[1].Trim());
+                    return (new PlacePair(place1, place2), cost);
+                })
+                .ToList();
+
+            foreach ((PlacePair placePair, double cost) placePairWithCost in placePairsWithCosts) {
+                if (placePairWithCost.cost < 0.0) {
+                    throw new ArgumentException($"Cannot have a negative cost: {placePairWithCost.cost} for {placePairWithCost.placePair}");
+                }
+                if (GetCost(placePairWithCost.placePair) > 0.0) {
+                    throw new ArgumentException($"Cannot specify the same pair of places more than once: {placePairWithCost.placePair}");
+                }
+                _costs[placePairWithCost.placePair] = placePairWithCost.cost;
+                Places[placePairWithCost.placePair.Place1] = new GenericPlace(placePairWithCost.placePair.Place1, this);
+                Places[placePairWithCost.placePair.Place2] = new GenericPlace(placePairWithCost.placePair.Place2, this);
+            }
         }
+
+        // TODO: move this to PlaceGraph and test it for every implementation of thereof
+        public bool ValidateNotDisjoint() {
+            // Start at a random Place and traverse the full graph, creating a set of destinations reached.
+            // This should be equal to the set of Places added during the build.
+            return false;
+        }
+
+        public double GetCost(string place1, string place2) {
+            return GetCost(new PlacePair(place1, place2));
+        }
+
+        private double GetCost(PlacePair placePair) {
+            return _costs.GetValueOrDefault(placePair, -1.0);
+        }
+
+        // Ensure there is no duplication due to reversed labels by sorting pairs upon creation
+        private readonly struct PlacePair {
+
+            public string Place1 { get; init; }
+            public string Place2 { get; init; }
+
+            public PlacePair(string place1, string place2) {
+                if (place1 == null || place2 == null || place1 == place2) {
+                    throw new Exception("GenericPlace labels must be unique and non-null.");
+                } else if (place1.CompareTo(place2) > 0) {
+                    Place2 = place1;
+                    Place1 = place2;
+                } else {
+                    Place1 = place1;
+                    Place2 = place2;
+                }
+            }
+
+            public override string ToString() => $"({Place1}, {Place2})";
+        }
+
+        [GeneratedRegex("-->")]
+        private static partial Regex ArrowRegex();
+        [GeneratedRegex(":")]
+        private static partial Regex ColonRegex();
     }
 }

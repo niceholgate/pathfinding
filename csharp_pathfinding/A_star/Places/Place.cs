@@ -7,9 +7,9 @@ namespace AStarNickNS {
 
         public PlaceGraph<TCoord> Graph { get; }
 
-        protected Place(TCoord label, PlaceGraph<TCoord> graph) : this(label, graph, new Dictionary<IPlace, double>()) { }
+        protected Place(TCoord label, PlaceGraph<TCoord> graph) : this(label, graph, new Dictionary<Place<TCoord>, double>()) { }
 
-        protected Place(TCoord label, PlaceGraph<TCoord> graph, Dictionary<IPlace, double> explicitNeighboursWithCosts) {
+        protected Place(TCoord label, PlaceGraph<TCoord> graph, Dictionary<Place<TCoord>, double> explicitNeighboursWithCosts) {
             Label = label;
             Graph = graph;
             ExplicitNeighboursWithCosts = explicitNeighboursWithCosts;
@@ -17,25 +17,32 @@ namespace AStarNickNS {
 
         public TCoord Label { get; }
 
-        public double TerrainCost {
+        public double Cost {
             get {
                 return Graph.GetTerrainCost(Label);
             }
         }
 
-        public Dictionary<IPlace, double> ExplicitNeighboursWithCosts { get; }
+        // Not using this yet. Perhaps don't want to distinguish between "normal" and "hacky" neighbours at this level.
+        public Dictionary<Place<TCoord>, double> ExplicitNeighboursWithCosts { get; }
 
-        public Dictionary<IPlace, double> NeighboursWithCosts {
+        //public Dictionary<IPlace<TCoord>, double> NeighboursWithCosts {
+        //    get {
+        //        var merge = new Dictionary<IPlace<TCoord>, double>(ExplicitNeighboursWithCosts);
+        //        foreach (var item in Graph.GetImplicitNeighboursWithCosts(this)) {
+        //            merge[item.Key] = item.Value;
+        //        }
+        //        return merge;
+        //    }
+        //}
+
+        public ISet<IPlace<TCoord>> Neighbours {
             get {
-                var merge = new Dictionary<IPlace, double>(ExplicitNeighboursWithCosts);
-                foreach (var item in Graph.GetImplicitNeighboursWithCosts(this)) {
-                    merge[item.Key] = item.Value;
-                }
-                return merge;
+                return (ISet<IPlace<TCoord>>)Graph.GetImplicitNeighboursWithCosts(this).Keys.ToHashSet();
             }
         }
 
-        public abstract IEnumerable<IPlace<TCoord>> ImplicitNeighbours { get; }
+        public abstract ISet<IPlace<TCoord>> ImplicitNeighbours { get; }
 
         public abstract bool IsNeighbourImplicit(IPlace<TCoord> other);
 
@@ -43,7 +50,8 @@ namespace AStarNickNS {
             return IsNeighbourExplicit(other) || IsNeighbourImplicit(other);
         }
 
-        public abstract double GetCostToLeave(IPlace<TCoord> neighbour);
+        // Planning to just deal with "cost to enter" initially, then implement "transitions contexts" which inform cost functions
+        //public abstract double GetCostToLeave(IPlace<TCoord> neighbour);
 
         public abstract override string ToString();
 

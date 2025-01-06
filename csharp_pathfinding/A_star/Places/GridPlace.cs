@@ -11,13 +11,15 @@ namespace AStarNickNS {
 
         public GridPlace((int, int) label, GridPlaceGraph graph) : base(label, graph) { }
 
-        public GridPlace((int, int) label, GridPlaceGraph graph, Dictionary<IPlace, double> explicitNeighboursWithCosts)
+        public GridPlace((int, int) label, GridPlaceGraph graph, Dictionary<Place<(int, int)>, double> explicitNeighboursWithCosts)
             : base(label, graph, explicitNeighboursWithCosts) { }
 
         // Initially will treat all adjacent squares as neighbours, and check downstream if it's blocked, off the map, or diagonal moves not allowed etc.
-        public override List<IPlace<(int, int)>> ImplicitNeighbours {
+        // TODO: this should just make a call to the Graph which contains logic on neighbours and cost calculations - in which case this method can probably be defined on the base class
+        public override HashSet<IPlace<(int, int)>> ImplicitNeighbours {
             get {
-                List<IPlace<(int, int)>> gridNeighbours = new List<IPlace<(int, int)>>();
+                HashSet<IPlace<(int, int)>> gridNeighbours = new HashSet<IPlace<(int, int)>>();
+                // TODO: use ranges?
                 foreach (int i in new int[3] { -1, 0, 1 }) {
                     foreach (int j in new int[3] { -1, 0, 1 }) {
                         if (!(i == 0 && j == 0)) {
@@ -31,37 +33,38 @@ namespace AStarNickNS {
 
         public override bool IsNeighbourImplicit(IPlace<(int, int)> other) {
             if (other.Graph != this.Graph) return false;
-            return IsDiagonalNeighbour(other) || IsStraightNeighbour(other);
+            return IsDiagonalNeighbour((GridPlace)other) || IsStraightNeighbour((GridPlace)other);
         }
 
-        public override double GetCostToLeave(IPlace<(int, int)> other) {
-            if (IsNeighbourImplicit(other)) {
-                double distance = IsDiagonalNeighbour(other) ? SQRT2 : 1.0;
-                return other.TerrainCost * distance;
-            } else if (IsNeighbourExplicit(other)) {
-                return ExplicitNeighboursWithCosts[other];
-            } else {
-                // Return a nonsense cost if the place is not actually a neighbour
-                return -1.0;
-            }
-        }
+        //public override double GetCostToLeave(IPlace<(int, int)> other) {
+        //    if (IsNeighbourImplicit(other)) {
+        //        double distance = IsDiagonalNeighbour(other) ? SQRT2 : 1.0;
+        //        return other.TerrainCost * distance;
+        //    } else if (IsNeighbourExplicit(other)) {
+        //        return ExplicitNeighboursWithCosts[other];
+        //    } else {
+        //        // Return a nonsense cost if the place is not actually a neighbour
+        //        return -1.0;
+        //    }
+        //}
 
         public double GetHeuristicDist(IPlaceAStar<(int, int)> other, Distances2D.HeuristicType heuristicType) {
-            double[] thisLabelAsDoubles = { Label.Item1, Label.Item2 };
-            double[] otherLabelAsDoubles = { other.Label.Item1, other.Label.Item2 };
-            return Distances2D.GetDistance(thisLabelAsDoubles, otherLabelAsDoubles, heuristicType);
+            return Distances2D.GetDistance(((double, double))Label, ((double, double))other.Label, heuristicType);
+            //double[] thisLabelAsDoubles = { Label.Item1, Label.Item2 };
+            //double[] otherLabelAsDoubles = { other.Label.Item1, other.Label.Item2 };
+            //return Distances2D.GetDistance(thisLabelAsDoubles, otherLabelAsDoubles, heuristicType);
         }
 
         public override string ToString() => Label.ToString();
 
-        public int[] DeltaFrom(IPlace<(int, int)> other) { return new int[] { Label.Item1 - other.Label.Item1, Label.Item2 - other.Label.Item2 }; }
+        public int[] DeltaFrom(GridPlace other) { return new int[] { Label.Item1 - other.Label.Item1, Label.Item2 - other.Label.Item2 }; }
 
-        private bool IsDiagonalNeighbour(IPlace<(int, int)> other) {
+        private bool IsDiagonalNeighbour(GridPlace other) {
             int[] delta = DeltaFrom(other);
             return delta[0] * delta[0] + delta[1] * delta[1] == 2;
         }
 
-        private bool IsStraightNeighbour(IPlace<(int, int)> other) {
+        private bool IsStraightNeighbour(GridPlace other) {
             int[] delta = DeltaFrom(other);
             return Math.Abs(delta[0]) + Math.Abs(delta[1]) == 1;
         }

@@ -14,6 +14,7 @@
 namespace AStarNickNS {
     // Ability to get the terrain cost should depend on how smart the agent finding a path is. i.e. should they be planning according to player's slow debuffs?
     public abstract class PlaceGraph<TCoord> {
+        // The cost to enter the specified Place.
         private Dictionary<TCoord, double> _terrainCosts;
 
         public Dictionary<TCoord, Place<TCoord>> Places = new Dictionary<TCoord, Place<TCoord>>();

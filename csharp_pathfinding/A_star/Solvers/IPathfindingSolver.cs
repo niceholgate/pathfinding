@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
+﻿//using System.Collections.Generic;
 
-namespace AStarNickNS {
-    public interface IPathfindingSolver<out TPlace> where TPlace : IPlace {
-        public void Solve();
+//namespace AStarNickNS {
+//    public interface IPathfindingSolver<out TPlace> where TPlace : IPlace {
+//        public void Solve();
 
-        public IEnumerable<TPlace> ReconstructPath();
-    }
-}
+//        public IEnumerable<TPlace> ReconstructPath();
+//    }
+//}
