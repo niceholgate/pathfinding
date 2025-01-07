@@ -6,17 +6,13 @@ namespace AStarNickNS {
     /*
      * A place on a 2D grid
      */
-    public class GridPlace : Place<(int, int)>, IPlaceAStar<(int, int)> {
-        public static readonly double SQRT2 = Math.Sqrt(2.0);
+    public class GridPlace : Place<(int x, int y)>, IPlaceAStar<(int x, int y)> {
+        //public static readonly double SQRT2 = Math.Sqrt(2.0);
 
         public GridPlace((int, int) label, GridPlaceGraph graph) : base(label, graph) { }
 
-        public GridPlace((int, int) label, GridPlaceGraph graph, Dictionary<Place<(int, int)>, double> explicitNeighboursWithCosts)
-            : base(label, graph) { }
-
-        public bool IsNeighbour() {
-            return false;
-        }
+        //public GridPlace((int, int) label, GridPlaceGraph graph, Dictionary<Place<(int, int)>, double> explicitNeighboursWithCosts)
+        //    : base(label, graph) { }
 
         // Initially will treat all adjacent squares as neighbours, and check downstream if it's blocked, off the map, or diagonal moves not allowed etc.
         // TODO: this should just make a call to the Graph which contains logic on neighbours and cost calculations - in which case this method can probably be defined on the base class
@@ -52,25 +48,30 @@ namespace AStarNickNS {
         //    }
         //}
 
-        public double GetHeuristicDist(IPlaceAStar<(int, int)> other, Distances2D.HeuristicType heuristicType) {
+        public double HeuristicDistanceFrom(IPlaceAStar<(int x, int y)> other, Distances2D.HeuristicType heuristicType) {
             return Distances2D.GetDistance(((double, double))Label, ((double, double))other.Label, heuristicType);
             //double[] thisLabelAsDoubles = { Label.Item1, Label.Item2 };
             //double[] otherLabelAsDoubles = { other.Label.Item1, other.Label.Item2 };
             //return Distances2D.GetDistance(thisLabelAsDoubles, otherLabelAsDoubles, heuristicType);
         }
 
+        public (int, int) DeltaFrom(GridPlace other) { return (Label.x - other.Label.x, Label.y - other.Label.y ); }
+
+        public bool IsDiagonalTo(GridPlace other) {
+            (int x, int y) = DeltaFrom(other);
+            return x * x + y * y == 2;
+        }
+
+        public bool IsAdjacentTo(GridPlace other) {
+            (int x, int y) = DeltaFrom(other);
+            if (x == 0) {
+                if (y == -1 || y == 1) return true;
+            } else if (y == 0) {
+                if (x == -1 || x == 1) return true;
+            }
+            return false;
+        }
+
         public override string ToString() => Label.ToString();
-
-        public int[] DeltaFrom(GridPlace other) { return new int[] { Label.Item1 - other.Label.Item1, Label.Item2 - other.Label.Item2 }; }
-
-        private bool IsDiagonalNeighbour(GridPlace other) {
-            int[] delta = DeltaFrom(other);
-            return delta[0] * delta[0] + delta[1] * delta[1] == 2;
-        }
-
-        private bool IsStraightNeighbour(GridPlace other) {
-            int[] delta = DeltaFrom(other);
-            return Math.Abs(delta[0]) + Math.Abs(delta[1]) == 1;
-        }
     }
 }

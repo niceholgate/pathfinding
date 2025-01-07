@@ -10,15 +10,13 @@ namespace AStarNickNS {
 
         private readonly Dictionary<PlacePair, double> _costs = new();
 
-        public GenericPlaceGraph() {
-
-        }
+        public GenericPlaceGraph(string dataFile) : base(dataFile) {}
 
         //public override Dictionary<Place<string>, double> GetImplicitNeighboursWithCosts(Place<string> place) {
         //    return new Dictionary<Place<string>, double>();
         //}
 
-        public override void Build(string dataFile) {
+        protected override void Build(string dataFile) {
             List<string> mermaidLines = new TextLineReader(dataFile).GetData();
             BuildFromMermaid(mermaidLines);
         }

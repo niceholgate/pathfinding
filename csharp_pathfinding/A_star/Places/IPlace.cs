@@ -31,7 +31,7 @@ namespace AStarNickNS {
      */
     public interface IPlaceAStar<TCoord> : IPlace<TCoord> {
 
-        double GetHeuristicDist(IPlaceAStar<TCoord> other, Distances2D.HeuristicType heuristicType);
+        double HeuristicDistanceFrom(IPlaceAStar<TCoord> other, Distances2D.HeuristicType heuristicType);
 
     }
 }

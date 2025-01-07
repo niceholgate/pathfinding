@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NicUtils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace AStarTests {
 
@@ -11,44 +12,39 @@ namespace AStarTests {
 
         private GenericPlaceGraph sut;
 
-        [TestInitialize]
-        public void Initialize() {
-            sut = new();
-        }
+        //[TestInitialize]
+        //public void Initialize() {
+        //    sut = new();
+        //}
 
         [TestMethod]
         public void TestBuild_SucceedsForGoodGraph() {
-            sut.Build("../../../Resources/mermaid_networks/net1.mmd");
+            sut = new GenericPlaceGraph("../../../Resources/mermaid_networks/net1.mmd");
 
             Assert.IsTrue(sut.Places.ContainsKey("G"));
             Assert.IsFalse(sut.Places.ContainsKey("H"));
             Assert.IsTrue(TestHelpers.AllEqual(sut.GetCost("A", "B"), sut.GetCost("B", "A"), 6.0));
-            Assert.IsFalse(sut.IsDisjoint());
         }
 
         [TestMethod]
         public void TestBuild_ExceptionOnNegativeCost() {
             TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
-                () => sut.Build("../../../Resources/mermaid_networks/netwithnegative.mmd"),
+                () => new GenericPlaceGraph("../../../Resources/mermaid_networks/netwithnegative.mmd"),
                 "Cannot have a negative cost: -2 for (C, D)");
         }
 
         [TestMethod]
         public void TestBuild_ExceptionOnDuplicatePairs() {
             TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
-                () => sut.Build("../../../Resources/mermaid_networks/netwithduplicate.mmd"),
+                () => new GenericPlaceGraph("../../../Resources/mermaid_networks/netwithduplicate.mmd"),
                 "Cannot specify the same pair of places more than once: (A, B)");
         }
 
         [TestMethod]
         public void TestBuild_FailsDisjointGraph() {
-            GenericPlaceGraph sut = new();
-            sut.Build("../../../Resources/mermaid_networks/netdisjoint.mmd");
-
-            Assert.IsTrue(sut.Places.ContainsKey("K"));
-            Assert.IsFalse(sut.Places.ContainsKey("Z"));
-            Assert.IsTrue(TestHelpers.AllEqual(sut.GetCost("A", "B"), sut.GetCost("B", "A"), 6.0));
-            Assert.IsTrue(sut.IsDisjoint());
+            TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
+                () => new GenericPlaceGraph("../../../Resources/mermaid_networks/netdisjoint.mmd"),
+                "Cannot support a disjoint Graph!");
         }
 
         ///*              E -3- F -3- G 

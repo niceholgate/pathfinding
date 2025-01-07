@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
+using System.IO;
 
 /*
  * Decided there will be no multi-Place-type Graphs.
@@ -17,7 +17,12 @@ namespace AStarNickNS {
     // Ability to get the terrain cost should depend on how smart the agent finding a path is. i.e. should they be planning according to player's slow debuffs?
     public abstract class PlaceGraph<TCoord> {
 
-        protected PlaceGraph() { }
+        protected PlaceGraph(string dataFile) {
+            Build(dataFile);
+            if (IsDisjoint()) {
+                throw new IOException("Cannot support a disjoint Graph!");
+            }
+        }
 
         // The cost to enter the specified Place.
         private readonly Dictionary<TCoord, double> _terrainCosts;
@@ -33,10 +38,10 @@ namespace AStarNickNS {
         //public abstract Dictionary<Place<TCoord>, double> GetImplicitNeighboursWithCosts(Place<TCoord> place);
 
         // getexplicitneighbours ?
-        public abstract void Build(string dataFile);
+        protected abstract void Build(string dataFile);
 
         // TODO: move this to PlaceGraph and test it for every implementation thereof
-        public bool IsDisjoint() {
+        private bool IsDisjoint() {
             // Start at a random Place and traverse the full Graph, stopping when every Place has been visited.
             HashSet<TCoord> placeLabelsToVisit = Places.Keys.ToHashSet();
             Place<TCoord> start = Places.Values.First();
