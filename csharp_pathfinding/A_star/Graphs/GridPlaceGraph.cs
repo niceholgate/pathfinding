@@ -6,9 +6,9 @@ namespace AStarNickNS {
 
         }
 
-        public override Dictionary<Place<(int, int)>, double> GetImplicitNeighboursWithCosts(Place<(int, int)> place) {
-            return new Dictionary<Place<(int, int)>, double>();
-        }
+        //public override Dictionary<Place<(int, int)>, double> GetImplicitNeighboursWithCosts(Place<(int, int)> place) {
+        //    return new Dictionary<Place<(int, int)>, double>();
+        //}
 
         public override void Build(string dataFile) {
             throw new System.NotImplementedException();

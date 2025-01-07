@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 
 /*
  * Decided there will be no multi-Place-type Graphs.
@@ -14,10 +16,13 @@
 namespace AStarNickNS {
     // Ability to get the terrain cost should depend on how smart the agent finding a path is. i.e. should they be planning according to player's slow debuffs?
     public abstract class PlaceGraph<TCoord> {
-        // The cost to enter the specified Place.
-        private Dictionary<TCoord, double> _terrainCosts;
 
-        public Dictionary<TCoord, Place<TCoord>> Places = new Dictionary<TCoord, Place<TCoord>>();
+        protected PlaceGraph() { }
+
+        // The cost to enter the specified Place.
+        private readonly Dictionary<TCoord, double> _terrainCosts;
+
+        public Dictionary<TCoord, Place<TCoord>> Places = new();
 
         public bool IsBlocked(TCoord label) { return GetTerrainCost(label) < 0; }
 
@@ -25,9 +30,38 @@ namespace AStarNickNS {
 
         public void SetTerrainCost(TCoord label, double cost) { _terrainCosts[label] = cost; }
 
-        public abstract Dictionary<Place<TCoord>, double> GetImplicitNeighboursWithCosts(Place<TCoord> place);
+        //public abstract Dictionary<Place<TCoord>, double> GetImplicitNeighboursWithCosts(Place<TCoord> place);
 
         // getexplicitneighbours ?
         public abstract void Build(string dataFile);
+
+        // TODO: move this to PlaceGraph and test it for every implementation thereof
+        public bool IsDisjoint() {
+            // Start at a random Place and traverse the full Graph, stopping when every Place has been visited.
+            HashSet<TCoord> placeLabelsToVisit = Places.Keys.ToHashSet();
+            Place<TCoord> start = Places.Values.First();
+            Stack<Place<TCoord>> stack = new();
+            stack.Push(start);
+            HashSet<Place<TCoord>> neighboursHaveBeenAddedToStack = new();
+
+            while (stack.Count > 0) {
+                Place<TCoord> thisPlace = stack.Pop();
+                placeLabelsToVisit.Remove(thisPlace.Label);
+                if (placeLabelsToVisit.Count == 0) {
+                    return false;
+                }
+
+                if (!neighboursHaveBeenAddedToStack.Contains(thisPlace)) {
+                    foreach (Place<TCoord> neighbour in thisPlace.Neighbours) {
+                        stack.Push(neighbour);
+                    }
+                    neighboursHaveBeenAddedToStack.Add(thisPlace);
+                }
+
+            }
+
+            // If you cannot visit every Place, then the Graph is disjoint.
+            return true;
+        }
     }
 }

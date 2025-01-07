@@ -7,12 +7,11 @@ namespace AStarNickNS {
 
         public PlaceGraph<TCoord> Graph { get; }
 
-        protected Place(TCoord label, PlaceGraph<TCoord> graph) : this(label, graph, new Dictionary<Place<TCoord>, double>()) { }
-
-        protected Place(TCoord label, PlaceGraph<TCoord> graph, Dictionary<Place<TCoord>, double> explicitNeighboursWithCosts) {
+        protected Place(TCoord label, PlaceGraph<TCoord> graph) {
             Label = label;
             Graph = graph;
-            ExplicitNeighboursWithCosts = explicitNeighboursWithCosts;
+            Neighbours = new HashSet<IPlace<TCoord>>();
+            //ExplicitNeighboursWithCosts = explicitNeighboursWithCosts;
         }
 
         public TCoord Label { get; }
@@ -23,8 +22,8 @@ namespace AStarNickNS {
             }
         }
 
-        // Not using this yet. Perhaps don't want to distinguish between "normal" and "hacky" neighbours at this level.
-        public Dictionary<Place<TCoord>, double> ExplicitNeighboursWithCosts { get; }
+        //// Perhaps don't want to distinguish between "normal" and "hacky" neighbours at this level.
+        //public Dictionary<Place<TCoord>, double> ExplicitNeighboursWithCosts { get; }
 
         //public Dictionary<IPlace<TCoord>, double> NeighboursWithCosts {
         //    get {
@@ -37,24 +36,25 @@ namespace AStarNickNS {
         //}
 
         public ISet<IPlace<TCoord>> Neighbours {
-            get {
-                return (ISet<IPlace<TCoord>>)Graph.GetImplicitNeighboursWithCosts(this).Keys.ToHashSet();
-            }
+            //get {
+            //    return (ISet<IPlace<TCoord>>)Graph.GetImplicitNeighboursWithCosts(this).Keys.ToHashSet();
+            //}
+            get; init;
         }
 
-        public abstract ISet<IPlace<TCoord>> ImplicitNeighbours { get; }
+        //public abstract ISet<IPlace<TCoord>> ImplicitNeighbours { get; }
 
-        public abstract bool IsNeighbourImplicit(IPlace<TCoord> other);
+        //public abstract bool IsNeighbourImplicit(IPlace<TCoord> other);
 
-        public bool IsNeighbour(IPlace<TCoord> other) {
-            return IsNeighbourExplicit(other) || IsNeighbourImplicit(other);
-        }
+        //public bool IsNeighbour(IPlace<TCoord> other) {
+        //    return IsNeighbourExplicit(other) || IsNeighbourImplicit(other);
+        //}
 
         // Planning to just deal with "cost to enter" initially, then implement "transitions contexts" which inform cost functions
         //public abstract double GetCostToLeave(IPlace<TCoord> neighbour);
 
         public abstract override string ToString();
 
-        protected bool IsNeighbourExplicit(IPlace<TCoord> other) { return ExplicitNeighboursWithCosts.Keys.Contains(other); }
+        //protected bool IsNeighbourExplicit(IPlace<TCoord> other) { return ExplicitNeighboursWithCosts.Keys.Contains(other); }
     }
 }

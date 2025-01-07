@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using NicUtils;
 
@@ -13,9 +14,9 @@ namespace AStarNickNS {
 
         }
 
-        public override Dictionary<Place<string>, double> GetImplicitNeighboursWithCosts(Place<string> place) {
-            return new Dictionary<Place<string>, double>();
-        }
+        //public override Dictionary<Place<string>, double> GetImplicitNeighboursWithCosts(Place<string> place) {
+        //    return new Dictionary<Place<string>, double>();
+        //}
 
         public override void Build(string dataFile) {
             List<string> mermaidLines = new TextLineReader(dataFile).GetData();
@@ -46,16 +47,21 @@ namespace AStarNickNS {
                     throw new ArgumentException($"Cannot specify the same pair of places more than once: {placePairWithCost.placePair}");
                 }
                 _costs[placePairWithCost.placePair] = placePairWithCost.cost;
-                Places[placePairWithCost.placePair.Place1] = new GenericPlace(placePairWithCost.placePair.Place1, this);
-                Places[placePairWithCost.placePair.Place2] = new GenericPlace(placePairWithCost.placePair.Place2, this);
+                GenericPlace place1 = GetPlaceOrCreate(placePairWithCost.placePair.Place1);
+                GenericPlace place2 = GetPlaceOrCreate(placePairWithCost.placePair.Place2);
+
+                place1.Neighbours.Add(place2);
+                place2.Neighbours.Add(place1);
             }
         }
 
-        // TODO: move this to PlaceGraph and test it for every implementation of thereof
-        public bool ValidateNotDisjoint() {
-            // Start at a random Place and traverse the full graph, creating a set of destinations reached.
-            // This should be equal to the set of Places added during the build.
-            return false;
+        public GenericPlace GetPlaceOrCreate(string label) {
+            if (Places.ContainsKey(label)) {
+                return (GenericPlace)Places[label];
+            } else {
+                Places[label] = new GenericPlace(label, this);
+                return (GenericPlace)Places[label];
+            }
         }
 
         public double GetCost(string place1, string place2) {

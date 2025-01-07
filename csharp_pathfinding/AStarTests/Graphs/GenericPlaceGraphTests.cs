@@ -23,6 +23,7 @@ namespace AStarTests {
             Assert.IsTrue(sut.Places.ContainsKey("G"));
             Assert.IsFalse(sut.Places.ContainsKey("H"));
             Assert.IsTrue(TestHelpers.AllEqual(sut.GetCost("A", "B"), sut.GetCost("B", "A"), 6.0));
+            Assert.IsFalse(sut.IsDisjoint());
         }
 
         [TestMethod]
@@ -39,15 +40,16 @@ namespace AStarTests {
                 "Cannot specify the same pair of places more than once: (A, B)");
         }
 
-        //[TestMethod]
-        //public void TestBuild_FailsDisjointGraph() {
-        //    GenericPlaceGraph sut = new();
-        //    sut.Build("../../../Resources/mermaid_networks/net1.mmd");
+        [TestMethod]
+        public void TestBuild_FailsDisjointGraph() {
+            GenericPlaceGraph sut = new();
+            sut.Build("../../../Resources/mermaid_networks/netdisjoint.mmd");
 
-        //    Assert.IsTrue(sut.Places.ContainsKey("G"));
-        //    Assert.IsFalse(sut.Places.ContainsKey("H"));
-        //    Assert.IsTrue(TestHelpers.AllEqual(sut.GetCost("A", "B"), sut.GetCost("B", "A"), 6.0));
-        //}
+            Assert.IsTrue(sut.Places.ContainsKey("K"));
+            Assert.IsFalse(sut.Places.ContainsKey("Z"));
+            Assert.IsTrue(TestHelpers.AllEqual(sut.GetCost("A", "B"), sut.GetCost("B", "A"), 6.0));
+            Assert.IsTrue(sut.IsDisjoint());
+        }
 
         ///*              E -3- F -3- G 
         //*               |           |
