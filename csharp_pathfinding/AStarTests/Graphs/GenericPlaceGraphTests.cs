@@ -10,7 +10,7 @@ namespace AStarTests {
     [TestClass]
     public class GenericPlaceGraphTests {
 
-        private GenericPlaceGraph sut;
+        private GenericPlaceGraph sut = new();
 
         //[TestInitialize]
         //public void Initialize() {
@@ -19,31 +19,31 @@ namespace AStarTests {
 
         [TestMethod]
         public void TestBuild_SucceedsForGoodGraph() {
-            sut = new GenericPlaceGraph("../../../Resources/mermaid_networks/net1.mmd");
+            sut.Build("../../../Resources/mermaid_networks/net1.mmd");
 
-            Assert.IsTrue(sut.Places.ContainsKey("G"));
-            Assert.IsFalse(sut.Places.ContainsKey("H"));
+            Assert.Contains("G", sut.Places.Keys);
+            Assert.DoesNotContain("H", sut.Places.Keys);
             Assert.IsTrue(TestHelpers.AllEqual(sut.GetCost("A", "B"), sut.GetCost("B", "A"), 6.0));
         }
 
         [TestMethod]
         public void TestBuild_ExceptionOnNegativeCost() {
             TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
-                () => new GenericPlaceGraph("../../../Resources/mermaid_networks/netwithnegative.mmd"),
+                () => sut.Build("../../../Resources/mermaid_networks/netwithnegative.mmd"),
                 "Cannot have a negative cost: -2 for (C, D)");
         }
 
         [TestMethod]
         public void TestBuild_ExceptionOnDuplicatePairs() {
             TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
-                () => new GenericPlaceGraph("../../../Resources/mermaid_networks/netwithduplicate.mmd"),
+                () => sut.Build("../../../Resources/mermaid_networks/netwithduplicate.mmd"),
                 "Cannot specify the same pair of places more than once: (A, B)");
         }
 
         [TestMethod]
         public void TestBuild_FailsDisjointGraph() {
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => new GenericPlaceGraph("../../../Resources/mermaid_networks/netdisjoint.mmd"),
+                () => sut.Build("../../../Resources/mermaid_networks/netdisjoint.mmd"),
                 "Cannot support a disjoint Graph!");
         }
 

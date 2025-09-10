@@ -1,11 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace AStarNickNS {
     /*
     * A place with no defining geometry, just explicitly specified neighbours
     */
-    public class GenericPlace : Place<string> {
-        public GenericPlace(string label, GenericPlaceGraph graph) : base(label, graph) { }
+    public class GenericPlace : IPlace<string>
+    {
+        
+        public string Label { get; init; }
+        public ISet<IPlace<string>> Neighbours { get; }
+        public double Cost { get; set; }
+
+        private GenericPlaceGraph _graph;
+        
+        public GenericPlace(string label, GenericPlaceGraph graph)
+        {
+            Label = label;
+            Neighbours = new HashSet<IPlace<string>>();
+            _graph = graph;
+        }
 
         //public GenericPlace(string label, GenericPlaceGraph graph, Dictionary<Place<string>, double> explicitNeighboursWithCosts)
         //    : base(label, graph) { }
@@ -23,5 +37,6 @@ namespace AStarNickNS {
         //}
 
         public override string ToString() => Label;
+        
     }
 }
