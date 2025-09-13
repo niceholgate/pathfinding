@@ -22,16 +22,24 @@ namespace AStarNickNS {
 
         public Dictionary<TCoord, IPlace<TCoord>> Places = new();
 
-        public bool IsBlocked(TCoord label) { return GetTerrainCost(label) < 0; }
+        public bool IsBlocked(TCoord from, TCoord to) { return CostToLeave(from, to) < 0; }
 
         public double GetTerrainCost(TCoord label) { return _terrainCosts[label]; }
-
+        //
         public void SetTerrainCost(TCoord label, double cost) { _terrainCosts[label] = cost; }
 
+        public abstract double CostToLeave(TCoord from, TCoord to);
+        
         //public abstract Dictionary<Place<TCoord>, double> GetImplicitNeighboursWithCosts(Place<TCoord> place);
 
         // getexplicitneighbours ?
-        public abstract void Build(string dataFile);
+        public void Build(string dataFile)
+        {
+            BuildCore(dataFile);
+            CheckDisjoint();
+        }
+        
+        protected virtual void BuildCore(string dataFile) { }
 
         // TODO: move this to PlaceGraph and test it for every implementation thereof
         protected void CheckDisjoint() {

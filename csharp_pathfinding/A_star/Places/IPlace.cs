@@ -21,7 +21,7 @@ namespace AStarNickNS {
         // - neighbour's terrain
         // - agent's speed for this transition (e.g. can it fly? can it use a portal? can it fit in small gaps?)
         // TODO: So the cost could become a delegate that turns a "transition context" into a double.
-        double Cost { get; set; }
+        double CostToLeave(IPlace<TCoord> to, PlaceGraph<TCoord> graph);
 
     }
     

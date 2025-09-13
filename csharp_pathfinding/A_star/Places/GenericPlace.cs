@@ -10,15 +10,13 @@ namespace AStarNickNS {
         
         public string Label { get; init; }
         public ISet<IPlace<string>> Neighbours { get; }
-        public double Cost { get; set; }
 
-        private GenericPlaceGraph _graph;
+        public double Cost { get; set; }
         
         public GenericPlace(string label, GenericPlaceGraph graph)
         {
             Label = label;
             Neighbours = new HashSet<IPlace<string>>();
-            _graph = graph;
         }
 
         //public GenericPlace(string label, GenericPlaceGraph graph, Dictionary<Place<string>, double> explicitNeighboursWithCosts)
@@ -38,5 +36,9 @@ namespace AStarNickNS {
 
         public override string ToString() => Label;
         
+        public double CostToLeave(IPlace<string> to, PlaceGraph<string> graph)
+        {
+            return graph.CostToLeave(Label, to.Label);
+        }
     }
 }

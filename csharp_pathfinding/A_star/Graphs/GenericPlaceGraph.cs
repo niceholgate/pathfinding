@@ -14,11 +14,9 @@ namespace AStarNickNS {
         //    return new Dictionary<Place<string>, double>();
         //}
 
-        public override void Build(string dataFile) {
+        protected override void BuildCore(string dataFile) {
             List<string> mermaidLines = new TextLineReader(dataFile).GetData();
             BuildFromMermaid(mermaidLines);
-            // TODO: how to have this happen for any graph after building?
-            CheckDisjoint();
         }
 
         private void BuildFromMermaid(List<string> mermaidLines) {
@@ -49,15 +47,15 @@ namespace AStarNickNS {
             }
         }
 
-        public GenericPlace GetPlaceOrCreate(string label) {
-            if (Places.ContainsKey(label)) {
-                return (GenericPlace)Places[label];
+        private GenericPlace GetPlaceOrCreate(string label) {
+            if (Places.TryGetValue(label, out var place)) {
+                return (GenericPlace)place;
             }
             Places[label] = new GenericPlace(label, this);
             return (GenericPlace)Places[label];
         }
 
-        public double GetCost(string place1, string place2) {
+        public override double CostToLeave(string place1, string place2) {
             return GetCost(new PlacePair(place1, place2));
         }
 
