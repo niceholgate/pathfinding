@@ -51,7 +51,7 @@ namespace AStarNickNS {
             if (Places.TryGetValue(label, out var place)) {
                 return (GenericPlace)place;
             }
-            Places[label] = new GenericPlace(label, this);
+            Places[label] = new GenericPlace(label);
             return (GenericPlace)Places[label];
         }
 

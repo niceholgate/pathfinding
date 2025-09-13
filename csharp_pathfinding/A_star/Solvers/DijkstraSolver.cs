@@ -1,5 +1,6 @@
 ﻿using FibonacciHeap;
 using System.Collections.Generic;
+using System.IO;
 
 namespace AStarNickNS {
     // Dijkstra is a generic solver for any coordinate type
@@ -14,13 +15,24 @@ namespace AStarNickNS {
         private bool _hasRun = false;
         private bool _foundPath = false;
 
-        public DijkstraSolver(TPlace start, TPlace target) {
+        public DijkstraSolver(TPlace start, TPlace target, PlaceGraph<TCoord> graph) {
             _start = start;
             _target = target;
-            
+            _graph = graph;
         }
 
-        public void Solve() {
+        public void Solve()
+        {
+            _graph.CheckDisjoint();
+            if (!_graph.Places.ContainsKey(_start.Label))
+            {
+                throw new IOException($"The start place (\"{_start.Label}\") is not on the graph!");
+            }
+            if (!_graph.Places.ContainsKey(_target.Label))
+            {
+                throw new IOException($"The target place (\"{_target.Label}\") is not on the graph!");
+            }
+            
             _hasRun = true;
             FibonacciHeap<TPlace, double> frontier = new(0);
             frontier.Insert(new FibonacciHeapNode<TPlace, double>(_start, 0));
@@ -34,13 +46,16 @@ namespace AStarNickNS {
                     break;
                 }
                 foreach (TPlace neighbour in _current.Neighbours) {
-                    _newCostForNeighbour = _costSoFar[_current] + _current.CostToLeave(neighbour, _graph);
-                    if (!_costSoFar.TryGetValue(neighbour, out double neighbourCostSoFar)
-                        || _newCostForNeighbour < neighbourCostSoFar)
+                    if (!_graph.IsBlocked(_current.Label, neighbour.Label))
                     {
-                        _costSoFar[neighbour] = _newCostForNeighbour;
-                        frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour, _newCostForNeighbour));
-                        _cameFrom[neighbour] = _current;
+                        _newCostForNeighbour = _costSoFar[_current] + _current.CostToLeave(neighbour, _graph);
+                        if (!_costSoFar.TryGetValue(neighbour, out double neighbourCostSoFar)
+                            || _newCostForNeighbour < neighbourCostSoFar)
+                        {
+                            _costSoFar[neighbour] = _newCostForNeighbour;
+                            frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour, _newCostForNeighbour));
+                            _cameFrom[neighbour] = _current;
+                        }
                     }
                 }
             }

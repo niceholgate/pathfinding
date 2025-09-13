@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using AStarNickNS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NicUtils;
 
 namespace AStarTests {
     [TestClass]
-    public class GenericPlaceDijkstra {
+    public class DijkstraSolverTests {
 
         // private static GenericPlaceGraph _genericPlaceGraph = new();
         // private readonly GenericPlace A = new("A", _genericPlaceGraph);
@@ -75,12 +78,81 @@ namespace AStarTests {
         //     _sut.Solve();
         //     Assert.IsNull(_sut.ReconstructPath());
         // }
-        //
-        // [TestMethod]
-        // public void TestNullPathIfNotYetRun() {
-        //     Assert.IsNull(_sut.ReconstructPath());
-        // }
+
         
         private DijkstraSolver<GenericPlace, string> _sut;
+        
+        
+        [TestMethod]
+        public void TestFindsShortestPath()
+        {
+            GenericPlaceGraph graph = new GenericPlaceGraph();
+            graph.Build("../../../Resources/mermaid_networks/net1.mmd");
+            _sut = new DijkstraSolver<GenericPlace, string>((GenericPlace)graph.Places["A"], (GenericPlace)graph.Places["G"], graph);
+
+            List<IPlace<string>> expected = new List<IPlace<string>>
+            {
+                graph.Places["A"],
+                graph.Places["C"],
+                graph.Places["B"],
+                graph.Places["E"],
+                graph.Places["F"],
+                graph.Places["G"],
+            };
+            
+            _sut.Solve();
+            List<GenericPlace> actual = _sut.ReconstructPath().ToList();
+            
+            CollectionAssert.AreEqual(expected, actual);
+        }
+        
+        [TestMethod]
+        public void TestNullPathIfNotYetRun()
+        {
+            GenericPlaceGraph graph = new GenericPlaceGraph();
+            graph.Build("../../../Resources/mermaid_networks/net1.mmd");
+            _sut = new DijkstraSolver<GenericPlace, string>((GenericPlace)graph.Places["A"], (GenericPlace)graph.Places["G"], graph);
+            Assert.IsNull(_sut.ReconstructPath());
+        }
+        
+        [TestMethod]
+        public void TestExceptionIfGraphDisjoint()
+        {
+            GenericPlaceGraph graph = new GenericPlaceGraph();
+            GenericPlace A = new GenericPlace("A");
+            GenericPlace B = new GenericPlace("B");
+            graph.Places.Add("A", A);
+            graph.Places.Add("B", B);
+            _sut = new DijkstraSolver<GenericPlace, string>(A, B, graph);
+            TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
+                () => _sut.Solve(),
+                "Cannot support a disjoint Graph!");
+        }
+        
+        [TestMethod]
+        public void TestExceptionIfStartNotOnGraph()
+        {
+            GenericPlaceGraph graph = new GenericPlaceGraph();
+            graph.Build("../../../Resources/mermaid_networks/net1.mmd");
+            GenericPlace notOnGraph = new GenericPlace("H");
+            _sut = new DijkstraSolver<GenericPlace, string>(notOnGraph, (GenericPlace)graph.Places["G"], graph);
+            TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
+                () => _sut.Solve(),
+                "The start place (\"H\") is not on the graph!");
+            Assert.IsNull(_sut.ReconstructPath());
+        }
+        
+        [TestMethod]
+        public void TestExceptionIfTargetNotOnGraph()
+        {
+            GenericPlaceGraph graph = new GenericPlaceGraph();
+            graph.Build("../../../Resources/mermaid_networks/net1.mmd");
+            GenericPlace notOnGraph = new GenericPlace("H");
+            _sut = new DijkstraSolver<GenericPlace, string>((GenericPlace)graph.Places["A"], notOnGraph, graph);
+            TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
+                () => _sut.Solve(),
+                $"The target place (\"H\") is not on the graph!");
+            Assert.IsNull(_sut.ReconstructPath());
+        }
     }
 }

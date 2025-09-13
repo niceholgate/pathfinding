@@ -13,7 +13,7 @@ namespace AStarNickNS {
 
         public double Cost { get; set; }
         
-        public GenericPlace(string label, GenericPlaceGraph graph)
+        public GenericPlace(string label)
         {
             Label = label;
             Neighbours = new HashSet<IPlace<string>>();

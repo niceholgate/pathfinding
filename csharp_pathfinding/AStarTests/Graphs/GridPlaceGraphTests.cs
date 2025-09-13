@@ -49,6 +49,13 @@ namespace AStarTests {
             HashSet<(int, int)> expectedNeighbourLabels11 = new HashSet<(int, int)> { place11.E, place11.SE, place11.S, place11.SW, place11.W, place11.NW, place11.N, place11.NE };
             HashSet<(int, int)> neighbourLabels11 = place11.Neighbours.Select(x => x.Label).ToHashSet();
             Assert.IsTrue(expectedNeighbourLabels11.SetEquals(neighbourLabels11));
+            
+            // Check inaccessible Place
+            foreach (var placeLabel in sut.Places.Keys)
+            {
+                Assert.IsTrue(sut.IsBlocked(placeLabel, (1, 1)));
+            }
+            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1)));
         }
 
         [TestMethod]
@@ -82,6 +89,13 @@ namespace AStarTests {
             HashSet<(int, int)> expectedNeighbourLabels11 = new HashSet<(int, int)> { place11.E, place11.S, place11.W, place11.N };
             HashSet<(int, int)> neighbourLabels11 = place11.Neighbours.Select(x => x.Label).ToHashSet();
             Assert.IsTrue(expectedNeighbourLabels11.SetEquals(neighbourLabels11));
+            
+            // Check inaccessible Place
+            foreach (var placeLabel in sut.Places.Keys)
+            {
+                Assert.IsTrue(sut.IsBlocked(placeLabel, (1, 1)));
+            }
+            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1)));
         }
 
         [TestMethod]

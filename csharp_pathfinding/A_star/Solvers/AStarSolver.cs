@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using FibonacciHeap;
 using NicUtils;
 
@@ -16,12 +17,23 @@ namespace AStarNickNS {
         private bool _hasRun = false;
         private bool _foundPath = false;
 
-        public AStarSolver(TPlace start, TPlace target) {
+        public AStarSolver(TPlace start, TPlace target, PlaceGraph<TCoord> graph) {
             _start = start;
             _target = target;
+            _graph = graph;
         }
 
         public void Solve() {
+            _graph.CheckDisjoint();
+            if (!_graph.Places.ContainsKey(_start.Label))
+            {
+                throw new IOException($"The start place (\"{_start.Label}\") is not on the graph!");
+            }
+            if (!_graph.Places.ContainsKey(_target.Label))
+            {
+                throw new IOException($"The target place (\"{_target.Label}\") is not on the graph!");
+            }
+            
             _hasRun = true;
             FibonacciHeap<TPlace, double> frontier = new(0);
             frontier.Insert(new FibonacciHeapNode<TPlace, double>(_start, 0));
@@ -35,12 +47,15 @@ namespace AStarNickNS {
                     break;
                 }
                 foreach (TPlace neighbour in _current.Neighbours) {
-                    _newCostForNeighbour = _costSoFar[_current] + _current.CostToLeave(neighbour, _graph);
-                    if (!_costSoFar.TryGetValue(neighbour, out double neighbourCostSoFar)
-                        || _newCostForNeighbour < neighbourCostSoFar) {
-                        _costSoFar[neighbour] = _newCostForNeighbour + neighbour.DistanceFrom(_target, Distances2D.HeuristicType.Euclidian);
-                        frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour, _newCostForNeighbour));
-                        _cameFrom[neighbour] = _current;
+                    if (!_graph.IsBlocked(_current.Label, neighbour.Label))
+                    {
+                        _newCostForNeighbour = _costSoFar[_current] + _current.CostToLeave(neighbour, _graph);
+                        if (!_costSoFar.TryGetValue(neighbour, out double neighbourCostSoFar)
+                            || _newCostForNeighbour < neighbourCostSoFar) {
+                            _costSoFar[neighbour] = _newCostForNeighbour + neighbour.DistanceFrom(_target, Distances2D.HeuristicType.Euclidian);
+                            frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour, _newCostForNeighbour));
+                            _cameFrom[neighbour] = _current;
+                        }
                     }
                 }
             }

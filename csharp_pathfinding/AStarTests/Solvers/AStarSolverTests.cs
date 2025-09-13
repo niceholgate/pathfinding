@@ -1,0 +1,104 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using AStarNickNS;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NicUtils;
+
+namespace AStarTests {
+    [TestClass]
+    public class AStarSolverTests {
+
+        private AStarSolver<GridPlace, (int, int)> _sut;
+        
+        // public static IEnumerable<object[]> GetTestData()
+        // {
+        //     yield return new object[] { 2, 3, 6 };
+        //     yield return new object[] { -1, 5, -5 };
+        //     yield return new object[] { 0, 99, 0 };
+        // }
+        
+        [TestMethod]
+        // [DataTestMethod]
+        // [DynamicData(nameof(GetTestData), DynamicDataSourceType.Method)]
+        public void TestFindsShortestPathWithDiagonals()
+        {
+            GridPlaceGraph graph = new(true);
+            graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
+            _sut = new AStarSolver<GridPlace, (int, int)>((GridPlace)graph.Places[(0, 0)], (GridPlace)graph.Places[(9, 9)], graph);
+
+            int expectedPathLength = 49;
+            
+            _sut.Solve();
+            List<GridPlace> actual = _sut.ReconstructPath().ToList();
+            
+            Assert.AreEqual(expectedPathLength, actual.Count);
+        }
+        
+        [TestMethod]
+        public void TestFindsShortestPathWithoutDiagonals()
+        {
+            GridPlaceGraph graph = new(false);
+            graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
+            _sut = new AStarSolver<GridPlace, (int, int)>((GridPlace)graph.Places[(0, 0)], (GridPlace)graph.Places[(9, 9)], graph);
+
+            int expectedPathLength = 59;
+            
+            _sut.Solve();
+            List<GridPlace> actual = _sut.ReconstructPath().ToList();
+            
+            Assert.AreEqual(expectedPathLength, actual.Count);
+        }
+        
+        [TestMethod]
+        public void TestNullPathIfNotYetRun()
+        {
+            GridPlaceGraph graph = new GridPlaceGraph(false);
+            graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
+            _sut = new AStarSolver<GridPlace, (int, int)>((GridPlace)graph.Places[(0, 0)], (GridPlace)graph.Places[(9, 9)], graph);
+            Assert.IsNull(_sut.ReconstructPath());
+        }
+        
+        [TestMethod]
+        public void TestExceptionIfGraphDisjoint()
+        {
+            GridPlaceGraph graph = new GridPlaceGraph(false);
+            GridPlace A = new GridPlace((0, 0));
+            GridPlace B = new GridPlace((0, 2));
+            graph.Places.Add((0, 0), A);
+            graph.Places.Add((0, 2), B);
+            _sut = new AStarSolver<GridPlace, (int, int)>(A, B, graph);
+            TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
+                () => _sut.Solve(),
+                "Cannot support a disjoint Graph!");
+        }
+        
+        [TestMethod]
+        public void TestExceptionIfStartNotOnGraph()
+        {
+            GridPlaceGraph graph = new GridPlaceGraph(false);
+            graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
+            GridPlace notOnGraph = new GridPlace((200, 200));
+            _sut = new AStarSolver<GridPlace, (int, int)>(notOnGraph, (GridPlace)graph.Places[(9, 9)], graph);
+            TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
+                () => _sut.Solve(),
+                "The start place (\"(200, 200)\") is not on the graph!");
+            Assert.IsNull(_sut.ReconstructPath());
+        }
+        
+        [TestMethod]
+        public void TestExceptionIfTargetNotOnGraph()
+        {
+            GridPlaceGraph graph = new GridPlaceGraph(false);
+            graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
+            GridPlace notOnGraph = new GridPlace((200, 200));
+            _sut = new AStarSolver<GridPlace, (int, int)>((GridPlace)graph.Places[(0, 0)], notOnGraph, graph);
+            TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
+                () => _sut.Solve(),
+                $"The target place (\"(200, 200)\") is not on the graph!");
+            Assert.IsNull(_sut.ReconstructPath());
+        }
+    }
+}

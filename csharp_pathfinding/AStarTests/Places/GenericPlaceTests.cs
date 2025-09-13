@@ -7,10 +7,9 @@ namespace AStarTests {
     
     [TestClass]
     public class GenericPlaceTests {
-        private static GenericPlaceGraph _genericPlaceGraph1 = new();
-        GenericPlace gpA = new("A", _genericPlaceGraph1);
-        GenericPlace gpB = new("B", _genericPlaceGraph1);
-        GenericPlace gpC = new("C", _genericPlaceGraph1);
+        GenericPlace gpA = new("A");
+        GenericPlace gpB = new("B");
+        GenericPlace gpC = new("C");
         //
         // [TestMethod]
         // public void TestIsNeighbour() {

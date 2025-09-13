@@ -7,7 +7,7 @@ namespace AStarTests {
 
     [TestClass]
     public class GridPlaceTests {
-        private static readonly GridPlaceGraph mockGridPlaceGraph = Substitute.For<GridPlaceGraph>(true);
+        // private static readonly GridPlaceGraph mockGridPlaceGraph = Substitute.For<GridPlaceGraph>(true);
         private static readonly GridPlace gridPlaceBase1 = new((-3, 5));
         private static readonly GridPlace gridPlaceDiag1 = new((-4, 6));
         private static readonly GridPlace gridPlaceStra1 = new((-3, 6));

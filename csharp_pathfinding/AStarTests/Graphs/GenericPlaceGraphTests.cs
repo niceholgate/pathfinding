@@ -41,7 +41,7 @@ namespace AStarTests {
         }
 
         [TestMethod]
-        public void TestBuild_FailsDisjointGraph() {
+        public void TestBuild_ExceptionOnDisjointGraph() {
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
                 () => sut.Build("../../../Resources/mermaid_networks/netdisjoint.mmd"),
                 "Cannot support a disjoint Graph!");

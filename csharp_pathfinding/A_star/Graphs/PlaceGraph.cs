@@ -22,7 +22,7 @@ namespace AStarNickNS {
 
         public Dictionary<TCoord, IPlace<TCoord>> Places = new();
 
-        public bool IsBlocked(TCoord from, TCoord to) { return CostToLeave(from, to) < 0; }
+        public bool IsBlocked(TCoord from, TCoord to) { return CostToLeave(from, to) <= 0; }
 
         public double GetTerrainCost(TCoord label) { return _terrainCosts[label]; }
         //
@@ -42,7 +42,7 @@ namespace AStarNickNS {
         protected virtual void BuildCore(string dataFile) { }
 
         // TODO: move this to PlaceGraph and test it for every implementation thereof
-        protected void CheckDisjoint() {
+        public void CheckDisjoint() {
             // Start at a random Place and traverse the full Graph, stopping when every Place has been visited.
             HashSet<TCoord> placeLabelsToVisit = Places.Keys.ToHashSet();
             if (placeLabelsToVisit.Count == 0) return;
