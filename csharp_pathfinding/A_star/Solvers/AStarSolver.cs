@@ -10,8 +10,6 @@ namespace AStarNickNS
     public class AStarSolver<TPlace, TCoord> : IPathfindingSolver<TPlace, TCoord>
         where TPlace : class, IPlaceAStar<TCoord>
     {
-        private readonly TPlace _start;
-        private readonly TPlace _target;
         private readonly PlaceGraph<TCoord> _graph;
         private TPlace _current;
         private double _newCostForNeighbour;
@@ -20,38 +18,36 @@ namespace AStarNickNS
         private bool _hasRun = false;
         private bool _foundPath = false;
 
-        public AStarSolver(TPlace start, TPlace target, PlaceGraph<TCoord> graph)
+        public AStarSolver(PlaceGraph<TCoord> graph)
         {
-            _start = start;
-            _target = target;
             _graph = graph;
         }
 
-        public void Solve()
+        public void Solve(IPlace<TCoord> start, IPlace<TCoord> target)
         {
             _graph.CheckDisjoint();
-            if (!_graph.Places.ContainsKey(_start.Label))
+            if (!_graph.Places.ContainsKey(start.Label))
             {
-                throw new IOException($"The start place (\"{_start.Label}\") is not on the graph!");
+                throw new IOException($"The start place ({start.Label}) is not on the graph!");
             }
 
-            if (!_graph.Places.ContainsKey(_target.Label))
+            if (!_graph.Places.ContainsKey(target.Label))
             {
-                throw new IOException($"The target place (\"{_target.Label}\") is not on the graph!");
+                throw new IOException($"The target place (\"{target.Label}\") is not on the graph!");
             }
 
             _hasRun = true;
             FibonacciHeap<TPlace, double> frontier = new(0);
-            frontier.Insert(new FibonacciHeapNode<TPlace, double>(_start, 0));
+            frontier.Insert(new FibonacciHeapNode<TPlace, double>((TPlace)start, 0));
             HashSet<TPlace> visited = new();
-            _cameFrom = new Dictionary<TPlace, TPlace> { { _start, null } };
-            _costSoFar = new Dictionary<TPlace, double> { { _start, 0.0 } };
+            _cameFrom = new Dictionary<TPlace, TPlace> { { (TPlace)start, null } };
+            _costSoFar = new Dictionary<TPlace, double> { { (TPlace)start, 0.0 } };
 
             while (!frontier.IsEmpty())
             {
                 _current = frontier.RemoveMin().Data;
                 visited.Add(_current);
-                if (_current.Equals(_target))
+                if (_current.Equals(target))
                 {
                     _foundPath = true;
                     break;
@@ -68,7 +64,7 @@ namespace AStarNickNS
                             _costSoFar[neighbour] = _newCostForNeighbour;
                             frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour,
                                 _newCostForNeighbour +
-                                neighbour.DistanceFrom(_target, Distances2D.HeuristicType.Euclidian)));
+                                neighbour.DistanceFrom((TPlace)target, Distances2D.HeuristicType.Euclidian)));
                             _cameFrom[neighbour] = _current;
                         }
                     }
@@ -76,19 +72,19 @@ namespace AStarNickNS
             }
         }
 
-        public IEnumerable<TPlace> ReconstructPath()
+        public IEnumerable<TPlace> ReconstructPath(IPlace<TCoord> start, IPlace<TCoord> target)
         {
             if (_hasRun && _foundPath)
             {
-                _current = _target;
+                _current = (TPlace)target;
                 List<TPlace> path = new List<TPlace>();
-                while (!_current.Equals(_start))
+                while (!_current.Equals(start))
                 {
                     path.Add(_current);
                     _current = _cameFrom[_current];
                 }
 
-                path.Add(_start);
+                path.Add((TPlace)start);
                 path.Reverse();
                 return path;
             }

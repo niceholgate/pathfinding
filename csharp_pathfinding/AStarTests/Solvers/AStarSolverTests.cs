@@ -37,11 +37,12 @@ namespace AStarTests
         {
             GridPlaceGraph graph = new(diagonalNeighbours);
             graph.Build($"../../../Resources/excel_mazes/{mazeFile}");
-            _sut = new AStarSolver<GridPlace, (int, int)>((GridPlace)graph.Places[start],
-                (GridPlace)graph.Places[target], graph);
+            _sut = new AStarSolver<GridPlace, (int, int)>(graph);
+            var startPlace = (GridPlace)graph.Places[start];
+            var targetPlace = (GridPlace)graph.Places[target];
 
-            _sut.Solve();
-            List<GridPlace> actual = _sut.ReconstructPath().ToList();
+            _sut.Solve(startPlace, targetPlace);
+            List<GridPlace> actual = _sut.ReconstructPath(startPlace, targetPlace).ToList();
 
             Assert.AreEqual(expectedPathLength, actual.Count);
         }
@@ -51,9 +52,10 @@ namespace AStarTests
         {
             GridPlaceGraph graph = new GridPlaceGraph(false);
             graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
-            _sut = new AStarSolver<GridPlace, (int, int)>((GridPlace)graph.Places[(0, 0)],
-                (GridPlace)graph.Places[(9, 9)], graph);
-            Assert.IsNull(_sut.ReconstructPath());
+            _sut = new AStarSolver<GridPlace, (int, int)>(graph);
+            var startPlace = (GridPlace)graph.Places[(0, 0)];
+            var targetPlace = (GridPlace)graph.Places[(9, 9)];
+            Assert.IsNull(_sut.ReconstructPath(startPlace, targetPlace));
         }
 
         [TestMethod]
@@ -64,9 +66,9 @@ namespace AStarTests
             GridPlace B = new GridPlace((0, 2));
             graph.Places.Add((0, 0), A);
             graph.Places.Add((0, 2), B);
-            _sut = new AStarSolver<GridPlace, (int, int)>(A, B, graph);
+            _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.Solve(),
+                () => _sut.Solve(A, B),
                 "Cannot support a disjoint Graph!");
         }
 
@@ -76,11 +78,12 @@ namespace AStarTests
             GridPlaceGraph graph = new GridPlaceGraph(false);
             graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
             GridPlace notOnGraph = new GridPlace((200, 200));
-            _sut = new AStarSolver<GridPlace, (int, int)>(notOnGraph, (GridPlace)graph.Places[(9, 9)], graph);
+            var targetPlace = (GridPlace)graph.Places[(9, 9)];
+            _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.Solve(),
-                "The start place (\"(200, 200)\") is not on the graph!");
-            Assert.IsNull(_sut.ReconstructPath());
+                () => _sut.Solve(notOnGraph, targetPlace),
+                "The start place ((200, 200)) is not on the graph!");
+            Assert.IsNull(_sut.ReconstructPath(notOnGraph, targetPlace));
         }
 
         [TestMethod]
@@ -89,11 +92,12 @@ namespace AStarTests
             GridPlaceGraph graph = new GridPlaceGraph(false);
             graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
             GridPlace notOnGraph = new GridPlace((200, 200));
-            _sut = new AStarSolver<GridPlace, (int, int)>((GridPlace)graph.Places[(0, 0)], notOnGraph, graph);
+            var startPlace = (GridPlace)graph.Places[(0, 0)];
+            _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.Solve(),
+                () => _sut.Solve(startPlace, notOnGraph),
                 $"The target place (\"(200, 200)\") is not on the graph!");
-            Assert.IsNull(_sut.ReconstructPath());
+            Assert.IsNull(_sut.ReconstructPath(startPlace, notOnGraph));
         }
     }
 }
