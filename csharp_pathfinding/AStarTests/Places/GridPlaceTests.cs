@@ -3,10 +3,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using System;
 
-namespace AStarTests {
-
+namespace AStarTests
+{
     [TestClass]
-    public class GridPlaceTests {
+    public class GridPlaceTests
+    {
         // private static readonly GridPlaceGraph mockGridPlaceGraph = Substitute.For<GridPlaceGraph>(true);
         private static readonly GridPlace gridPlaceBase1 = new((-3, 5));
         private static readonly GridPlace gridPlaceDiag1 = new((-4, 6));
@@ -14,32 +15,38 @@ namespace AStarTests {
         private static readonly GridPlace gridPlaceDistant1 = new((-60, 60));
 
         [TestMethod]
-        public void TestDistanceFrom() {
+        public void TestDistanceFrom()
+        {
             double expectedDistance = Math.Sqrt(Math.Pow((-60) - (-3), 2.0) + Math.Pow((60 - 5), 2.0));
-            double result = gridPlaceBase1.DistanceFrom(gridPlaceDistant1, NicUtils.Distances2D.HeuristicType.Euclidian);
+            double result =
+                gridPlaceBase1.DistanceFrom(gridPlaceDistant1, NicUtils.Distances2D.HeuristicType.Euclidian);
             Assert.AreEqual(result, expectedDistance);
         }
 
         [TestMethod]
-        public void TestDeltaFrom() {
+        public void TestDeltaFrom()
+        {
             (int, int) expectedDelta = ((-60) - (-3), 60 - 5);
             Assert.AreEqual(gridPlaceDistant1.DeltaFrom(gridPlaceBase1), expectedDelta);
         }
 
         [TestMethod]
-        public void TestIsDiagonalTo() {
+        public void TestIsDiagonalTo()
+        {
             Assert.IsFalse(gridPlaceBase1.IsDiagonalTo(gridPlaceStra1));
             Assert.IsTrue(gridPlaceBase1.IsDiagonalTo(gridPlaceDiag1));
         }
 
         [TestMethod]
-        public void TestIsAdjacentTo() {
+        public void TestIsAdjacentTo()
+        {
             Assert.IsTrue(gridPlaceBase1.IsAdjacentTo(gridPlaceStra1));
             Assert.IsFalse(gridPlaceBase1.IsAdjacentTo(gridPlaceDiag1));
         }
 
         [TestMethod]
-        public void TestToString() {
+        public void TestToString()
+        {
             Assert.AreEqual("(-3, 5)", gridPlaceBase1.ToString());
         }
 

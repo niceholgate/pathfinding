@@ -3,12 +3,14 @@
 // using System.Linq;
 //
 // // Going to try get rid of this - think I only need GenericPlace : IPlace and GridPlace : IPlaceAStar
-// namespace AStarNickNS {
-//     public abstract class Place<TCoord> : IPlace<TCoord> {
-//
+// namespace AStarNickNS
+// {
+//     public abstract class Place<TCoord> : IPlace<TCoord>
+//     {
 //         public PlaceGraph<TCoord> Graph { get; }
 //
-//         protected Place(TCoord label, PlaceGraph<TCoord> graph) {
+//         protected Place(TCoord label, PlaceGraph<TCoord> graph)
+//         {
 //             Label = label;
 //             Graph = graph;
 //             Neighbours = new HashSet<IPlace<TCoord>>();
@@ -17,10 +19,9 @@
 //
 //         public TCoord Label { get; }
 //
-//         public double Cost {
-//             get {
-//                 return Graph.GetTerrainCost(Label);
-//             }
+//         public double Cost
+//         {
+//             get { return Graph.GetTerrainCost(Label); }
 //         }
 //
 //         //// Perhaps don't want to distinguish between "normal" and "hacky" neighbours at this level.
@@ -36,11 +37,13 @@
 //         //    }
 //         //}
 //
-//         public ISet<IPlace<TCoord>> Neighbours {
+//         public ISet<IPlace<TCoord>> Neighbours
+//         {
 //             //get {
 //             //    return (ISet<IPlace<TCoord>>)Graph.GetImplicitNeighboursWithCosts(this).Keys.ToHashSet();
 //             //}
-//             get; init;
+//             get;
+//             init;
 //         }
 //
 //         //public abstract ISet<IPlace<TCoord>> ImplicitNeighbours { get; }

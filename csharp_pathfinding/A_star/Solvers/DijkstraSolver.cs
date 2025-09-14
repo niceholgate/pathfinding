@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace AStarNickNS {
+namespace AStarNickNS
+{
     // Dijkstra is a generic solver for any coordinate type
-    public class DijkstraSolver<TPlace, TCoord> : IPathfindingSolver<TPlace, TCoord> where TPlace : class, IPlace<TCoord> {
+    public class DijkstraSolver<TPlace, TCoord> : IPathfindingSolver<TPlace, TCoord>
+        where TPlace : class, IPlace<TCoord>
+    {
         private readonly TPlace _start;
         private readonly TPlace _target;
         private readonly PlaceGraph<TCoord> _graph;
@@ -15,7 +18,8 @@ namespace AStarNickNS {
         private bool _hasRun = false;
         private bool _foundPath = false;
 
-        public DijkstraSolver(TPlace start, TPlace target, PlaceGraph<TCoord> graph) {
+        public DijkstraSolver(TPlace start, TPlace target, PlaceGraph<TCoord> graph)
+        {
             _start = start;
             _target = target;
             _graph = graph;
@@ -28,24 +32,29 @@ namespace AStarNickNS {
             {
                 throw new IOException($"The start place (\"{_start.Label}\") is not on the graph!");
             }
+
             if (!_graph.Places.ContainsKey(_target.Label))
             {
                 throw new IOException($"The target place (\"{_target.Label}\") is not on the graph!");
             }
-            
+
             _hasRun = true;
             FibonacciHeap<TPlace, double> frontier = new(0);
             frontier.Insert(new FibonacciHeapNode<TPlace, double>(_start, 0));
             _cameFrom = new Dictionary<TPlace, TPlace> { { _start, null } };
             _costSoFar = new Dictionary<TPlace, double> { { _start, 0.0 } };
 
-            while (!frontier.IsEmpty()) {
+            while (!frontier.IsEmpty())
+            {
                 _current = frontier.RemoveMin().Data;
-                if (_current.Equals(_target)) {
+                if (_current.Equals(_target))
+                {
                     _foundPath = true;
                     break;
                 }
-                foreach (TPlace neighbour in _current.Neighbours) {
+
+                foreach (TPlace neighbour in _current.Neighbours)
+                {
                     if (!_graph.IsBlocked(_current.Label, neighbour.Label))
                     {
                         _newCostForNeighbour = _costSoFar[_current] + _current.CostToLeave(neighbour, _graph);
@@ -61,18 +70,23 @@ namespace AStarNickNS {
             }
         }
 
-        public IEnumerable<TPlace> ReconstructPath() {
-            if (_hasRun && _foundPath) {
+        public IEnumerable<TPlace> ReconstructPath()
+        {
+            if (_hasRun && _foundPath)
+            {
                 _current = _target;
                 List<TPlace> path = new List<TPlace>();
-                while (!_current.Equals(_start)) {
+                while (!_current.Equals(_start))
+                {
                     path.Add(_current);
                     _current = _cameFrom[_current];
                 }
+
                 path.Add(_start);
                 path.Reverse();
                 return path;
             }
+
             return null;
         }
     }

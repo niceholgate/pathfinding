@@ -5,11 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace AStarTests {
-
+namespace AStarTests
+{
     [TestClass]
-    public class GenericPlaceGraphTests {
-
+    public class GenericPlaceGraphTests
+    {
         private GenericPlaceGraph sut = new();
 
         //[TestInitialize]
@@ -18,7 +18,8 @@ namespace AStarTests {
         //}
 
         [TestMethod]
-        public void TestBuild_SucceedsForGoodGraph() {
+        public void TestBuild_SucceedsForGoodGraph()
+        {
             sut.Build("../../../Resources/mermaid_networks/net1.mmd");
 
             Assert.Contains("G", sut.Places.Keys);
@@ -27,21 +28,24 @@ namespace AStarTests {
         }
 
         [TestMethod]
-        public void TestBuild_ExceptionOnNegativeCost() {
+        public void TestBuild_ExceptionOnNegativeCost()
+        {
             TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
                 () => sut.Build("../../../Resources/mermaid_networks/netwithnegative.mmd"),
                 "Cannot have a negative cost: -2 for (C, D)");
         }
 
         [TestMethod]
-        public void TestBuild_ExceptionOnDuplicatePairs() {
+        public void TestBuild_ExceptionOnDuplicatePairs()
+        {
             TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
                 () => sut.Build("../../../Resources/mermaid_networks/netwithduplicate.mmd"),
                 "Cannot specify the same pair of places more than once: (A, B)");
         }
 
         [TestMethod]
-        public void TestBuild_ExceptionOnDisjointGraph() {
+        public void TestBuild_ExceptionOnDisjointGraph()
+        {
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
                 () => sut.Build("../../../Resources/mermaid_networks/netdisjoint.mmd"),
                 "Cannot support a disjoint Graph!");
@@ -70,6 +74,5 @@ namespace AStarTests {
         //    Assert.IsTrue(sut.BuildFromTables(neighbourPairs));
         //    Assert.AreEqual(sut.Places["A"].GetCostToLeave(sut.Places["B"]), 2.0);
         //}
-
     }
 }

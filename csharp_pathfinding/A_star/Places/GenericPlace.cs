@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AStarNickNS {
+namespace AStarNickNS
+{
     /*
-    * A place with no defining geometry, just explicitly specified neighbours
-    */
+     * A place with no defining geometry, just explicitly specified neighbours
+     */
     public class GenericPlace : IPlace<string>
     {
-        
         public string Label { get; init; }
         public ISet<IPlace<string>> Neighbours { get; }
 
         public double Cost { get; set; }
-        
+
         public GenericPlace(string label)
         {
             Label = label;
@@ -35,7 +35,7 @@ namespace AStarNickNS {
         //}
 
         public override string ToString() => Label;
-        
+
         public double CostToLeave(IPlace<string> to, PlaceGraph<string> graph)
         {
             return graph.CostToLeave(Label, to.Label);

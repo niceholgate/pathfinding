@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 
-namespace AStarNickNS {
-
+namespace AStarNickNS
+{
     /*
      * A place with a descriptive type (e.g. a string name, or a grid coordinate).
      */
-    public interface IPlace<TCoord> {
-
+    public interface IPlace<TCoord>
+    {
         // The Graph that this Place belongs to.
         // TODO: is this needed? - I think so, so that a Place can query its Graph for its Neighbours - Neighbour updates need only happen on Graphs
         // but that should be an impl detail, not part of this interface?
@@ -22,7 +22,5 @@ namespace AStarNickNS {
         // - agent's speed for this transition (e.g. can it fly? can it use a portal? can it fit in small gaps?)
         // TODO: So the cost could become a delegate that turns a "transition context" into a double.
         double CostToLeave(IPlace<TCoord> to, PlaceGraph<TCoord> graph);
-
     }
-    
 }

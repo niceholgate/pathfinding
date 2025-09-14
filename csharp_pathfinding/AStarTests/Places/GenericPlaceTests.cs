@@ -3,12 +3,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 
 
-namespace AStarTests {
-    
+namespace AStarTests
+{
     [TestClass]
-    public class GenericPlaceTests {
+    public class GenericPlaceTests
+    {
         GenericPlace gpA = new("A");
         GenericPlace gpB = new("B");
+
         GenericPlace gpC = new("C");
         //
         // [TestMethod]
@@ -37,14 +39,16 @@ namespace AStarTests {
         // }
 
         [TestMethod]
-        public void TestToString() {
+        public void TestToString()
+        {
             // Check ToString() method returns the label
             Assert.AreEqual(gpA.Label, "A");
             Assert.AreEqual(gpA.Label, gpA.ToString());
         }
-        
+
         [TestMethod]
-        public void TestUpdateNeighbours() {
+        public void TestUpdateNeighbours()
+        {
             // Check ToString() method returns the label
             Assert.IsNotNull(gpA.Neighbours);
             Assert.IsEmpty(gpA.Neighbours);
