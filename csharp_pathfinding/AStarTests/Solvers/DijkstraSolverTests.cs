@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -102,21 +100,9 @@ namespace AStarTests {
                 graph.Places["G"],
             };
             
-            _sut.Solve(startPlace, targetPlace);
-            List<GenericPlace> actual = _sut.ReconstructPath(startPlace, targetPlace).ToList();
+            List<GenericPlace> actual = _sut.SolvePath(startPlace, targetPlace).ToList();
             
             CollectionAssert.AreEqual(expected, actual);
-        }
-        
-        [TestMethod]
-        public void TestNullPathIfNotYetRun()
-        {
-            GenericPlaceGraph graph = new GenericPlaceGraph();
-            graph.Build("../../../Resources/mermaid_networks/net1.mmd");
-            _sut = new DijkstraSolver<GenericPlace, string>(graph);
-            var startPlace = (GenericPlace)graph.Places["A"];
-            var targetPlace = (GenericPlace)graph.Places["G"];
-            Assert.IsNull(_sut.ReconstructPath(startPlace, targetPlace));
         }
         
         [TestMethod]
@@ -129,7 +115,7 @@ namespace AStarTests {
             graph.Places.Add("B", B);
             _sut = new DijkstraSolver<GenericPlace, string>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.Solve(A, B),
+                () => _sut.SolvePath(A, B),
                 "Cannot support a disjoint Graph!");
         }
         
@@ -142,9 +128,8 @@ namespace AStarTests {
             var targetPlace = (GenericPlace)graph.Places["G"];
             _sut = new DijkstraSolver<GenericPlace, string>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.Solve(notOnGraph, targetPlace),
+                () => _sut.SolvePath(notOnGraph, targetPlace),
                 "The start place (\"H\") is not on the graph!");
-            Assert.IsNull(_sut.ReconstructPath(notOnGraph, targetPlace));
         }
         
         [TestMethod]
@@ -156,9 +141,8 @@ namespace AStarTests {
             var startPlace = (GenericPlace)graph.Places["A"];
             _sut = new DijkstraSolver<GenericPlace, string>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.Solve(startPlace, notOnGraph),
-                @"The target place (""H"") is not on the graph!");
-            Assert.IsNull(_sut.ReconstructPath(startPlace, notOnGraph));
+                () => _sut.SolvePath(startPlace, notOnGraph),
+                "The target place (\"H\") is not on the graph!");
         }
     }
 }

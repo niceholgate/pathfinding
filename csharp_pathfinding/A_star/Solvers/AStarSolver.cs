@@ -11,19 +11,13 @@ namespace AStarNickNS
         where TPlace : class, IPlaceAStar<TCoord>
     {
         private readonly PlaceGraph<TCoord> _graph;
-        private TPlace _current;
-        private double _newCostForNeighbour;
-        private Dictionary<TPlace, TPlace> _cameFrom;
-        private Dictionary<TPlace, double> _costSoFar;
-        private bool _hasRun = false;
-        private bool _foundPath = false;
-
+        
         public AStarSolver(PlaceGraph<TCoord> graph)
         {
             _graph = graph;
         }
 
-        public void Solve(IPlace<TCoord> start, IPlace<TCoord> target)
+        public IEnumerable<TPlace> SolvePath(IPlace<TCoord> start, IPlace<TCoord> target)
         {
             _graph.CheckDisjoint();
             if (!_graph.Places.ContainsKey(start.Label))
@@ -36,60 +30,52 @@ namespace AStarNickNS
                 throw new IOException($"The target place (\"{target.Label}\") is not on the graph!");
             }
 
-            _hasRun = true;
             FibonacciHeap<TPlace, double> frontier = new(0);
             frontier.Insert(new FibonacciHeapNode<TPlace, double>((TPlace)start, 0));
-            HashSet<TPlace> visited = new();
-            _cameFrom = new Dictionary<TPlace, TPlace> { { (TPlace)start, null } };
-            _costSoFar = new Dictionary<TPlace, double> { { (TPlace)start, 0.0 } };
+            Dictionary<TPlace, TPlace> cameFrom = new Dictionary<TPlace, TPlace>();
+            Dictionary<TPlace, double> costSoFar = new Dictionary<TPlace, double> { { (TPlace)start, 0.0 } };
 
+            var closed = new HashSet<TPlace>();
+            
             while (!frontier.IsEmpty())
             {
-                _current = frontier.RemoveMin().Data;
-                visited.Add(_current);
-                if (_current.Equals(target))
-                {
-                    _foundPath = true;
-                    break;
-                }
+                TPlace current = frontier.RemoveMin().Data;
+                if (!closed.Add(current)) continue;
+                if (current.Equals(target)) break;
 
-                foreach (TPlace neighbour in _current.Neighbours)
+                foreach (TPlace neighbour in current.Neighbours)
                 {
-                    if (!visited.Contains(neighbour) && !_graph.IsBlocked(_current.Label, neighbour.Label))
-                    {
-                        _newCostForNeighbour = _costSoFar[_current] + _current.CostToLeave(neighbour, _graph);
-                        if (!_costSoFar.TryGetValue(neighbour, out double neighbourCostSoFar)
-                            || _newCostForNeighbour < neighbourCostSoFar)
-                        {
-                            _costSoFar[neighbour] = _newCostForNeighbour;
-                            frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour,
-                                _newCostForNeighbour +
-                                neighbour.DistanceFrom((TPlace)target, Distances2D.HeuristicType.Euclidian)));
-                            _cameFrom[neighbour] = _current;
-                        }
-                    }
+                    if (_graph.IsBlocked(current.Label, neighbour.Label)) continue;
+                    
+                    double newCostForNeighbour = costSoFar[current] + current.CostToLeave(neighbour, _graph);
+
+                    if (costSoFar.TryGetValue(neighbour, out double neighbourCostSoFar) &&
+                        newCostForNeighbour >= neighbourCostSoFar) continue;
+                    
+                    costSoFar[neighbour] = newCostForNeighbour;
+                    cameFrom[neighbour] = current;
+                    frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour,
+                        newCostForNeighbour +
+                        neighbour.DistanceFrom((TPlace)target, Distances2D.HeuristicType.Euclidian)));
                 }
             }
+
+            return ReconstructPath(start, target, cameFrom);
         }
 
-        public IEnumerable<TPlace> ReconstructPath(IPlace<TCoord> start, IPlace<TCoord> target)
+        private IEnumerable<TPlace> ReconstructPath(IPlace<TCoord> start, IPlace<TCoord> target, Dictionary<TPlace, TPlace> cameFrom)
         {
-            if (_hasRun && _foundPath)
+            TPlace current = (TPlace)target;
+            List<TPlace> path = new List<TPlace>();
+            while (!current.Equals(start))
             {
-                _current = (TPlace)target;
-                List<TPlace> path = new List<TPlace>();
-                while (!_current.Equals(start))
-                {
-                    path.Add(_current);
-                    _current = _cameFrom[_current];
-                }
-
-                path.Add((TPlace)start);
-                path.Reverse();
-                return path;
+                path.Add(current);
+                current = cameFrom[current];
             }
 
-            return null;
+            path.Add((TPlace)start);
+            path.Reverse();
+            return path;
         }
     }
 }

@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -41,21 +39,9 @@ namespace AStarTests
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];
 
-            _sut.Solve(startPlace, targetPlace);
-            List<GridPlace> actual = _sut.ReconstructPath(startPlace, targetPlace).ToList();
+            List<GridPlace> actual = _sut.SolvePath(startPlace, targetPlace).ToList();
 
             Assert.AreEqual(expectedPathLength, actual.Count);
-        }
-
-        [TestMethod]
-        public void TestNullPathIfNotYetRun()
-        {
-            GridPlaceGraph graph = new GridPlaceGraph(false);
-            graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
-            _sut = new AStarSolver<GridPlace, (int, int)>(graph);
-            var startPlace = (GridPlace)graph.Places[(0, 0)];
-            var targetPlace = (GridPlace)graph.Places[(9, 9)];
-            Assert.IsNull(_sut.ReconstructPath(startPlace, targetPlace));
         }
 
         [TestMethod]
@@ -68,7 +54,7 @@ namespace AStarTests
             graph.Places.Add((0, 2), B);
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.Solve(A, B),
+                () => _sut.SolvePath(A, B),
                 "Cannot support a disjoint Graph!");
         }
 
@@ -81,9 +67,8 @@ namespace AStarTests
             var targetPlace = (GridPlace)graph.Places[(9, 9)];
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.Solve(notOnGraph, targetPlace),
+                () => _sut.SolvePath(notOnGraph, targetPlace),
                 "The start place ((200, 200)) is not on the graph!");
-            Assert.IsNull(_sut.ReconstructPath(notOnGraph, targetPlace));
         }
 
         [TestMethod]
@@ -95,9 +80,8 @@ namespace AStarTests
             var startPlace = (GridPlace)graph.Places[(0, 0)];
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.Solve(startPlace, notOnGraph),
+                () => _sut.SolvePath(startPlace, notOnGraph),
                 $"The target place (\"(200, 200)\") is not on the graph!");
-            Assert.IsNull(_sut.ReconstructPath(startPlace, notOnGraph));
         }
     }
 }
