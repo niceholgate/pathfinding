@@ -13,39 +13,31 @@ namespace AStarTests {
 
         private AStarSolver<GridPlace, (int, int)> _sut;
         
-        // public static IEnumerable<object[]> GetTestData()
-        // {
-        //     yield return new object[] { 2, 3, 6 };
-        //     yield return new object[] { -1, 5, -5 };
-        //     yield return new object[] { 0, 99, 0 };
-        // }
-        
-        [TestMethod]
-        // [DataTestMethod]
-        // [DynamicData(nameof(GetTestData), DynamicDataSourceType.Method)]
-        public void TestFindsShortestPathWithDiagonals()
+        public static IEnumerable<object[]> GetTestData()
         {
-            GridPlaceGraph graph = new(true);
-            graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
-            _sut = new AStarSolver<GridPlace, (int, int)>((GridPlace)graph.Places[(0, 0)], (GridPlace)graph.Places[(9, 9)], graph);
-
-            int expectedPathLength = 49;
-            
-            _sut.Solve();
-            List<GridPlace> actual = _sut.ReconstructPath().ToList();
-            
-            Assert.AreEqual(expectedPathLength, actual.Count);
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 49, true };
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 59, false };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 19, true };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 23, false };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 49, true };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 49, false };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 49, true };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 49, false };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 49, true };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 41, false };
+            yield return new object[] { "walls_and_swamps_test.csv", (7, 12), (26, 15), 49, true };
+            yield return new object[] { "walls_and_swamps_test.csv", (7, 12), (26, 15), 49, false };
         }
-        
-        [TestMethod]
-        public void TestFindsShortestPathWithoutDiagonals()
-        {
-            GridPlaceGraph graph = new(false);
-            graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
-            _sut = new AStarSolver<GridPlace, (int, int)>((GridPlace)graph.Places[(0, 0)], (GridPlace)graph.Places[(9, 9)], graph);
 
-            int expectedPathLength = 59;
-            
+        [DataTestMethod]
+        [DynamicData(nameof(GetTestData), DynamicDataSourceType.Method)]
+        public void TestFindsShortestPathWithDiagonals(string mazeFile, (int, int) start, (int, int) target,
+            int expectedPathLength, bool diagonalNeighbours)
+        {
+            GridPlaceGraph graph = new(diagonalNeighbours);
+            graph.Build($"../../../Resources/excel_mazes/{mazeFile}");
+            _sut = new AStarSolver<GridPlace, (int, int)>((GridPlace)graph.Places[start], (GridPlace)graph.Places[target], graph);
+
             _sut.Solve();
             List<GridPlace> actual = _sut.ReconstructPath().ToList();
             
