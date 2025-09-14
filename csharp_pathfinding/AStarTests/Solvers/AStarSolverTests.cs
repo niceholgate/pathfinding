@@ -68,7 +68,7 @@ namespace AStarTests
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
                 () => _sut.SolvePath(notOnGraph, targetPlace),
-                "The start place ((200, 200)) is not on the graph!");
+                "The start place (\"(200, 200)\") is not on the graph!");
         }
 
         [TestMethod]

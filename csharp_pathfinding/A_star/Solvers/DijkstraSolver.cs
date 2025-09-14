@@ -30,17 +30,15 @@ namespace AStarNickNS
 
             FibonacciHeap<TPlace, double> frontier = new(0);
             frontier.Insert(new FibonacciHeapNode<TPlace, double>((TPlace)start, 0));
-            Dictionary<TPlace, TPlace> cameFrom = new Dictionary<TPlace, TPlace>();
-            Dictionary<TPlace, double> costSoFar = new Dictionary<TPlace, double> { { (TPlace)start, 0.0 } };
+            Dictionary<TPlace, TPlace> cameFrom = new();
+            Dictionary<TPlace, double> costSoFar = new() { { (TPlace)start, 0.0 } };
             
             var visited = new HashSet<TPlace>();
             
             while (!frontier.IsEmpty())
             {
                 TPlace current = frontier.RemoveMin().Data;
-                
                 if (!visited.Add(current)) continue;
-                
                 if (current.Equals(target)) break;
                 
                 foreach (TPlace neighbour in current.Neighbours)
@@ -54,11 +52,20 @@ namespace AStarNickNS
                     
                     costSoFar[neighbour] = newCostForNeighbour;
                     cameFrom[neighbour] = current;
-                    frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour, newCostForNeighbour));
+                    UpdateFrontier(frontier, neighbour, newCostForNeighbour, (TPlace)target);
                 }
             }
             
             return ReconstructPath(start, target, cameFrom);
+        }
+
+        protected virtual void UpdateFrontier(
+            FibonacciHeap<TPlace, double> frontier,
+            TPlace neighbour,
+            double newCostForNeighbour,
+            TPlace target)
+        {
+            frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour, newCostForNeighbour));
         }
 
         private IEnumerable<TPlace> ReconstructPath(IPlace<TCoord> start, IPlace<TCoord> target, Dictionary<TPlace, TPlace> cameFrom)
