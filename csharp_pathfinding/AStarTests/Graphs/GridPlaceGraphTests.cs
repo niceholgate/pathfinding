@@ -126,11 +126,33 @@ namespace AStarTests
                 "Cannot have a negative cost: -6 for (1, 2)");
         }
 
-        //[TestMethod]
-        //public void TestBuild_FailsDisjointGraph() {
-        //    TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-        //        () => new GenericPlaceGraph("../../../Resources/mermaid_networks/netdisjoint.mmd"),
-        //        "Cannot support a disjoint Graph!");
-        //}
+        // Not currently testing this because the disjoint check is not aware of blocked cells
+        // [TestMethod]
+        // public void TestBuild_FailsDisjointGraph() {
+        //     sut = new GridPlaceGraph(true);
+        //     TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
+        //         () => sut.Build("../../../Resources/excel_mazes/spiral_disjoint_test.csv"),
+        //         "Cannot support a disjoint Graph!");
+        // }
+        
+        [TestMethod]
+        public void TestPathfinderCanFit()
+        {
+            sut = new GridPlaceGraph(true);
+            sut.Build("../../../Resources/excel_mazes/walls_test.csv");
+
+            // Inside a size 1 square
+            Assert.IsTrue(sut.PathfinderCanFit((0, 0), 0.9));
+            Assert.IsFalse(sut.PathfinderCanFit((0, 0), 1.1));
+            
+            // Inside a size 3 square
+            Assert.IsTrue(sut.PathfinderCanFit((1, 2), 2.9));
+            Assert.IsFalse(sut.PathfinderCanFit((1, 2), 3.1));
+            
+            // Overlap with a corner
+            Assert.IsTrue(sut.PathfinderCanFit((2, 8), 0.9));
+            Assert.IsTrue(sut.PathfinderCanFit((2, 8), Math.Sqrt(2) - 0.01));
+            Assert.IsFalse(sut.PathfinderCanFit((2, 8), Math.Sqrt(2) + 0.01));
+        }
     }
 }

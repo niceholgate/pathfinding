@@ -24,9 +24,49 @@ namespace AStarNickNS
             return GetTerrainCost(to);
         }
 
+        // Better to precompute this over the grid for pathfinders of various sizes.
+        // Only need to recompute it around newly inaccessible cells (within a radius equal to half the largest pathfinder size).
+        public bool PathfinderCanFit((int, int) label, double pathfinderSize)
+        {
+            double halfWidth = pathfinderSize / 2;
+            double radiusSq = halfWidth * halfWidth;
+            (double cx, double cy) = (label.Item1, label.Item2);
+            int radius = (int)Math.Ceiling(halfWidth);
+
+            for (int cellX = label.Item1 - radius; cellX <= label.Item1 + radius; cellX++)
+            {
+                for (int cellY = label.Item2 - radius; cellY <= label.Item2 + radius; cellY++)
+                {
+                    if (GetTerrainCost((cellX, cellY)) <= 0)
+                    {
+                        // This cell is an obstacle. Check for intersection with the pathfinder's circle.
+
+                        // Find the closest point on the cell's square to the circle's center.
+                        double closestX = Math.Max(cellX - 0.5, Math.Min(cx, cellX + 0.5));
+                        double closestY = Math.Max(cellY - 0.5, Math.Min(cy, cellY + 0.5));
+
+                        // Calculate the distance squared from the circle's center to this closest point.
+                        double deltaX = cx - closestX;
+                        double deltaY = cy - closestY;
+                        double distanceSq = (deltaX * deltaX) + (deltaY * deltaY);
+
+                        // If the distance is less than the circle's radius squared, there is an intersection.
+                        if (distanceSq < radiusSq)
+                        {
+                            return false; // Collision detected.
+                        }
+                    }
+                }
+            }
+
+            return true; // No collisions found.
+        }
+
         public override double GetTerrainCost((int, int) label)
         {
             (int x, int y) = label;
+            if (x < 0 || x >= _gridTerrainCosts.GetLength(0)
+                || y < 0 || y >= _gridTerrainCosts.GetLength(1)) return 0;
             return _gridTerrainCosts[x, y];
         }
 

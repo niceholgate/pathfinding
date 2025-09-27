@@ -53,7 +53,6 @@ namespace AStarNickNS
         {
         }
 
-        // TODO: move this to PlaceGraph and test it for every implementation thereof
         public void CheckDisjoint()
         {
             // Start at a random Place and traverse the full Graph, stopping when every Place has been visited.
