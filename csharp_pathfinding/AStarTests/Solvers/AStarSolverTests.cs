@@ -33,7 +33,7 @@ namespace AStarTests
         public void TestFindsShortestPathIncludingWallsAndSwamps(string mazeFile, (int, int) start, (int, int) target,
             int expectedPathLength, bool diagonalNeighbours)
         {
-            GridPlaceGraph graph = new(diagonalNeighbours);
+            GridPlaceGraph graph = new(diagonalNeighbours, new PathfinderObstacleIntersector());
             graph.Build($"../../../Resources/excel_mazes/{mazeFile}");
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             var startPlace = (GridPlace)graph.Places[start];
@@ -47,7 +47,7 @@ namespace AStarTests
         [TestMethod]
         public void TestExceptionIfGraphDisjoint()
         {
-            GridPlaceGraph graph = new GridPlaceGraph(false);
+            GridPlaceGraph graph = new GridPlaceGraph(false, new PathfinderObstacleIntersector());
             GridPlace A = new GridPlace((0, 0));
             GridPlace B = new GridPlace((0, 2));
             graph.Places.Add((0, 0), A);
@@ -61,7 +61,7 @@ namespace AStarTests
         [TestMethod]
         public void TestExceptionIfStartNotOnGraph()
         {
-            GridPlaceGraph graph = new GridPlaceGraph(false);
+            GridPlaceGraph graph = new GridPlaceGraph(false, new PathfinderObstacleIntersector());
             graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
             GridPlace notOnGraph = new GridPlace((200, 200));
             var targetPlace = (GridPlace)graph.Places[(9, 9)];
@@ -74,7 +74,7 @@ namespace AStarTests
         [TestMethod]
         public void TestExceptionIfTargetNotOnGraph()
         {
-            GridPlaceGraph graph = new GridPlaceGraph(false);
+            GridPlaceGraph graph = new GridPlaceGraph(false, new PathfinderObstacleIntersector());
             graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
             GridPlace notOnGraph = new GridPlace((200, 200));
             var startPlace = (GridPlace)graph.Places[(0, 0)];
