@@ -137,13 +137,34 @@ namespace AStarTests
         // }
         
         [TestMethod]
-        public void TestPathfinderCanFit()
+        public void TestPathfinderCanFitCached()
         {
-            var mockIntersector = Substitute.For<PathfinderObstacleIntersector>();
+            // Initial Build just to get the GridTerrainCosts for the concreteIntersector
+            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
+                new HashSet<double>{0.9, 1.1, 2.9, 3.1, Math.Sqrt(2) - 0.01, Math.Sqrt(2) + 0.01});
+            sut.Build("../../../Resources/excel_mazes/walls_test.csv");
+            
+            PathfinderObstacleIntersector concreteIntersector = new()
+            {
+                GridTerrainCosts = sut.GetGridTerrainCosts()
+            };
+            
+            var mockIntersector = Substitute.For<IPathfinderObstacleIntersector>();
+            mockIntersector
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>())
+                .Returns(callInfo =>
+                {
+                    int x = callInfo.ArgAt<int>(0);
+                    int y = callInfo.ArgAt<int>(1);
+                    double size = callInfo.ArgAt<double>(2);
+                    return concreteIntersector.PathfinderIntersectsWithObstacles(x, y, size);
+                });
+            
             sut = new GridPlaceGraph(true, mockIntersector,
                 new HashSet<double>{0.9, 1.1, 2.9, 3.1, Math.Sqrt(2) - 0.01, Math.Sqrt(2) + 0.01});
             sut.Build("../../../Resources/excel_mazes/walls_test.csv");
-            mockIntersector.Received(2)
+            
+            mockIntersector.Received(3936)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         
             // Inside a size 1 square
@@ -158,6 +179,10 @@ namespace AStarTests
             Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, 0.9));
             Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, Math.Sqrt(2) - 0.01));
             Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, Math.Sqrt(2) + 0.01));
+            
+            // Due to caching, Intersector did not need to perform any further calcs
+            mockIntersector.Received(3936)
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         }
         
     }

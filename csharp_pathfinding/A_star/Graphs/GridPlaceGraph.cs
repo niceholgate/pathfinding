@@ -14,14 +14,14 @@ namespace AStarNickNS
 
         private IPathfinderObstacleIntersector _intersector;
         
-        public GridPlaceGraph(bool diagonalNeighbours, PathfinderObstacleIntersector pathfinderObstacleIntersector)
+        public GridPlaceGraph(bool diagonalNeighbours, IPathfinderObstacleIntersector pathfinderObstacleIntersector)
         {
             DiagonalNeighbours = diagonalNeighbours;
             _intersector = pathfinderObstacleIntersector;
             PathfinderObstacleIntersectionsCache = new Dictionary<double, bool?[,]> { { 0.9, null } };
         }
         
-        public GridPlaceGraph(bool diagonalNeighbours, PathfinderObstacleIntersector pathfinderObstacleIntersector, HashSet<double> pathfinderSizes)
+        public GridPlaceGraph(bool diagonalNeighbours, IPathfinderObstacleIntersector pathfinderObstacleIntersector, HashSet<double> pathfinderSizes)
         {
             DiagonalNeighbours = diagonalNeighbours;
             _intersector = pathfinderObstacleIntersector;
@@ -139,6 +139,11 @@ namespace AStarNickNS
 
             Places[label] = new GridPlace(label);
             return (GridPlace)Places[label];
+        }
+
+        public double[,] GetGridTerrainCosts()
+        {
+            return (double[,])_gridTerrainCosts.Clone();
         }
     }
 }
