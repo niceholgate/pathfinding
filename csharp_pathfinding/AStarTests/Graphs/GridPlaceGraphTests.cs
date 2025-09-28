@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using NSubstitute;
 
 namespace AStarTests
 {
@@ -138,21 +139,45 @@ namespace AStarTests
         [TestMethod]
         public void TestPathfinderCanFit()
         {
-            sut = new GridPlaceGraph(true);
+            sut = new GridPlaceGraph(true,
+                new HashSet<double>{0.9, 1.1, 2.9, 3.1, Math.Sqrt(2) - 0.01, Math.Sqrt(2) + 0.01});
             sut.Build("../../../Resources/excel_mazes/walls_test.csv");
 
             // Inside a size 1 square
-            Assert.IsTrue(sut.PathfinderCanFit((0, 0), 0.9));
-            Assert.IsFalse(sut.PathfinderCanFit((0, 0), 1.1));
+            Assert.IsTrue(sut.PathfinderCanFitCached((0, 0), 0.9));
+            Assert.IsFalse(sut.PathfinderCanFitCached((0, 0), 1.1));
             
             // Inside a size 3 square
-            Assert.IsTrue(sut.PathfinderCanFit((1, 2), 2.9));
-            Assert.IsFalse(sut.PathfinderCanFit((1, 2), 3.1));
+            Assert.IsTrue(sut.PathfinderCanFitCached((1, 2), 2.9));
+            Assert.IsFalse(sut.PathfinderCanFitCached((1, 2), 3.1));
             
             // Overlap with a corner
-            Assert.IsTrue(sut.PathfinderCanFit((2, 8), 0.9));
-            Assert.IsTrue(sut.PathfinderCanFit((2, 8), Math.Sqrt(2) - 0.01));
-            Assert.IsFalse(sut.PathfinderCanFit((2, 8), Math.Sqrt(2) + 0.01));
+            Assert.IsTrue(sut.PathfinderCanFitCached((2, 8), 0.9));
+            Assert.IsTrue(sut.PathfinderCanFitCached((2, 8), Math.Sqrt(2) - 0.01));
+            Assert.IsFalse(sut.PathfinderCanFitCached((2, 8), Math.Sqrt(2) + 0.01));
+        }
+
+        [TestMethod]
+        public void TestPathfinderCanFitCached()
+        {
+            // Arrange
+            var sut = Substitute.ForPartsOf<GridPlaceGraph>(true, new HashSet<double> { 0.9 });
+            sut.Build("../../../Resources/excel_mazes/walls_test.csv");
+            
+            // Clear the cache for a specific entry
+            (int, int) label = (0, 0);
+            double size = 0.9;
+            var pathfindersCanFit = sut.GetType().GetField("PathfindersCanFit",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(sut) 
+                as Dictionary<double, bool?[,]>;
+            pathfindersCanFit[size][label.Item1, label.Item2] = null;
+
+            // Act
+            sut.PathfinderCanFitCached(label, size);
+            sut.PathfinderCanFitCached(label, size);
+
+            // Assert
+            sut.Received(1).PathfinderCanFitInner(label, size);
         }
     }
 }
