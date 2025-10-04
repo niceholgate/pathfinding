@@ -85,7 +85,7 @@ namespace AStarTests {
         public void TestFindsShortestPath()
         {
             GenericPlaceGraph graph = new GenericPlaceGraph();
-            graph.Build("../../../Resources/mermaid_networks/net1.mmd");
+            graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
             _sut = new DijkstraSolver<GenericPlace, string>(graph);
             var startPlace = (GenericPlace)graph.Places["A"];
             var targetPlace = (GenericPlace)graph.Places["G"];
@@ -123,7 +123,7 @@ namespace AStarTests {
         public void TestExceptionIfStartNotOnGraph()
         {
             GenericPlaceGraph graph = new GenericPlaceGraph();
-            graph.Build("../../../Resources/mermaid_networks/net1.mmd");
+            graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
             GenericPlace notOnGraph = new GenericPlace("H");
             var targetPlace = (GenericPlace)graph.Places["G"];
             _sut = new DijkstraSolver<GenericPlace, string>(graph);
@@ -136,7 +136,7 @@ namespace AStarTests {
         public void TestExceptionIfTargetNotOnGraph()
         {
             GenericPlaceGraph graph = new GenericPlaceGraph();
-            graph.Build("../../../Resources/mermaid_networks/net1.mmd");
+            graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
             GenericPlace notOnGraph = new GenericPlace("H");
             var startPlace = (GenericPlace)graph.Places["A"];
             _sut = new DijkstraSolver<GenericPlace, string>(graph);

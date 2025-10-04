@@ -2,6 +2,7 @@ using NicUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NicUtils.ExtensionMethods;
 
 namespace AStarNickNS
 {
@@ -103,24 +104,28 @@ namespace AStarNickNS
             }
         }
 
-        protected override void BuildCore(string dataFile)
+        // public void BuildFromArray(double[,] array)
+        // {
+        //     
+        // }
+        
+        protected override void BuildFromFileCore(string dataFile)
         {
+            if (!dataFile.EndsWith(".csv"))
+            {
+                throw new ArgumentException("GridPlaceGraph only supports building from .csv files");
+            }
+            
             List<List<double>> gridCosts = new CSVReader(dataFile, false).GetData<double>();
             int height = gridCosts.Count;
             int width = gridCosts[0].Count;
-            _gridTerrainCosts = new double[width, height];
+            // _gridTerrainCosts = new double[width, height];
+            _gridTerrainCosts = gridCosts.ToRectangularArray();
             _intersector.GridTerrainCosts = _gridTerrainCosts;
             
             for (int y = 0; y < height; y++)
             {
                 List<double> row = gridCosts[y];
-
-                // The grid must be rectangular (holes or perimeters must be represented with zero terrain costs).
-                if (row.Count != width)
-                {
-                    throw new ArgumentException($"Cannot have a non-rectangular grid " +
-                                                $"(row 0 has length {width} but row {y} has length {row.Count}).");
-                }
 
                 for (int x = 0; x < width; x++)
                 {
@@ -133,7 +138,7 @@ namespace AStarNickNS
                         throw new ArgumentException($"Cannot have a negative cost: {row[x]} for {here.Label}");
                     }
 
-                    _gridTerrainCosts[x, y] = row[x];
+                    // _gridTerrainCosts[x, y] = row[x];
 
                     // Position bools
                     bool isFstRow = y == 0;

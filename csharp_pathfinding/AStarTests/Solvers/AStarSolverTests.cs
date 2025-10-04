@@ -34,7 +34,7 @@ namespace AStarTests
             int expectedPathLength, bool diagonalNeighbours)
         {
             GridPlaceGraph graph = new(diagonalNeighbours, new PathfinderObstacleIntersector());
-            graph.Build($"../../../Resources/excel_mazes/{mazeFile}");
+            graph.BuildFromFile($"../../../Resources/excel_mazes/{mazeFile}");
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];
@@ -62,7 +62,7 @@ namespace AStarTests
         public void TestExceptionIfStartNotOnGraph()
         {
             GridPlaceGraph graph = new GridPlaceGraph(false, new PathfinderObstacleIntersector());
-            graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
+            graph.BuildFromFile("../../../Resources/excel_mazes/spiral_test.csv");
             GridPlace notOnGraph = new GridPlace((200, 200));
             var targetPlace = (GridPlace)graph.Places[(9, 9)];
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);
@@ -75,7 +75,7 @@ namespace AStarTests
         public void TestExceptionIfTargetNotOnGraph()
         {
             GridPlaceGraph graph = new GridPlaceGraph(false, new PathfinderObstacleIntersector());
-            graph.Build("../../../Resources/excel_mazes/spiral_test.csv");
+            graph.BuildFromFile("../../../Resources/excel_mazes/spiral_test.csv");
             GridPlace notOnGraph = new GridPlace((200, 200));
             var startPlace = (GridPlace)graph.Places[(0, 0)];
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);

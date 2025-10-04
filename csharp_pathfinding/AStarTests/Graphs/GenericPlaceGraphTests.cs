@@ -20,7 +20,7 @@ namespace AStarTests
         [TestMethod]
         public void TestBuild_SucceedsForGoodGraph()
         {
-            sut.Build("../../../Resources/mermaid_networks/net1.mmd");
+            sut.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
 
             Assert.Contains("G", sut.Places.Keys);
             Assert.DoesNotContain("H", sut.Places.Keys);
@@ -28,10 +28,18 @@ namespace AStarTests
         }
 
         [TestMethod]
+        public void TestBuild_ExceptionOnBadFileType()
+        {
+            TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
+                () => sut.BuildFromFile("../../../Resources/mermaid_networks/netwithnegative.txt"),
+                "GenericPlaceGraph only supports building from .mmd (Mermaid) files");
+        }
+        
+        [TestMethod]
         public void TestBuild_ExceptionOnNegativeCost()
         {
             TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
-                () => sut.Build("../../../Resources/mermaid_networks/netwithnegative.mmd"),
+                () => sut.BuildFromFile("../../../Resources/mermaid_networks/netwithnegative.mmd"),
                 "Cannot have a negative cost: -2 for (C, D)");
         }
 
@@ -39,7 +47,7 @@ namespace AStarTests
         public void TestBuild_ExceptionOnDuplicatePairs()
         {
             TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
-                () => sut.Build("../../../Resources/mermaid_networks/netwithduplicate.mmd"),
+                () => sut.BuildFromFile("../../../Resources/mermaid_networks/netwithduplicate.mmd"),
                 "Cannot specify the same pair of places more than once: (A, B)");
         }
 
@@ -47,7 +55,7 @@ namespace AStarTests
         public void TestBuild_ExceptionOnDisjointGraph()
         {
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => sut.Build("../../../Resources/mermaid_networks/netdisjoint.mmd"),
+                () => sut.BuildFromFile("../../../Resources/mermaid_networks/netdisjoint.mmd"),
                 "Cannot support a disjoint Graph!");
         }
 

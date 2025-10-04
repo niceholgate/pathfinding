@@ -15,8 +15,12 @@ namespace AStarNickNS
         //    return new Dictionary<Place<string>, double>();
         //}
 
-        protected override void BuildCore(string dataFile)
+        protected override void BuildFromFileCore(string dataFile)
         {
+            if (!dataFile.EndsWith(".mmd"))
+            {
+                throw new ArgumentException("GenericPlaceGraph only supports building from .mmd (Mermaid) files");
+            }
             List<string> mermaidLines = new TextLineReader(dataFile).GetData();
             BuildFromMermaid(mermaidLines);
         }

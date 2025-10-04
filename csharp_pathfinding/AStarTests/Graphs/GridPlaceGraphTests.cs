@@ -23,7 +23,7 @@ namespace AStarTests
         public void TestBuild_SucceedsForGoodGraphWithDiagonals()
         {
             sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector());
-            sut.Build("../../../Resources/excel_mazes/3x3_test.csv");
+            sut.BuildFromFile("../../../Resources/excel_mazes/3x3_test.csv");
 
             // Check the costs
             Dictionary<(int, int), double> expectedCosts = new()
@@ -69,7 +69,7 @@ namespace AStarTests
         public void TestBuild_SucceedsForGoodGraphWithoutDiagonals()
         {
             sut = new GridPlaceGraph(false, new PathfinderObstacleIntersector());
-            sut.Build("../../../Resources/excel_mazes/3x3_test.csv");
+            sut.BuildFromFile("../../../Resources/excel_mazes/3x3_test.csv");
 
             // Check the costs
             Dictionary<(int, int), double> expectedCosts = new()
@@ -108,13 +108,22 @@ namespace AStarTests
 
             Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1)));
         }
+        
+        [TestMethod]
+        public void TestBuild_ExceptionOnBadFileType()
+        {
+            sut = new GridPlaceGraph(false, new PathfinderObstacleIntersector());
+            TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
+                () => sut.BuildFromFile("../../../Resources/excel_mazes/3x3_test.txt"),
+                "GridPlaceGraph only supports building from .csv files");
+        }
 
         [TestMethod]
         public void TestBuild_ExceptionNonRectangularGrid()
         {
             sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector());
             TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
-                () => sut.Build("../../../Resources/excel_mazes/non-rectangular_test.csv"),
+                () => sut.BuildFromFile("../../../Resources/excel_mazes/non-rectangular_test.csv"),
                 "Cannot have a non-rectangular grid (row 0 has length 3 but row 1 has length 2).");
         }
 
@@ -123,7 +132,7 @@ namespace AStarTests
         {
             sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector());
             TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
-                () => sut.Build("../../../Resources/excel_mazes/negative_cost_test.csv"),
+                () => sut.BuildFromFile("../../../Resources/excel_mazes/negative_cost_test.csv"),
                 "Cannot have a negative cost: -6 for (1, 2)");
         }
 
@@ -142,7 +151,7 @@ namespace AStarTests
             // Initial Build just to get the GridTerrainCosts for the concreteIntersector
             // Could make this simpler if add ability to specify a double[,] for Build()
             sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector());
-            sut.Build("../../../Resources/excel_mazes/walls_test.csv");
+            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
             
             PathfinderObstacleIntersector concreteIntersector = new()
             {
@@ -162,7 +171,7 @@ namespace AStarTests
             
             sut = new GridPlaceGraph(true, mockIntersector,
                 new HashSet<double>{0.9, 1.1, 2.9, 3.1, Math.Sqrt(2) - 0.01, Math.Sqrt(2) + 0.01});
-            sut.Build("../../../Resources/excel_mazes/walls_test.csv");
+            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
             
             mockIntersector.Received(2968)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
@@ -191,7 +200,7 @@ namespace AStarTests
             // Initial Build just to get the GridTerrainCosts for the concreteIntersector
             // Could make this simpler if add ability to specify a double[,] for Build()
             sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector());
-            sut.Build("../../../Resources/excel_mazes/walls_test.csv");
+            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
             double[,] gridTerrainCosts = sut.GetGridTerrainCosts();
             
             PathfinderObstacleIntersector concreteIntersector = new()
@@ -212,7 +221,7 @@ namespace AStarTests
             
             sut = new GridPlaceGraph(true, mockIntersector,
                 new HashSet<double>{0.9, Math.Sqrt(2) + 0.01});
-            sut.Build("../../../Resources/excel_mazes/walls_test.csv");
+            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
             
             mockIntersector.Received(1099)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());

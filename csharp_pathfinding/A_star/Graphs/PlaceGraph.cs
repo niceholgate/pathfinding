@@ -43,13 +43,13 @@ namespace AStarNickNS
         //public abstract Dictionary<Place<TCoord>, double> GetImplicitNeighboursWithCosts(Place<TCoord> place);
 
         // getexplicitneighbours ?
-        public void Build(string dataFile)
+        public void BuildFromFile(string dataFile)
         {
-            BuildCore(dataFile);
+            BuildFromFileCore(dataFile);
             CheckDisjoint();
         }
 
-        protected virtual void BuildCore(string dataFile)
+        protected virtual void BuildFromFileCore(string dataFile)
         {
         }
 
