@@ -15,7 +15,7 @@ namespace AStarNickNS
             _graph = graph;
         }
         
-        public IEnumerable<TPlace> SolvePath(IPlace<TCoord> start, IPlace<TCoord> target)
+        public IEnumerable<TPlace> SolvePath(IPlace<TCoord> start, IPlace<TCoord> target, double pathfinderSize=0.9)
         {
             _graph.CheckDisjoint();
             if (!_graph.Places.ContainsKey(start.Label))
@@ -43,7 +43,7 @@ namespace AStarNickNS
                 
                 foreach (TPlace neighbour in current.Neighbours)
                 {
-                    if (_graph.IsBlocked(current.Label, neighbour.Label)) continue;
+                    if (_graph.IsBlocked(current.Label, neighbour.Label, pathfinderSize)) continue;
                     
                     double newCostForNeighbour = costSoFar[current] + current.CostToLeave(neighbour, _graph);
 

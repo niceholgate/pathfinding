@@ -12,26 +12,26 @@ namespace AStarTests
     {
         private AStarSolver<GridPlace, (int, int)> _sut;
 
-        public static IEnumerable<object[]> GetTestData()
+        public static IEnumerable<object[]> PathfinderTestData()
         {
-            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 49, true };
-            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 59, false };
-            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 19, true };
-            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 23, false };
-            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 44, true };
-            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 53, false };
-            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 35, true };
-            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 41, false };
-            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 36, true };
-            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 41, false };
-            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 10, true };
-            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 17, false };
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 48, true };
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58, false };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 18, true };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22, false };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 43, true };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 52, false };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 34, true };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40, false };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 35, true };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 40, false };
+            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 13, true };
+            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 18, false };
         }
 
         [DataTestMethod]
-        [DynamicData(nameof(GetTestData), DynamicDataSourceType.Method)]
+        [DynamicData(nameof(PathfinderTestData), DynamicDataSourceType.Method)]
         public void TestFindsShortestPathIncludingWallsAndSwamps(string mazeFile, (int, int) start, (int, int) target,
-            int expectedPathLength, bool diagonalNeighbours)
+            double expectedPathCost, bool diagonalNeighbours)
         {
             GridPlaceGraph graph = new(diagonalNeighbours, new PathfinderObstacleIntersector());
             graph.BuildFromFile($"../../../Resources/excel_mazes/{mazeFile}");
@@ -39,9 +39,9 @@ namespace AStarTests
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];
 
-            List<GridPlace> actual = _sut.SolvePath(startPlace, targetPlace).ToList();
+            List<GridPlace> path = _sut.SolvePath(startPlace, targetPlace).ToList();
 
-            Assert.AreEqual(expectedPathLength, actual.Count);
+            Assert.AreEqual(expectedPathCost, graph.GetPathCost(path.Select(place => place.Label).ToList()));
         }
 
         [TestMethod]

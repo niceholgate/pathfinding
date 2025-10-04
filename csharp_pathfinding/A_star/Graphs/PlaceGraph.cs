@@ -18,26 +18,28 @@ namespace AStarNickNS
     // Ability to get the terrain cost should depend on how smart the agent finding a path is. i.e. should they be planning according to player's slow debuffs?
     public abstract class PlaceGraph<TCoord>
     {
-        protected Dictionary<TCoord, double> _terrainCosts = new();
+        public readonly Dictionary<TCoord, IPlace<TCoord>> Places = new();
 
-        public Dictionary<TCoord, IPlace<TCoord>> Places = new();
-
-        public bool IsBlocked(TCoord from, TCoord to)
+        public bool IsBlocked(TCoord from, TCoord to, double pathfinderSize)
         {
-            return CostToLeave(from, to) <= 0;
+            return CostToLeave(from, to) <= 0 && !PlaceAccessible(to, pathfinderSize);
         }
 
-        public virtual double GetTerrainCost(TCoord label)
+        protected bool PlaceExists(TCoord label)
         {
-            return _terrainCosts[label];
+            return Places.ContainsKey(label);
         }
 
-        //
-        public virtual void SetTerrainCost(TCoord label, double cost)
-        {
-            _terrainCosts[label] = cost;
-        }
+        // TODO: replace pathfinderSize with a PathfinderAttributes data class?
+        protected abstract bool PlaceAccessible(TCoord label, double pathfinderSize);
 
+        public double GetPathCost(IList<TCoord> path)
+        {
+            return Enumerable.Range(0, path.Count - 1)
+                .Select(i => CostToLeave(path[i], path[i+1]))
+                .Sum();
+        }
+        
         public abstract double CostToLeave(TCoord from, TCoord to);
 
         //public abstract Dictionary<Place<TCoord>, double> GetImplicitNeighboursWithCosts(Place<TCoord> place);

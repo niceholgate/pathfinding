@@ -78,15 +78,16 @@ namespace AStarTests {
         // }
 
         
-        private DijkstraSolver<GenericPlace, string> _sut;
+        private DijkstraSolver<GenericPlace, string> _sutGenericPlace;
         
+        private DijkstraSolver<GridPlace, (int, int)> _sutGridPlace;
         
         [TestMethod]
         public void TestFindsShortestPath()
         {
             GenericPlaceGraph graph = new GenericPlaceGraph();
             graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
-            _sut = new DijkstraSolver<GenericPlace, string>(graph);
+            _sutGenericPlace = new DijkstraSolver<GenericPlace, string>(graph);
             var startPlace = (GenericPlace)graph.Places["A"];
             var targetPlace = (GenericPlace)graph.Places["G"];
 
@@ -100,9 +101,65 @@ namespace AStarTests {
                 graph.Places["G"],
             };
             
-            List<GenericPlace> actual = _sut.SolvePath(startPlace, targetPlace).ToList();
+            List<GenericPlace> actual = _sutGenericPlace.SolvePath(startPlace, targetPlace).ToList();
             
             CollectionAssert.AreEqual(expected, actual);
+        }
+        
+        // [TestMethod]
+        // public void TestFindsShortestPath2()
+        // {
+        //     GenericPlaceGraph graph = new GenericPlaceGraph();
+        //     graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
+        //     _sut = new DijkstraSolver<GenericPlace, string>(graph);
+        //     var startPlace = (GenericPlace)graph.Places["A"];
+        //     var targetPlace = (GenericPlace)graph.Places["G"];
+        //
+        //     List<IPlace<string>> expected = new List<IPlace<string>>
+        //     {
+        //         graph.Places["A"],
+        //         graph.Places["C"],
+        //         graph.Places["B"],
+        //         graph.Places["E"],
+        //         graph.Places["F"],
+        //         graph.Places["G"],
+        //     };
+        //     
+        //     List<GenericPlace> actual = _sut.SolvePath(startPlace, targetPlace).ToList();
+        //     
+        //     CollectionAssert.AreEqual(expected, actual);
+        // }
+        
+        public static IEnumerable<object[]> PathfinderTestData()
+        {
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 48, true };
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58, false };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 18, true };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22, false };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 43, true };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 52, false };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 34, true };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40, false };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 35, true };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 40, false };
+            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 13, true };
+            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 18, false };
+        }
+
+        [DataTestMethod]
+        [DynamicData(nameof(PathfinderTestData), DynamicDataSourceType.Method)]
+        public void TestFindsShortestPathIncludingWallsAndSwamps(string mazeFile, (int, int) start, (int, int) target,
+            double expectedPathCost, bool diagonalNeighbours)
+        {
+            GridPlaceGraph graph = new(diagonalNeighbours, new PathfinderObstacleIntersector());
+            graph.BuildFromFile($"../../../Resources/excel_mazes/{mazeFile}");
+            _sutGridPlace = new DijkstraSolver<GridPlace, (int, int)>(graph);
+            var startPlace = (GridPlace)graph.Places[start];
+            var targetPlace = (GridPlace)graph.Places[target];
+
+            List<GridPlace> path = _sutGridPlace.SolvePath(startPlace, targetPlace).ToList();
+
+            Assert.AreEqual(expectedPathCost, graph.GetPathCost(path.Select(place => place.Label).ToList()));
         }
         
         [TestMethod]
@@ -113,9 +170,9 @@ namespace AStarTests {
             GenericPlace B = new GenericPlace("B");
             graph.Places.Add("A", A);
             graph.Places.Add("B", B);
-            _sut = new DijkstraSolver<GenericPlace, string>(graph);
+            _sutGenericPlace = new DijkstraSolver<GenericPlace, string>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.SolvePath(A, B),
+                () => _sutGenericPlace.SolvePath(A, B),
                 "Cannot support a disjoint Graph!");
         }
         
@@ -126,9 +183,9 @@ namespace AStarTests {
             graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
             GenericPlace notOnGraph = new GenericPlace("H");
             var targetPlace = (GenericPlace)graph.Places["G"];
-            _sut = new DijkstraSolver<GenericPlace, string>(graph);
+            _sutGenericPlace = new DijkstraSolver<GenericPlace, string>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.SolvePath(notOnGraph, targetPlace),
+                () => _sutGenericPlace.SolvePath(notOnGraph, targetPlace),
                 "The start place (\"H\") is not on the graph!");
         }
         
@@ -139,9 +196,9 @@ namespace AStarTests {
             graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
             GenericPlace notOnGraph = new GenericPlace("H");
             var startPlace = (GenericPlace)graph.Places["A"];
-            _sut = new DijkstraSolver<GenericPlace, string>(graph);
+            _sutGenericPlace = new DijkstraSolver<GenericPlace, string>(graph);
             TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-                () => _sut.SolvePath(startPlace, notOnGraph),
+                () => _sutGenericPlace.SolvePath(startPlace, notOnGraph),
                 "The target place (\"H\") is not on the graph!");
         }
     }

@@ -75,10 +75,10 @@ namespace AStarTests
             // Check inaccessible Place
             foreach (var placeLabel in sut.Places.Keys)
             {
-                Assert.IsTrue(sut.IsBlocked(placeLabel, (1, 1)));
+                Assert.IsTrue(sut.IsBlocked(placeLabel, (1, 1), 0.9));
             }
 
-            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1)));
+            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), 0.9));
         }
 
         [TestMethod]
@@ -119,10 +119,10 @@ namespace AStarTests
             // Check inaccessible Place
             foreach (var placeLabel in sut.Places.Keys)
             {
-                Assert.IsTrue(sut.IsBlocked(placeLabel, (1, 1)));
+                Assert.IsTrue(sut.IsBlocked(placeLabel, (1, 1), 0.9));
             }
 
-            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1)));
+            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), 0.9));
         }
         
         [TestMethod]

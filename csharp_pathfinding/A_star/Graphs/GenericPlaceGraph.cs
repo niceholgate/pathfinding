@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text.RegularExpressions;
 using NicUtils;
 
@@ -14,6 +13,11 @@ namespace AStarNickNS
         //public override Dictionary<Place<string>, double> GetImplicitNeighboursWithCosts(Place<string> place) {
         //    return new Dictionary<Place<string>, double>();
         //}
+
+        protected override bool PlaceAccessible(string label, double pathfinderSize)
+        {
+            return PlaceExists(label);
+        }
 
         protected override void BuildFromFileCore(string dataFile)
         {

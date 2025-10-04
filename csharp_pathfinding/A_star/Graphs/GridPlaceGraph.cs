@@ -38,7 +38,7 @@ namespace AStarNickNS
             _descendingOrderedPathfinderSizes = PathfinderObstacleIntersectionsCache.Keys
                 .OrderByDescending(k => k).ToList();
         }
-
+        
         public override double CostToLeave((int, int) from, (int, int) to)
         {
             return GetTerrainCost(to);
@@ -50,25 +50,26 @@ namespace AStarNickNS
                 _intersector.PathfinderIntersectsWithObstacles(x, y, pathfinderSize);
             return !PathfinderObstacleIntersectionsCache[pathfinderSize][x, y].Value;
         }
-                
-        public override double GetTerrainCost((int, int) label)
+
+        protected override bool PlaceAccessible((int, int) label, double pathfinderSize)
         {
             (int x, int y) = label;
-            if (CoordinateOutOfBounds(x, y)) return 0;
-            return _gridTerrainCosts[x, y];
+            return PlaceExists(label) && PathfinderCanFitCached(x, y, pathfinderSize);
         }
 
-        private bool CoordinateOutOfBounds(int x, int y)
+        public double GetTerrainCost((int, int) label)
         {
-            return x < 0 || x >= _gridTerrainCosts.GetLength(0)
-                || y < 0 || y >= _gridTerrainCosts.GetLength(1);
+            (int x, int y) = label;
+            // if (!PlaceExists(label)) return 0;
+            return _gridTerrainCosts[x, y];
         }
         
         // If the grid changes, recompute PathfinderCanFitCached.
         // Only need to recompute it around cells with newly changed accessibility within a radius equal to half the largest pathfinder size.
         // TODO: if multiple updates are happening nearby to each other, it would be more efficient to make one bigger bounding box
-        // and do just a single intersections update to avoid rework.
-        public override void SetTerrainCost((int, int) label, double cost)
+        // and do just a single intersections update to avoid rework. If a player is just placing building in series, can neglect this.
+        // But it would be significant if a map underwent a significant terrain change e.g. from an earthquake or flood.
+        public void SetTerrainCost((int, int) label, double cost)
         {
             (int x, int y) = label;
 
