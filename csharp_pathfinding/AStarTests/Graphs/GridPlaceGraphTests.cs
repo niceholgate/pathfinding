@@ -140,8 +140,8 @@ namespace AStarTests
         public void TestPathfinderCanFitCached()
         {
             // Initial Build just to get the GridTerrainCosts for the concreteIntersector
-            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
-                new HashSet<double>{0.9, 1.1, 2.9, 3.1, Math.Sqrt(2) - 0.01, Math.Sqrt(2) + 0.01});
+            // Could make this simpler if add ability to specify a double[,] for Build()
+            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector());
             sut.Build("../../../Resources/excel_mazes/walls_test.csv");
             
             PathfinderObstacleIntersector concreteIntersector = new()
@@ -164,7 +164,7 @@ namespace AStarTests
                 new HashSet<double>{0.9, 1.1, 2.9, 3.1, Math.Sqrt(2) - 0.01, Math.Sqrt(2) + 0.01});
             sut.Build("../../../Resources/excel_mazes/walls_test.csv");
             
-            mockIntersector.Received(3936)
+            mockIntersector.Received(2968)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         
             // Inside a size 1 square
@@ -180,10 +180,60 @@ namespace AStarTests
             Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, Math.Sqrt(2) - 0.01));
             Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, Math.Sqrt(2) + 0.01));
             
-            // Due to caching, Intersector did not need to perform any further calcs
-            mockIntersector.Received(3936)
+            // Due to caching, Intersector did not need to perform any further calcs after Build
+            mockIntersector.Received(2968)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         }
         
+        [TestMethod]
+        public void TestPathfinderCanFitCached_SelectivelyCalledWhenTerrainGridAccessibilityUpdated()
+        {
+            // Initial Build just to get the GridTerrainCosts for the concreteIntersector
+            // Could make this simpler if add ability to specify a double[,] for Build()
+            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector());
+            sut.Build("../../../Resources/excel_mazes/walls_test.csv");
+            double[,] gridTerrainCosts = sut.GetGridTerrainCosts();
+            
+            PathfinderObstacleIntersector concreteIntersector = new()
+            {
+                GridTerrainCosts = gridTerrainCosts
+            };
+            
+            var mockIntersector = Substitute.For<IPathfinderObstacleIntersector>();
+            mockIntersector
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>())
+                .Returns(callInfo =>
+                {
+                    int x = callInfo.ArgAt<int>(0);
+                    int y = callInfo.ArgAt<int>(1);
+                    double size = callInfo.ArgAt<double>(2);
+                    return concreteIntersector.PathfinderIntersectsWithObstacles(x, y, size);
+                });
+            
+            sut = new GridPlaceGraph(true, mockIntersector,
+                new HashSet<double>{0.9, Math.Sqrt(2) + 0.01});
+            sut.Build("../../../Resources/excel_mazes/walls_test.csv");
+            
+            mockIntersector.Received(1099)
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+        
+            // Initially, a collision
+            Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, Math.Sqrt(2) + 0.01));
+            
+            // Caching means no further intersection checks
+            mockIntersector.Received(1099)
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+
+            gridTerrainCosts[3, 7] = 1;
+            sut.SetTerrainCost((3, 7), 1);
+            
+            // No more collision
+            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, Math.Sqrt(2) + 0.01));
+            
+            // "radius" is 1 i.e. 9 cells. Should perform all 9 rechecks for larger pathfinder size, then only 8 for smaller pathfinder size,
+            // since the large one can fit at coordinate (2, 8) after this change.
+            mockIntersector.Received(1099 + 9 + 8)
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+        }
     }
 }

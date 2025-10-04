@@ -1,6 +1,7 @@
 using NicUtils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AStarNickNS
 {
@@ -13,30 +14,35 @@ namespace AStarNickNS
         private double[,] _gridTerrainCosts;
 
         private IPathfinderObstacleIntersector _intersector;
+
+        private List<double> _descendingOrderedPathfinderSizes;
         
         public GridPlaceGraph(bool diagonalNeighbours, IPathfinderObstacleIntersector pathfinderObstacleIntersector)
         {
             DiagonalNeighbours = diagonalNeighbours;
             _intersector = pathfinderObstacleIntersector;
             PathfinderObstacleIntersectionsCache = new Dictionary<double, bool?[,]> { { 0.9, null } };
+            _descendingOrderedPathfinderSizes = PathfinderObstacleIntersectionsCache.Keys
+                .OrderByDescending(k => k).ToList();
         }
-        
-        public GridPlaceGraph(bool diagonalNeighbours, IPathfinderObstacleIntersector pathfinderObstacleIntersector, HashSet<double> pathfinderSizes)
+
+        public GridPlaceGraph(bool diagonalNeighbours, IPathfinderObstacleIntersector pathfinderObstacleIntersector,
+            HashSet<double> pathfinderSizes)
         {
             DiagonalNeighbours = diagonalNeighbours;
             _intersector = pathfinderObstacleIntersector;
             PathfinderObstacleIntersectionsCache = new Dictionary<double, bool?[,]>();
-            foreach (var pathfinderSize in pathfinderSizes) PathfinderObstacleIntersectionsCache.Add(pathfinderSize, null);
-        }        //public override Dictionary<Place<(int, int)>, double> GetImplicitNeighboursWithCosts(Place<(int, int)> place) {
-        //    return new Dictionary<Place<(int, int)>, double>();
-        //}
-        
+            foreach (var pathfinderSize in pathfinderSizes)
+                PathfinderObstacleIntersectionsCache.Add(pathfinderSize, null);
+            _descendingOrderedPathfinderSizes = PathfinderObstacleIntersectionsCache.Keys
+                .OrderByDescending(k => k).ToList();
+        }
+
         public override double CostToLeave((int, int) from, (int, int) to)
         {
             return GetTerrainCost(to);
         }
         
-        // TODO: If the grid changes, recompute. Only need to recompute it around cells with newly changed accessibility within a radius equal to half the largest pathfinder size.
         public bool PathfinderCanFitCached(int x, int y, double pathfinderSize)
         {
             PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] ??=
@@ -57,10 +63,44 @@ namespace AStarNickNS
                 || y < 0 || y >= _gridTerrainCosts.GetLength(1);
         }
         
+        // If the grid changes, recompute PathfinderCanFitCached.
+        // Only need to recompute it around cells with newly changed accessibility within a radius equal to half the largest pathfinder size.
+        // TODO: if multiple updates are happening nearby to each other, it would be more efficient to make one bigger bounding box
+        // and do just a single intersections update to avoid rework.
         public override void SetTerrainCost((int, int) label, double cost)
         {
             (int x, int y) = label;
+
+            double oldCost = _gridTerrainCosts[x, y];
             _gridTerrainCosts[x, y] = cost;
+            
+            // Only need to recompute PathfinderCanFitCached if there's a change in accessibility.
+            if ((oldCost <= 0 && cost > 0) || (cost <= 0 && oldCost > 0))
+            {
+                double? previousPathfinderSize = null;
+                foreach (double pathfinderSize in _descendingOrderedPathfinderSizes)
+                {
+                    double halfWidth = _descendingOrderedPathfinderSizes.Max() / 2;
+                    int radius = (int)Math.Ceiling(halfWidth);
+                    for (int cellX = x - radius; cellX <= x + radius; cellX++)
+                    {
+                        for (int cellY = y - radius; cellY <= y + radius; cellY++)
+                        {
+                            if (previousPathfinderSize != null &&
+                                !PathfinderObstacleIntersectionsCache[previousPathfinderSize.Value][cellX, cellY].Value)
+                            {
+                                PathfinderObstacleIntersectionsCache[pathfinderSize][cellX, cellY] = false;
+                                continue;
+                            }
+
+                            PathfinderObstacleIntersectionsCache[pathfinderSize][cellX, cellY] = null;
+                            PathfinderCanFitCached(cellX, cellY, pathfinderSize);
+                        }
+                    }
+
+                    previousPathfinderSize = pathfinderSize;
+                }
+            }
         }
 
         protected override void BuildCore(string dataFile)
@@ -93,7 +133,7 @@ namespace AStarNickNS
                         throw new ArgumentException($"Cannot have a negative cost: {row[x]} for {here.Label}");
                     }
 
-                    SetTerrainCost(here.Label, row[x]);
+                    _gridTerrainCosts[x, y] = row[x];
 
                     // Position bools
                     bool isFstRow = y == 0;
@@ -117,16 +157,26 @@ namespace AStarNickNS
                 }
             }
             
-            foreach (double pathfinderSize in PathfinderObstacleIntersectionsCache.Keys)
+            // Assess pathfinders in descending order. If the next biggest pathfinder can fit in a certain place, so can the current one.
+            double? previousPathfinderSize = null;
+            foreach (double pathfinderSize in _descendingOrderedPathfinderSizes)
             {
                 PathfinderObstacleIntersectionsCache[pathfinderSize] = new bool?[width, height];
                 for (int y = 0; y < height; y++)
                 {
                     for (int x = 0; x < width; x++)
                     {
+                        if (previousPathfinderSize != null &&
+                            !PathfinderObstacleIntersectionsCache[previousPathfinderSize.Value][x, y].Value)
+                        {
+                            PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] = false;
+                            continue;
+                        }
                         PathfinderCanFitCached(x, y, pathfinderSize);
                     }
                 }
+
+                previousPathfinderSize = pathfinderSize;
             }
         }
 
