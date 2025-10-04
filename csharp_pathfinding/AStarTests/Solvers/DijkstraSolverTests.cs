@@ -132,17 +132,18 @@ namespace AStarTests {
         
         public static IEnumerable<object[]> PathfinderTestData()
         {
-            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 48, true };
+            // Test various mazes and diagonality
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 52.14, true };
             yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58, false };
-            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 18, true };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 19.66, true };
             yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22, false };
-            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 43, true };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 46.73, true };
             yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 52, false };
-            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 34, true };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 36.49, true };
             yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40, false };
-            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 35, true };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 37.07, true };
             yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 40, false };
-            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 13, true };
+            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 14.24, true };
             yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 18, false };
         }
 
@@ -159,7 +160,10 @@ namespace AStarTests {
 
             List<GridPlace> path = _sutGridPlace.SolvePath(startPlace, targetPlace).ToList();
 
-            Assert.AreEqual(expectedPathCost, graph.GetPathCost(path.Select(place => place.Label).ToList()));
+            TestHelpers.AssertEqualWithinTolerance(
+                expectedPathCost,
+                graph.GetPathCost(path.Select(place => place.Label).ToList()),
+                0.01);
         }
         
         [TestMethod]

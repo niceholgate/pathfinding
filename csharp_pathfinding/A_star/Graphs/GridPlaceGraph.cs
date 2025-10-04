@@ -8,6 +8,8 @@ namespace AStarNickNS
 {
     public class GridPlaceGraph : PlaceGraph<(int, int)>
     {
+        private static readonly double SQRT2 = Math.Sqrt(2);
+        
         private bool DiagonalNeighbours { get; init; }
         
         private Dictionary<double, bool?[,]> PathfinderObstacleIntersectionsCache { get; init; }
@@ -41,6 +43,10 @@ namespace AStarNickNS
         
         public override double CostToLeave((int, int) from, (int, int) to)
         {
+            int dx = from.Item1 - to.Item1;
+            int dy = from.Item2 - to.Item2;
+            bool isDiagonal = dx * dx + dy * dy == 2;
+            if (isDiagonal) return GetTerrainCost(to) * SQRT2;
             return GetTerrainCost(to);
         }
         
