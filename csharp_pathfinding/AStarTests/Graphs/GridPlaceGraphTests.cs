@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using MathNet.Numerics.Providers.LinearAlgebra;
+using NicUtils.ExtensionMethods;
 using NSubstitute;
 
 namespace AStarTests
@@ -14,10 +16,24 @@ namespace AStarTests
     {
         private GridPlaceGraph sut;
 
-        //[TestInitialize]
-        //public void Initialize() {
-        //    sut = new();
-        //}
+        private double[,] gridTerrainCosts = {
+            { 1, 0, 0, 0, 0 },
+            { 1, 1, 1, 0, 1 },
+            { 1, 1, 1, 0, 1 },
+            { 1, 1, 1, 0, 1 },
+            { 1, 1, 1, 0, 1 },
+            { 1, 1, 1, 0, 1 },
+            { 1, 1, 1, 0, 1 },
+            { 1, 1, 1, 0, 0 },
+            { 1, 1, 1, 1, 1 },
+            { 1, 1, 1, 1, 1 },
+            { 1, 1, 0, 0, 0 }
+        };
+        
+        [TestInitialize]
+        public void Initialize() {
+            gridTerrainCosts = gridTerrainCosts.Transpose();
+        }
 
         [TestMethod]
         public void TestBuild_SucceedsForGoodGraphWithDiagonals()
@@ -148,14 +164,9 @@ namespace AStarTests
         [TestMethod]
         public void TestPathfinderCanFitCached()
         {
-            // Initial Build just to get the GridTerrainCosts for the concreteIntersector
-            // Could make this simpler if add ability to specify a double[,] for Build()
-            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector());
-            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
-            
             PathfinderObstacleIntersector concreteIntersector = new()
             {
-                GridTerrainCosts = sut.GetGridTerrainCosts()
+                GridTerrainCosts = gridTerrainCosts
             };
             
             var mockIntersector = Substitute.For<IPathfinderObstacleIntersector>();
@@ -171,9 +182,9 @@ namespace AStarTests
             
             sut = new GridPlaceGraph(true, mockIntersector,
                 new HashSet<double>{0.9, 1.1, 2.9, 3.1, Math.Sqrt(2) - 0.01, Math.Sqrt(2) + 0.01});
-            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
+            sut.BuildFromArray(gridTerrainCosts);
             
-            mockIntersector.Received(2968)
+            mockIntersector.Received(298)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         
             // Inside a size 1 square
@@ -190,19 +201,13 @@ namespace AStarTests
             Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, Math.Sqrt(2) + 0.01));
             
             // Due to caching, Intersector did not need to perform any further calcs after Build
-            mockIntersector.Received(2968)
+            mockIntersector.Received(298)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         }
         
         [TestMethod]
         public void TestPathfinderCanFitCached_SelectivelyCalledWhenTerrainGridAccessibilityUpdated()
         {
-            // Initial Build just to get the GridTerrainCosts for the concreteIntersector
-            // Could make this simpler if add ability to specify a double[,] for Build()
-            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector());
-            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
-            double[,] gridTerrainCosts = sut.GetGridTerrainCosts();
-            
             PathfinderObstacleIntersector concreteIntersector = new()
             {
                 GridTerrainCosts = gridTerrainCosts
@@ -221,19 +226,18 @@ namespace AStarTests
             
             sut = new GridPlaceGraph(true, mockIntersector,
                 new HashSet<double>{0.9, Math.Sqrt(2) + 0.01});
-            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
+            sut.BuildFromArray(gridTerrainCosts);
             
-            mockIntersector.Received(1099)
+            mockIntersector.Received(103)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         
             // Initially, a collision
             Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, Math.Sqrt(2) + 0.01));
             
             // Caching means no further intersection checks
-            mockIntersector.Received(1099)
+            mockIntersector.Received(103)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
 
-            gridTerrainCosts[3, 7] = 1;
             sut.SetTerrainCost((3, 7), 1);
             
             // No more collision
@@ -241,7 +245,7 @@ namespace AStarTests
             
             // "radius" is 1 i.e. 9 cells. Should perform all 9 rechecks for larger pathfinder size, then only 8 for smaller pathfinder size,
             // since the large one can fit at coordinate (2, 8) after this change.
-            mockIntersector.Received(1099 + 9 + 8)
+            mockIntersector.Received(103 + 9 + 8)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         }
     }

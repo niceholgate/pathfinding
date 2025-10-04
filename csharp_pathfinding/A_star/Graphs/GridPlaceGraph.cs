@@ -104,41 +104,26 @@ namespace AStarNickNS
             }
         }
 
-        // public void BuildFromArray(double[,] array)
-        // {
-        //     
-        // }
-        
-        protected override void BuildFromFileCore(string dataFile)
+        public void BuildFromArray(double[,] gridCosts)
         {
-            if (!dataFile.EndsWith(".csv"))
-            {
-                throw new ArgumentException("GridPlaceGraph only supports building from .csv files");
-            }
+            _gridTerrainCosts = gridCosts;
+            int height = gridCosts.GetLength(1);
+            int width = gridCosts.GetLength(0);
             
-            List<List<double>> gridCosts = new CSVReader(dataFile, false).GetData<double>();
-            int height = gridCosts.Count;
-            int width = gridCosts[0].Count;
-            // _gridTerrainCosts = new double[width, height];
-            _gridTerrainCosts = gridCosts.ToRectangularArray();
             _intersector.GridTerrainCosts = _gridTerrainCosts;
             
             for (int y = 0; y < height; y++)
             {
-                List<double> row = gridCosts[y];
-
                 for (int x = 0; x < width; x++)
                 {
                     // Create this Place
                     GridPlace here = GetPlaceOrCreate((x, y));
 
                     // Set this Place's cost (error if the cost is negative)
-                    if (row[x] < 0.0)
+                    if (_gridTerrainCosts[x, y] < 0.0)
                     {
-                        throw new ArgumentException($"Cannot have a negative cost: {row[x]} for {here.Label}");
+                        throw new ArgumentException($"Cannot have a negative cost: {_gridTerrainCosts[x, y]} for {here.Label}");
                     }
-
-                    // _gridTerrainCosts[x, y] = row[x];
 
                     // Position bools
                     bool isFstRow = y == 0;
@@ -183,6 +168,17 @@ namespace AStarNickNS
 
                 previousPathfinderSize = pathfinderSize;
             }
+        }
+        
+        protected override void BuildFromFileCore(string dataFile)
+        {
+            if (!dataFile.EndsWith(".csv"))
+            {
+                throw new ArgumentException("GridPlaceGraph only supports building from .csv files");
+            }
+            
+            List<List<double>> gridCosts = new CSVReader(dataFile, false).GetData<double>();
+            BuildFromArray(gridCosts.ToRectangularArray());
         }
 
         public GridPlace GetPlaceOrCreate((int, int) label)
