@@ -17,17 +17,17 @@ namespace AStarTests
         private GridPlaceGraph sut;
 
         private double[,] gridTerrainCosts = {
-            { 1, 0, 0, 0, 0, 1 },
-            { 1, 1, 1, 0, 1, 1 },
-            { 1, 1, 1, 0, 1, 1 },
-            { 1, 1, 1, 0, 1, 1 },
-            { 1, 1, 1, 0, 1, 1 },
-            { 1, 1, 1, 0, 1, 1 },
-            { 1, 1, 1, 0, 1, 1 },
-            { 1, 1, 1, 0, 0, 1 },
-            { 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1 }
+            { 1, 0, 0, 0, 0, 1 }, // 0
+            { 1, 1, 1, 0, 1, 1 }, // 1
+            { 1, 1, 1, 0, 1, 1 }, // 2
+            { 1, 1, 1, 0, 1, 1 }, // 3
+            { 1, 1, 1, 0, 1, 1 }, // 4
+            { 1, 1, 1, 0, 1, 1 }, // 5
+            { 1, 1, 1, 0, 1, 1 }, // 6
+            { 1, 1, 1, 0, 0, 0 }, // 7
+            { 1, 1, 1, 1, 1, 1 }, // 8
+            { 1, 1, 1, 1, 1, 1 }, // 9
+            { 1, 1, 1, 1, 0, 0 }  // 10
         };
         
         [TestInitialize]
@@ -35,44 +35,35 @@ namespace AStarTests
             gridTerrainCosts = gridTerrainCosts.Transpose();
         }
 
-        
-        // Initially, just calculated each cell's size accessibility from the middle of the cell.
-        // That made this test fail because e.g. a size 1.9 pathfinder thinks it cannot stand on either of the
-        // parallel lines of cells in a tunnel that is 2 wide.
-        // Add collision checks centred on all corners as well as the cell center to make this pass.
         [TestMethod]
-        public void TestPathfinderCanFitCached_FitsWhenSizeAndGapAreEqualAndEven()
+        public void TestIsBlocked()
         {
-            PathfinderObstacleIntersector concreteIntersector = new()
-            {
-                GridTerrainCosts = gridTerrainCosts
-            };
-            
-            var mockIntersector = Substitute.For<IPathfinderObstacleIntersector>();
-            mockIntersector
-                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>())
-                .Returns(callInfo =>
-                {
-                    int x = callInfo.ArgAt<int>(0);
-                    int y = callInfo.ArgAt<int>(1);
-                    double size = callInfo.ArgAt<double>(2);
-                    return concreteIntersector.PathfinderIntersectsWithObstacles(x, y, size);
-                });
-            
-            sut = new GridPlaceGraph(true, mockIntersector,
-                new HashSet<double>{0.9, 1.9});
+            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
+                new HashSet<double>{0.9, 2.1});
             sut.BuildFromArray(gridTerrainCosts);
             
-            mockIntersector.Received(81)
-                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
-        
-            // Size 2 pathfinder can fit on either of the cells in a 2-width tunnel (by standing in the middle)
-            Assert.IsTrue(sut.PathfinderCanFitCached(3, 8, 1.9));
-            Assert.IsTrue(sut.PathfinderCanFitCached(3, 9, 1.9));
+            // Moving to a non-existent place is blocked
+            Assert.IsTrue(sut.IsBlocked((0, 0), (-1, 0), 0.9));
             
-            // Due to caching, Intersector did not need to perform any further calcs after Build
-            mockIntersector.Received(81)
-                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+            // Moving into a >0 cost cell is not blocked
+            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1),0.9));
+            Assert.IsFalse(sut.IsBlocked((1, 0), (1, 1), 0.9));
+            
+            // Moving into a <=0 cost cell is blocked
+            Assert.IsTrue(sut.IsBlocked((0, 0), (1, 0), 0.9));
+            Assert.IsTrue(sut.IsBlocked((2, 0), (1, 0), 0.9));
+            
+            // Moving diagonally right past a corner is blocked
+            Assert.IsTrue(sut.IsBlocked((2, 7), (3, 8), 0.9));
+            Assert.IsTrue(sut.IsBlocked((3, 8), (2, 7), 0.9));
+            
+            // Otherwise moving diagonally is not blocked
+            Assert.IsFalse(sut.IsBlocked((0, 7), (0, 8), 0.9));
+            Assert.IsFalse(sut.IsBlocked((0, 8), (0, 7), 0.9));
+            
+            // Moving to a place where the pathfinder can't fit is blocked
+            Assert.IsFalse(sut.IsBlocked((1, 3), (1, 2), 2.1));
+            Assert.IsTrue(sut.IsBlocked((1, 2), (2, 1), 2.1));
         }
         
         [TestMethod]
@@ -204,27 +195,13 @@ namespace AStarTests
         [TestMethod]
         public void TestPathfinderCanFitCached()
         {
-            PathfinderObstacleIntersector concreteIntersector = new()
-            {
-                GridTerrainCosts = gridTerrainCosts
-            };
-            
-            var mockIntersector = Substitute.For<IPathfinderObstacleIntersector>();
-            mockIntersector
-                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>())
-                .Returns(callInfo =>
-                {
-                    int x = callInfo.ArgAt<int>(0);
-                    int y = callInfo.ArgAt<int>(1);
-                    double size = callInfo.ArgAt<double>(2);
-                    return concreteIntersector.PathfinderIntersectsWithObstacles(x, y, size);
-                });
+            var mockIntersector = getMockIntersector();
             
             sut = new GridPlaceGraph(true, mockIntersector,
                 new HashSet<double>{0.9, 1.1, 2.9, 3.1, 2*Math.Sqrt(2) - 0.01, 2*Math.Sqrt(2) + 0.01});
             sut.BuildFromArray(gridTerrainCosts);
             
-            mockIntersector.Received(311)
+            mockIntersector.Received(319)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         
             // Inside a size 1 square
@@ -241,12 +218,68 @@ namespace AStarTests
             Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, 2*Math.Sqrt(2) + 0.01));
             
             // Due to caching, Intersector did not need to perform any further calcs after Build
-            mockIntersector.Received(311)
+            mockIntersector.Received(319)
                 .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         }
         
         [TestMethod]
         public void TestPathfinderCanFitCached_SelectivelyCalledWhenTerrainGridAccessibilityUpdated()
+        {
+            var mockIntersector = getMockIntersector();
+            
+            sut = new GridPlaceGraph(true, mockIntersector,
+                new HashSet<double>{0.9, 2*Math.Sqrt(2) + 0.01});
+            sut.BuildFromArray(gridTerrainCosts);
+            
+            mockIntersector.Received(123)
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+        
+            // Initially, a collision
+            Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, 2*Math.Sqrt(2) + 0.01));
+            
+            // Caching means no further intersection checks
+            mockIntersector.Received(123)
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+
+            sut.SetTerrainCost((3, 7), 1);
+            
+            // No more collision
+            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, 2*Math.Sqrt(2) + 0.01));
+            
+            // For bigger pathfinder, "radius" is 2 i.e. 25 cells. Should perform all 25 rechecks
+            // Then for smaller pathfinder, "radius" is 1. Should perform only 8 rechecks since the large one can fit at coordinate (2, 8) after this change.
+            mockIntersector.Received(123 + 25 + 8)
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+        }
+        
+        // Initially, just calculated each cell's size accessibility from the middle of the cell.
+        // That made this test fail because e.g. a size 1.9 pathfinder thinks it cannot stand on either of the
+        // parallel lines of cells in a tunnel that is 2 wide.
+        // Add collision checks centred on all corners as well as the cell center to make this pass.
+        [TestMethod]
+        public void TestPathfinderCanFitCached_FitsWhenSizeAndGapAreEqualAndEven()
+        {
+            var mockIntersector = getMockIntersector();
+            
+            sut = new GridPlaceGraph(true, mockIntersector,
+                new HashSet<double>{0.9, 1.9});
+            sut.BuildFromArray(gridTerrainCosts);
+            
+            mockIntersector.Received(83)
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+        
+            // Size 2 pathfinder can fit on either of the cells in a 2-width tunnel (by standing in the middle)
+            Assert.IsTrue(sut.PathfinderCanFitCached(4, 8, 1.9));
+            Assert.IsTrue(sut.PathfinderCanFitCached(4, 9, 1.9));
+            Assert.IsTrue(sut.PathfinderCanFitCached(5, 8, 1.9));
+            Assert.IsTrue(sut.PathfinderCanFitCached(5, 9, 1.9));
+            
+            // Due to caching, Intersector did not need to perform any further calcs after Build
+            mockIntersector.Received(83)
+                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+        }
+        
+        private IPathfinderObstacleIntersector getMockIntersector()
         {
             PathfinderObstacleIntersector concreteIntersector = new()
             {
@@ -263,30 +296,8 @@ namespace AStarTests
                     double size = callInfo.ArgAt<double>(2);
                     return concreteIntersector.PathfinderIntersectsWithObstacles(x, y, size);
                 });
-            
-            sut = new GridPlaceGraph(true, mockIntersector,
-                new HashSet<double>{0.9, 2*Math.Sqrt(2) + 0.01});
-            sut.BuildFromArray(gridTerrainCosts);
-            
-            mockIntersector.Received(121)
-                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
-        
-            // Initially, a collision
-            Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, 2*Math.Sqrt(2) + 0.01));
-            
-            // Caching means no further intersection checks
-            mockIntersector.Received(121)
-                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
 
-            sut.SetTerrainCost((3, 7), 1);
-            
-            // No more collision
-            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, 2*Math.Sqrt(2) + 0.01));
-            
-            // For bigger pathfinder, "radius" is 2 i.e. 25 cells. Should perform all 25 rechecks
-            // Then for smaller pathfinder, "radius" is 1. Should perform only 8 rechecks since the large one can fit at coordinate (2, 8) after this change.
-            mockIntersector.Received(121 + 25 + 8)
-                .PathfinderIntersectsWithObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+            return mockIntersector;
         }
     }
 }

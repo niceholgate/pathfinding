@@ -56,13 +56,30 @@ namespace AStarNickNS
                 _intersector.PathfinderIntersectsWithObstacles(x, y, pathfinderSize);
             return !PathfinderObstacleIntersectionsCache[pathfinderSize][x, y].Value;
         }
-
-        // TODO: introduce from/to and prevent weird corner cutting (check if there are barriers left and/or right of
-        // a diagonal transition
-        protected override bool PlaceAccessible((int, int) label, double pathfinderSize)
+        
+        protected override bool PlaceAccessible((int, int) from, (int, int) to, double pathfinderSize)
         {
-            (int x, int y) = label;
-            return PlaceExists(label) && PathfinderCanFitCached(x, y, pathfinderSize);
+            (int xTo, int yTo) = to;
+            (int xFrom, int yFrom) = from;
+            
+            // Prevent weird corner cutting for diagonal movements near to obstacle corners
+            int diagType = (xTo - xFrom) * (yTo - yFrom);
+            bool principalDiag = diagType == 1;
+            bool secondaryDiag = diagType == -1;
+            if (principalDiag &&
+                (_gridTerrainCosts[Math.Max(xTo, xFrom), Math.Min(yTo, yFrom)] <= 0
+                    || _gridTerrainCosts[Math.Min(xTo, xFrom), Math.Max(yTo, yFrom)] <= 0))
+            {
+                return false;
+            }
+            if (secondaryDiag &&
+                (_gridTerrainCosts[Math.Max(xTo, xFrom), Math.Max(yTo, yFrom)] <= 0
+                 || _gridTerrainCosts[Math.Min(xTo, xFrom), Math.Min(yTo, yFrom)] <= 0))
+            {
+                return false;
+            }
+            
+            return PlaceExists(to) && PathfinderCanFitCached(xTo, yTo, pathfinderSize);
         }
 
         public double GetTerrainCost((int, int) label)

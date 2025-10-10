@@ -111,22 +111,22 @@ namespace AStarTests {
         {
             // Test various mazes with/without diagonality, including with "swamps" (higher movement cost areas).
             // Small pathfinders only (they're smaller than the cell size i.e. they fit anywhere).
-            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 52.14, true, 0.9 };
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58, true, 0.9 };
             yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58, false, 0.9 };
-            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 19.66, true, 0.9 };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22, true, 0.9 };
             yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22, false, 0.9 };
-            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 46.73, true, 0.9 };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 51.41, true, 0.9 };
             yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 52, false, 0.9 };
-            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 36.49, true, 0.9 };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40, true, 0.9 };
             yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40, false, 0.9 };
-            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 37.07, true, 0.9 };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 39.41, true, 0.9 };
             yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 40, false, 0.9 };
-            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 14.24, true, 0.9 };
+            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 14.83, true, 0.9 };
             yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 18, false, 0.9 };
             
             // Test larger pathfinders.
-            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 33.90, true, 0.9 };
-            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 73.80, true, 1.9 };
+            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 36.24, true, 0.9 };
+            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 77.31, true, 1.9 };
         }
 
         [DataTestMethod]

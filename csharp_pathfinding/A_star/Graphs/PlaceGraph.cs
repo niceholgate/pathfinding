@@ -22,7 +22,7 @@ namespace AStarNickNS
 
         public bool IsBlocked(TCoord from, TCoord to, double pathfinderSize)
         {
-            return CostToLeave(from, to) <= 0 || !PlaceAccessible(to, pathfinderSize);
+            return !PlaceAccessible(from, to, pathfinderSize) || CostToLeave(from, to) <= 0;
         }
 
         protected bool PlaceExists(TCoord label)
@@ -31,7 +31,7 @@ namespace AStarNickNS
         }
 
         // TODO: replace pathfinderSize with a PathfinderAttributes data class?
-        protected abstract bool PlaceAccessible(TCoord label, double pathfinderSize);
+        protected abstract bool PlaceAccessible(TCoord from, TCoord to, double pathfinderSize);
 
         public double GetPathCost(IList<TCoord> path)
         {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,10 +28,12 @@ namespace AStarTests
             var targetPlace = (GridPlace)graph.Places[target];
 
             List<GridPlace> path = _sut.SolvePath(startPlace, targetPlace, pathfinderSize).ToList();
+            double pathCost = graph.GetPathCost(path.Select(place => place.Label).ToList());
+            Console.WriteLine($"pathCost: {pathCost}");
 
             TestHelpers.AssertEqualWithinTolerance(
                 expectedPathCost,
-                graph.GetPathCost(path.Select(place => place.Label).ToList()),
+                pathCost,
                 0.01);
         }
 

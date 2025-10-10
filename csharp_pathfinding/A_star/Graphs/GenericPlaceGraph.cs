@@ -14,9 +14,9 @@ namespace AStarNickNS
         //    return new Dictionary<Place<string>, double>();
         //}
 
-        protected override bool PlaceAccessible(string label, double pathfinderSize)
+        protected override bool PlaceAccessible(string from, string to, double pathfinderSize)
         {
-            return PlaceExists(label);
+            return PlaceExists(to);
         }
 
         protected override void BuildFromFileCore(string dataFile)
