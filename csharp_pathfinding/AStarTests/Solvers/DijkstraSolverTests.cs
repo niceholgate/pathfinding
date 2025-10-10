@@ -7,7 +7,8 @@ using NicUtils;
 
 namespace AStarTests {
     [TestClass]
-    public class DijkstraSolverTests {
+    public class DijkstraSolverTests
+    {
 
         // private static GenericPlaceGraph _genericPlaceGraph = new();
         // private readonly GenericPlace A = new("A", _genericPlaceGraph);
@@ -83,7 +84,7 @@ namespace AStarTests {
         private DijkstraSolver<GridPlace, (int, int)> _sutGridPlace;
         
         [TestMethod]
-        public void TestFindsShortestPath()
+        public void TestFindsShortestPathGenericPlaceGraph()
         {
             GenericPlaceGraph graph = new GenericPlaceGraph();
             graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
@@ -106,59 +107,43 @@ namespace AStarTests {
             CollectionAssert.AreEqual(expected, actual);
         }
         
-        // [TestMethod]
-        // public void TestFindsShortestPath2()
-        // {
-        //     GenericPlaceGraph graph = new GenericPlaceGraph();
-        //     graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
-        //     _sut = new DijkstraSolver<GenericPlace, string>(graph);
-        //     var startPlace = (GenericPlace)graph.Places["A"];
-        //     var targetPlace = (GenericPlace)graph.Places["G"];
-        //
-        //     List<IPlace<string>> expected = new List<IPlace<string>>
-        //     {
-        //         graph.Places["A"],
-        //         graph.Places["C"],
-        //         graph.Places["B"],
-        //         graph.Places["E"],
-        //         graph.Places["F"],
-        //         graph.Places["G"],
-        //     };
-        //     
-        //     List<GenericPlace> actual = _sut.SolvePath(startPlace, targetPlace).ToList();
-        //     
-        //     CollectionAssert.AreEqual(expected, actual);
-        // }
-        
         public static IEnumerable<object[]> PathfinderTestData()
         {
-            // Test various mazes and diagonality
-            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 52.14, true };
-            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58, false };
-            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 19.66, true };
-            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22, false };
-            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 46.73, true };
-            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 52, false };
-            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 36.49, true };
-            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40, false };
-            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 37.07, true };
-            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 40, false };
-            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 14.24, true };
-            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 18, false };
+            // Test various mazes with/without diagonality, including with "swamps" (higher movement cost areas).
+            // Small pathfinders only (they're smaller than the cell size i.e. they fit anywhere).
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 52.14, true, 0.9 };
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58, false, 0.9 };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 19.66, true, 0.9 };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22, false, 0.9 };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 46.73, true, 0.9 };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 52, false, 0.9 };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 36.49, true, 0.9 };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40, false, 0.9 };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 37.07, true, 0.9 };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 40, false, 0.9 };
+            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 14.24, true, 0.9 };
+            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 18, false, 0.9 };
+            
+            // Test larger pathfinders.
+            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 33.90, true, 0.9 };
+            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 73.80, true, 1.9 };
         }
 
         [DataTestMethod]
         [DynamicData(nameof(PathfinderTestData), DynamicDataSourceType.Method)]
-        public void TestFindsShortestPathIncludingWallsAndSwamps(string mazeFile, (int, int) start, (int, int) target,
-            double expectedPathCost, bool diagonalNeighbours)
+        public virtual void TestFindsShortestPathGridPlaceGraph(string mazeFile, (int, int) start, (int, int) target,
+            double expectedPathCost, bool diagonalNeighbours, double pathfinderSize)
         {
-            GridPlaceGraph graph = new(diagonalNeighbours, new PathfinderObstacleIntersector());
+            GridPlaceGraph graph = new(
+                diagonalNeighbours,
+                new PathfinderObstacleIntersector(), 
+                new HashSet<double>{pathfinderSize});
             graph.BuildFromFile($"../../../Resources/excel_mazes/{mazeFile}");
             _sutGridPlace = new DijkstraSolver<GridPlace, (int, int)>(graph);
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];
 
-            List<GridPlace> path = _sutGridPlace.SolvePath(startPlace, targetPlace).ToList();
+            List<GridPlace> path = _sutGridPlace.SolvePath(startPlace, targetPlace, pathfinderSize).ToList();
 
             TestHelpers.AssertEqualWithinTolerance(
                 expectedPathCost,
@@ -167,7 +152,7 @@ namespace AStarTests {
         }
         
         [TestMethod]
-        public void TestExceptionIfGraphDisjoint()
+        public virtual void TestExceptionIfGraphDisjoint()
         {
             GenericPlaceGraph graph = new GenericPlaceGraph();
             GenericPlace A = new GenericPlace("A");
@@ -181,7 +166,7 @@ namespace AStarTests {
         }
         
         [TestMethod]
-        public void TestExceptionIfStartNotOnGraph()
+        public virtual void TestExceptionIfStartNotOnGraph()
         {
             GenericPlaceGraph graph = new GenericPlaceGraph();
             graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");
@@ -194,7 +179,7 @@ namespace AStarTests {
         }
         
         [TestMethod]
-        public void TestExceptionIfTargetNotOnGraph()
+        public virtual void TestExceptionIfTargetNotOnGraph()
         {
             GenericPlaceGraph graph = new GenericPlaceGraph();
             graph.BuildFromFile("../../../Resources/mermaid_networks/net1.mmd");

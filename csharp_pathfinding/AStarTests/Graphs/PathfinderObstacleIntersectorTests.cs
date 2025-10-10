@@ -3,13 +3,14 @@ using System.IO;
 using AStarNickNS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NicUtils;
+using NicUtils.ExtensionMethods;
 
 namespace AStarTests;
 
 [TestClass]
 public class PathfinderObstacleIntersectorTests
 {
-    private readonly double[,] gridTerrainCosts =
+    private double[,] gridTerrainCosts =
     { // y, x
         {1, 0, 0, 0, 1},
         {1, 1, 1, 0, 1},
@@ -18,12 +19,14 @@ public class PathfinderObstacleIntersectorTests
         {1, 1, 1, 0, 1},
         {1, 1, 1, 1, 1},
         {1, 1, 1, 1, 1},
+        {1, 1, 1, 1, 1},
         {1, 1, 1, 1, 1}
     };
     
     [TestMethod]
     public void TestPathfinderIntersectsWithObstacles_Happy()
     {
+        gridTerrainCosts = gridTerrainCosts.Transpose();
         PathfinderObstacleIntersector sut = new()
         {
             GridTerrainCosts = gridTerrainCosts
@@ -34,23 +37,23 @@ public class PathfinderObstacleIntersectorTests
         Assert.IsTrue(sut.PathfinderIntersectsWithObstacles(0, 0, 1.1));
             
         // Inside a size 3 square
-        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(2, 1, 2.9));
-        Assert.IsTrue(sut.PathfinderIntersectsWithObstacles(2, 1, 3.1));
+        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(1, 2, 2.9));
+        Assert.IsTrue(sut.PathfinderIntersectsWithObstacles(1, 2, 3.1));
             
         // Intersect with a corner
-        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(5, 2, 0.9));
-        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(5, 2, Math.Sqrt(2) - 0.01));
-        Assert.IsTrue(sut.PathfinderIntersectsWithObstacles(5, 2, Math.Sqrt(2) + 0.01));
+        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(2, 5, 0.9));
+        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(2, 5, 2*Math.Sqrt(2) - 0.01));
+        Assert.IsTrue(sut.PathfinderIntersectsWithObstacles(2, 5, 2*Math.Sqrt(2) + 0.01));
         
         // Respond to changes in the gridTerrainCosts
-        gridTerrainCosts[4, 3] = 1;
-        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(5, 2, 0.9));
-        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(5, 2, Math.Sqrt(2) - 0.01));
-        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(5, 2, Math.Sqrt(2) + 0.01));
-        gridTerrainCosts[4, 3] = 0;
-        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(5, 2, 0.9));
-        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(5, 2, Math.Sqrt(2) - 0.01));
-        Assert.IsTrue(sut.PathfinderIntersectsWithObstacles(5, 2, Math.Sqrt(2) + 0.01));
+        gridTerrainCosts[3, 4] = 1;
+        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(2, 5, 0.9));
+        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(2, 5, 2*Math.Sqrt(2) - 0.01));
+        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(2, 5, 2*Math.Sqrt(2) + 0.01));
+        gridTerrainCosts[3, 4] = 0;
+        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(2, 5, 0.9));
+        Assert.IsFalse(sut.PathfinderIntersectsWithObstacles(2, 5, 2*Math.Sqrt(2) - 0.01));
+        Assert.IsTrue(sut.PathfinderIntersectsWithObstacles(2, 5, 2*Math.Sqrt(2) + 0.01));
     }
     
     [TestMethod]

@@ -57,6 +57,8 @@ namespace AStarNickNS
             return !PathfinderObstacleIntersectionsCache[pathfinderSize][x, y].Value;
         }
 
+        // TODO: introduce from/to and prevent weird corner cutting (check if there are barriers left and/or right of
+        // a diagonal transition
         protected override bool PlaceAccessible((int, int) label, double pathfinderSize)
         {
             (int x, int y) = label;
@@ -88,12 +90,14 @@ namespace AStarNickNS
                 double? previousPathfinderSize = null;
                 foreach (double pathfinderSize in _descendingOrderedPathfinderSizes)
                 {
-                    double halfWidth = _descendingOrderedPathfinderSizes.Max() / 2;
+                    double halfWidth = pathfinderSize / 2;
                     int radius = (int)Math.Ceiling(halfWidth);
                     for (int cellX = x - radius; cellX <= x + radius; cellX++)
                     {
+                        if (cellX < 0 || cellX >= _gridTerrainCosts.GetLength(0)) continue;
                         for (int cellY = y - radius; cellY <= y + radius; cellY++)
                         {
+                            if (cellY < 0 || cellY >= _gridTerrainCosts.GetLength(1)) continue;
                             if (previousPathfinderSize != null &&
                                 !PathfinderObstacleIntersectionsCache[previousPathfinderSize.Value][cellX, cellY].Value)
                             {
@@ -199,9 +203,5 @@ namespace AStarNickNS
             return (GridPlace)Places[label];
         }
 
-        public double[,] GetGridTerrainCosts()
-        {
-            return (double[,])_gridTerrainCosts.Clone();
-        }
     }
 }
