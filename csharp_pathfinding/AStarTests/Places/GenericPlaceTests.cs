@@ -42,7 +42,7 @@ namespace AStarTests
         public void TestToString()
         {
             // Check ToString() method returns the label
-            Assert.AreEqual(gpA.Label, "A");
+            Assert.AreEqual("A", gpA.Label);
             Assert.AreEqual(gpA.Label, gpA.ToString());
         }
 

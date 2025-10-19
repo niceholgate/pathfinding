@@ -1,8 +1,10 @@
-namespace AStarNickNS;
-
-public interface IPathfinderObstacleIntersector
+namespace AStarNickNS
 {
-    public bool PathfinderIntersectsWithObstacles(int x, int y, double pathfinderSize);
-    
-    public double[,] GridTerrainCosts { get; set; }
+
+    public interface IPathfinderObstacleIntersector
+    {
+        public bool PathfinderIntersectsWithObstacles(int x, int y, double pathfinderSize);
+
+        public double[,] GridTerrainCosts { get; set; }
+    }
 }

@@ -129,8 +129,8 @@ namespace AStarTests {
             yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 77.31, true, 1.9 };
         }
 
-        [DataTestMethod]
-        [DynamicData(nameof(PathfinderTestData), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(PathfinderTestData))]
         public virtual void TestFindsShortestPathGridPlaceGraph(string mazeFile, (int, int) start, (int, int) target,
             double expectedPathCost, bool diagonalNeighbours, double pathfinderSize)
         {

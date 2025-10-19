@@ -10,9 +10,9 @@ namespace AStarNickNS
     {
         private static readonly double SQRT2 = Math.Sqrt(2);
         
-        private bool DiagonalNeighbours { get; init; }
+        private bool DiagonalNeighbours { get; set; }
         
-        private Dictionary<double, bool?[,]> PathfinderObstacleIntersectionsCache { get; init; }
+        private Dictionary<double, bool?[,]> PathfinderObstacleIntersectionsCache { get; set; }
 
         private double[,] _gridTerrainCosts;
 

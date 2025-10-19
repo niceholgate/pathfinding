@@ -13,8 +13,8 @@ namespace AStarTests
     {
         private AStarSolver<GridPlace, (int, int)> _sut;
 
-        [DataTestMethod]
-        [DynamicData(nameof(PathfinderTestData), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(PathfinderTestData))]
         public override void TestFindsShortestPathGridPlaceGraph(string mazeFile, (int, int) start, (int, int) target,
             double expectedPathCost, bool diagonalNeighbours, double pathfinderSize)
         {

@@ -97,7 +97,7 @@ namespace AStarNickNS
                 {
                     throw new Exception("GenericPlace labels must be unique and non-null.");
                 }
-                else if (place1.CompareTo(place2) > 0)
+                if (place1.CompareTo(place2) > 0)
                 {
                     Place2 = place1;
                     Place1 = place2;
@@ -112,7 +112,6 @@ namespace AStarNickNS
             public override string ToString() => $"({Place1}, {Place2})";
         }
 
-        [GeneratedRegex("""^\s*(\w+)\s*-->\s*(\w+)\s*:\s*(-?[\d\.]+)\s*$""")]
-        private static partial Regex MermaidRegex();
+        private static Regex MermaidRegex() => new Regex(@"^\s*(\w+)\s*-->\s*(\w+)\s*:\s*(-?[\d\.]+)\s*$", RegexOptions.Compiled);
     }
 }
