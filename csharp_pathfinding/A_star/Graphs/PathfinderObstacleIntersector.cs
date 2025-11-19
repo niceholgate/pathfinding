@@ -10,7 +10,7 @@ namespace AStarNickNS
     {
         public double[,] GridTerrainCosts { get; set; } = null;
 
-        private List<(double, double)> GRID_CORNER_DELTAS = new List<(double, double)>
+        private List<(double, double)> GRID_CORNER_DELTAS = new()
         {
             (0.0, 0.0), (0.5, 0.5), (-0.5, 0.5), (-0.5, -0.5), (0.5, -0.5)
         };

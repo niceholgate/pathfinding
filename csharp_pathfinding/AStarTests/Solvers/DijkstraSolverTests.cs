@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using AStarNickNS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NicUtils;
@@ -143,7 +144,7 @@ namespace AStarTests {
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];
 
-            List<GridPlace> path = _sutGridPlace.SolvePath(startPlace, targetPlace, pathfinderSize).ToList();
+            List<GridPlace> path = _sutGridPlace.SolvePath(startPlace, targetPlace, CancellationToken.None, pathfinderSize).ToList();
 
             TestHelpers.AssertEqualWithinTolerance(
                 expectedPathCost,

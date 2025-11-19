@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using AStarNickNS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NicUtils;
@@ -27,7 +28,7 @@ namespace AStarTests
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];
 
-            List<GridPlace> path = _sut.SolvePath(startPlace, targetPlace, pathfinderSize).ToList();
+            List<GridPlace> path = _sut.SolvePath(startPlace, targetPlace, CancellationToken.None, pathfinderSize).ToList();
             double pathCost = graph.GetPathCost(path.Select(place => place.Label).ToList());
             Console.WriteLine($"pathCost: {pathCost}");
 

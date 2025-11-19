@@ -1,6 +1,7 @@
 ﻿using FibonacciHeap;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 namespace AStarNickNS
 {
@@ -15,7 +16,7 @@ namespace AStarNickNS
             _graph = graph;
         }
         
-        public IEnumerable<TPlace> SolvePath(IPlace<TCoord> start, IPlace<TCoord> target, double pathfinderSize=0.9)
+        public IEnumerable<TPlace> SolvePath(IPlace<TCoord> start, IPlace<TCoord> target, CancellationToken token=new(), double pathfinderSize=0.9)
         {
             _graph.CheckDisjoint();
             if (!_graph.Places.ContainsKey(start.Label))
@@ -37,6 +38,8 @@ namespace AStarNickNS
             
             while (!frontier.IsEmpty())
             {
+                token.ThrowIfCancellationRequested();
+                
                 TPlace current = frontier.RemoveMin().Data;
                 if (!visited.Add(current)) continue;
                 if (current.Equals(target)) break;
