@@ -9,19 +9,19 @@ public class PathfinderObstacleIntersector : IPathfinderObstacleIntersector
 {
     public double[,] GridTerrainCosts { get; set; } = null;
 
-    private List<(double, double)> GRID_CORNER_DELTAS = new List<(double, double)>
+    private List<(double, double)> GRID_CORNER_DELTAS = new()
     {
         (0.0, 0.0), (0.5, 0.5), (-0.5, 0.5), (-0.5, -0.5), (0.5, -0.5)
     };
 
-    public bool PathfinderIntersectsWithObstacles(int x, int y, double pathfinderSize)
+    public (double, double)? CoordinateWherePathfinderDoesNotIntersectAnyObstacles(int x, int y, double pathfinderSize)
     {
         if (GridTerrainCosts == null || GridTerrainCosts.Length == 0)
         {
             throw new IOException("GridTerrainCosts not yet initialised!");
         }
         
-        if (GetTerrainCost(x, y) <= 0) return true;
+        if (GetTerrainCost(x, y) <= 0) return null;
             
         double halfWidth = pathfinderSize / 2;
         double radiusSq = halfWidth * halfWidth;
@@ -40,11 +40,12 @@ public class PathfinderObstacleIntersector : IPathfinderObstacleIntersector
             double circleCentreY = cy + cornerDelta.Item2;
             if (!CircleIntersectsWithAnyObstacle(cells, circleCentreX, circleCentreY, radiusSq))
             {
-                return false;
+                // We found a spot (circleCentreX, circleCentreY) in this cell (x, y) where the pathfinder fits
+                return (circleCentreX, circleCentreY);
             }
         }
 
-        return true; // Intersections were found for all positions on the cell.
+        return null; // Intersections were found for all positions on the cell.
     }
 
     private bool CircleIntersectsWithAnyObstacle(List<(int, int)> cells, double circleCentreX, double circleCentreY, double circleRadiusSquared)
