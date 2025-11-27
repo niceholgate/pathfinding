@@ -10,20 +10,30 @@ namespace AStarNickNS
     {
         private static readonly double SQRT2 = Math.Sqrt(2);
         
-        private bool DiagonalNeighbours { get; init; }
+        private bool DiagonalNeighbours { get; set; }
         
         // null bool means not yet calculated/cache invalidated
-        private Dictionary<double, bool?[,]> PathfinderObstacleIntersectionsCache { get; init; }
+        private Dictionary<double, bool?[,]> PathfinderObstacleIntersectionsCache { get; set; }
         
         // don't need to worry about caching invalidation on this one
         // - just stores the last seen coordinate where a pathfinder fits
-        public Dictionary<double, (double, double)?[,]> PathfinderFitsCoords { get; init; }
+        public Dictionary<double, (double, double)?[,]> PathfinderFitsCoords { get; set; }
 
-        private double[,] _gridTerrainCosts;
+        private double[,] _gridTerrainCosts = new double[1,1];
 
-        private IPathfinderObstacleIntersector _intersector;
+        private readonly IPathfinderObstacleIntersector _intersector;
 
-        private List<double> _descendingOrderedPathfinderSizes;
+        private readonly List<double> _descendingOrderedPathfinderSizes;
+
+        public int GetWidth()
+        {
+            return _gridTerrainCosts.GetLength(0);
+        }
+        
+        public int GetHeight()
+        {
+            return _gridTerrainCosts.GetLength(1);
+        }
         
         public GridPlaceGraph(bool diagonalNeighbours, IPathfinderObstacleIntersector pathfinderObstacleIntersector)
         {
@@ -145,6 +155,39 @@ namespace AStarNickNS
                     previousPathfinderSize = pathfinderSize;
                 }
             }
+        }
+
+        public void BuildFromString(string csvString)
+        {
+            double[,] gridCosts = ParseCsvToDoubleArray(csvString);
+            BuildFromArray(gridCosts);
+        }
+        
+        private double[,] ParseCsvToDoubleArray(string csvString)
+        {
+            // Split lines (trim to remove empty lines)
+            string[] lines = csvString.Trim().Split('\n');
+
+            int rows = lines.Length;
+            int cols = lines[0].Split(',').Length;
+
+            double[,] result = new double[rows, cols];
+
+            for (int i = 0; i < rows; i++)
+            {
+                string[] cells = lines[i].Trim().Split(',');
+                for (int j = 0; j < cols; j++)
+                {
+                    // Handle possible whitespace or empty entries
+                    string value = cells[j].Trim();
+                    if (double.TryParse(value, out double parsed))
+                        result[i, j] = parsed;
+                    else
+                        result[i, j] = double.NaN; // or 0 if you prefer
+                }
+            }
+
+            return result;
         }
 
         public void BuildFromArray(double[,] gridCosts)

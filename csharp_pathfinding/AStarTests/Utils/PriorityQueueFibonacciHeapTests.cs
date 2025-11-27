@@ -22,18 +22,18 @@ namespace AStarTests {
         [TestMethod]
         public void TestNodeExaminationAndRemoval() {
             // Examination
-            Assert.AreEqual(heap.Size(), 5);
-            Assert.AreEqual(heap.Min().Data, "B");
+            Assert.AreEqual(5, heap.Size());
+            Assert.AreEqual("B", heap.Min().Data);
 
             // Examination + removal
-            Assert.AreEqual(heap.RemoveMin().Data, "B");
-            Assert.AreEqual(heap.Size(), 4);
+            Assert.AreEqual("B", heap.RemoveMin().Data);
+            Assert.AreEqual(4, heap.Size());
 
             // Empty heap behaviour
             for (int i = 0; i < 4; i++) {
                 heap.RemoveMin();
             }
-            Assert.AreEqual(heap.Size(), 0);
+            Assert.AreEqual(0, heap.Size());
             Assert.IsTrue(heap.IsEmpty());
             Assert.IsNull(heap.Min());
             Assert.IsNull(heap.RemoveMin());

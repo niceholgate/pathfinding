@@ -20,14 +20,14 @@ namespace AStarTests
             double expectedDistance = Math.Sqrt(Math.Pow((-60) - (-3), 2.0) + Math.Pow((60 - 5), 2.0));
             double result =
                 gridPlaceBase1.DistanceFrom(gridPlaceDistant1, NicUtils.Distances2D.HeuristicType.Euclidian);
-            Assert.AreEqual(result, expectedDistance);
+            Assert.AreEqual(expectedDistance, result);
         }
 
         [TestMethod]
         public void TestDeltaFrom()
         {
             (int, int) expectedDelta = ((-60) - (-3), 60 - 5);
-            Assert.AreEqual(gridPlaceDistant1.DeltaFrom(gridPlaceBase1), expectedDelta);
+            Assert.AreEqual(expectedDelta, gridPlaceDistant1.DeltaFrom(gridPlaceBase1));
         }
 
         [TestMethod]

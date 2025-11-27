@@ -4,8 +4,9 @@ using AStarNickNS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NicUtils;
 using NicUtils.ExtensionMethods;
+// using NUnit.Framework;
 
-namespace AStarTests;
+namespace AStarTests {
 
 [TestClass]
 public class PathfinderObstacleIntersectorTests
@@ -64,4 +65,5 @@ public class PathfinderObstacleIntersectorTests
             () => sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 0.9),
             "GridTerrainCosts not yet initialised!");
     }
+}
 }

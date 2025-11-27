@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AStarTests", "..\AStarTests\AStarTests.csproj", "{BD51BDE1-F84A-401D-856C-44FBC5EBD4ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicUtils", "..\..\..\csharp_projects\utils\NicUtils\NicUtils.csproj", "{B99B4C45-6C35-4493-A24B-DA9C959C88E1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicUtils", "..\..\..\CSharpUseful\NicUtils\NicUtils.csproj", "{066822EF-02EE-41B5-875E-EB161135C510}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,14 +35,14 @@ Global
 		{BD51BDE1-F84A-401D-856C-44FBC5EBD4ED}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BD51BDE1-F84A-401D-856C-44FBC5EBD4ED}.Release|x64.ActiveCfg = Release|Any CPU
 		{BD51BDE1-F84A-401D-856C-44FBC5EBD4ED}.Release|x64.Build.0 = Release|Any CPU
-		{B99B4C45-6C35-4493-A24B-DA9C959C88E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B99B4C45-6C35-4493-A24B-DA9C959C88E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B99B4C45-6C35-4493-A24B-DA9C959C88E1}.Debug|x64.ActiveCfg = Debug|x64
-		{B99B4C45-6C35-4493-A24B-DA9C959C88E1}.Debug|x64.Build.0 = Debug|x64
-		{B99B4C45-6C35-4493-A24B-DA9C959C88E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B99B4C45-6C35-4493-A24B-DA9C959C88E1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B99B4C45-6C35-4493-A24B-DA9C959C88E1}.Release|x64.ActiveCfg = Release|x64
-		{B99B4C45-6C35-4493-A24B-DA9C959C88E1}.Release|x64.Build.0 = Release|x64
+		{066822EF-02EE-41B5-875E-EB161135C510}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{066822EF-02EE-41B5-875E-EB161135C510}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{066822EF-02EE-41B5-875E-EB161135C510}.Debug|x64.ActiveCfg = Debug|x64
+		{066822EF-02EE-41B5-875E-EB161135C510}.Debug|x64.Build.0 = Debug|x64
+		{066822EF-02EE-41B5-875E-EB161135C510}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{066822EF-02EE-41B5-875E-EB161135C510}.Release|Any CPU.Build.0 = Release|Any CPU
+		{066822EF-02EE-41B5-875E-EB161135C510}.Release|x64.ActiveCfg = Release|x64
+		{066822EF-02EE-41B5-875E-EB161135C510}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

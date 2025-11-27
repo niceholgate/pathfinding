@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using AStarNickNS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NicUtils;
@@ -129,8 +130,8 @@ namespace AStarTests {
             yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 77.31, true, 1.9 };
         }
 
-        [DataTestMethod]
-        [DynamicData(nameof(PathfinderTestData), DynamicDataSourceType.Method)]
+        [TestMethod]
+        [DynamicData(nameof(PathfinderTestData))]
         public virtual void TestFindsShortestPathGridPlaceGraph(string mazeFile, (int, int) start, (int, int) target,
             double expectedPathCost, bool diagonalNeighbours, double pathfinderSize)
         {
@@ -143,7 +144,7 @@ namespace AStarTests {
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];
 
-            List<GridPlace> path = _sutGridPlace.SolvePath(startPlace, targetPlace, pathfinderSize).ToList();
+            List<GridPlace> path = _sutGridPlace.SolvePath(startPlace, targetPlace, CancellationToken.None, pathfinderSize).ToList();
 
             TestHelpers.AssertEqualWithinTolerance(
                 expectedPathCost,
