@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AStarTests", "..\AStarTests\AStarTests.csproj", "{BD51BDE1-F84A-401D-856C-44FBC5EBD4ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicUtils", "..\..\..\CSharpUseful\NicUtils\NicUtils.csproj", "{066822EF-02EE-41B5-875E-EB161135C510}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicUtils", "..\..\..\csharp_projects\utils\NicUtils\NicUtils.csproj", "{066822EF-02EE-41B5-875E-EB161135C510}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

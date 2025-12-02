@@ -1,20 +1,86 @@
 {
   "format": 1,
   "restore": {
-    "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj": {}
+    "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj": {}
   },
   "projects": {
-    "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj": {
+    "C:\\dev\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
-        "projectName": "AStarTests",
-        "projectPath": "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
+        "projectUniqueName": "C:\\dev\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj",
+        "projectName": "NicUtils",
+        "projectPath": "C:\\dev\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj",
         "packagesPath": "C:\\Users\\micro\\.nuget\\packages\\",
-        "outputPath": "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\AStarTests\\obj\\",
+        "outputPath": "C:\\dev\\csharp_projects\\utils\\NicUtils\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\dev\\unity_projects\\tag\\tag\\Assets\\NuGet.Config",
+          "C:\\Users\\micro\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net7.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net7.0": {
+            "targetAlias": "net7.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net7.0": {
+          "targetAlias": "net7.0",
+          "dependencies": {
+            "FibonacciHeap": {
+              "target": "Package",
+              "version": "[2.0.2, )"
+            },
+            "MSTest.TestFramework": {
+              "target": "Package",
+              "version": "[3.1.1, )"
+            },
+            "MathNet.Numerics": {
+              "target": "Package",
+              "version": "[4.12.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
+        "projectName": "AStarTests",
+        "projectPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
+        "packagesPath": "C:\\Users\\micro\\.nuget\\packages\\",
+        "outputPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
           "C:\\Users\\micro\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
@@ -27,8 +93,8 @@
           "net7.0": {
             "targetAlias": "net7.0",
             "projectReferences": {
-              "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj": {
-                "projectPath": "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj"
+              "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj": {
+                "projectPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj"
               }
             }
           }
@@ -88,17 +154,16 @@
         }
       }
     },
-    "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj": {
+    "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj",
+        "projectUniqueName": "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj",
         "projectName": "AStar",
-        "projectPath": "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj",
+        "projectPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj",
         "packagesPath": "C:\\Users\\micro\\.nuget\\packages\\",
-        "outputPath": "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\Pathfinding\\csharp_pathfinding\\A_star\\obj\\",
+        "outputPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\dev\\unity_projects\\tag\\tag\\Assets\\NuGet.Config",
           "C:\\Users\\micro\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
@@ -111,8 +176,8 @@
           "net7.0": {
             "targetAlias": "net7.0",
             "projectReferences": {
-              "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj": {
-                "projectPath": "C:\\dev\\unity_projects\\tag\\tag\\Assets\\Scripts\\External\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj"
+              "C:\\dev\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj": {
+                "projectPath": "C:\\dev\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj"
               }
             }
           }

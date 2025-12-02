@@ -40,12 +40,30 @@ namespace AStarNickNS
         
         public Line((int x, int y) start, (int x, int y) end)
         {
-            M = (end.y - start.y)/(end.x - end.y);
-            C = start.y - M*start.x;
+            if (end.x == start.x)
+            {
+                M = float.PositiveInfinity; // Vertical line
+                C = start.x; // Store x-intercept
+            }
+            else
+            {
+                M = (float)(end.y - start.y) / (end.x - start.x);
+                C = start.y - M * start.x;
+            }
         }
 
-        public float X(float y) => (y - C) / M;
-        public float Y(float x) => M * x + C;
+        public float X(float y)
+        {
+            if (float.IsPositiveInfinity(M)) return C; // Vertical line
+            if (M == 0) throw new InvalidOperationException("Cannot calculate Y for a horizontal line.");
+            return (y - C) / M;
+        }
+        
+        public float Y(float x)
+        {
+            if (float.IsPositiveInfinity(M)) throw new InvalidOperationException("Cannot calculate Y for a vertical line.");
+            return M * x + C;
+        }
     }
     
     public static class GridCellIntersections
@@ -53,25 +71,77 @@ namespace AStarNickNS
         public static List<CellIntersectionData> GetCellIntersectionsWithLineSegment(
             (int x, int y) start, (int x, int y) end)
         {
-            Line line = new Line(start, end);
-            
-            float minX = end.x;
-            float maxX = start.x;
-            float minY = end.y;
-            float maxY = start.y;
-                
-            if (start.x < end.x)
+            var intersectedCells = new List<CellIntersectionData>();
+
+            float startX = start.x;
+            float startY = start.y;
+            float endX = end.x;
+            float endY = end.y;
+
+            if (startX == endX && startY == endY)
             {
-                minX = start.x;
-                maxX = end.x;
-            }
-            if (start.y < end.y)
-            {
-                minY = start.y;
-                maxY = end.y;
+                intersectedCells.Add(new CellIntersectionData(start.x, start.y, (startX, startY), (endX, endY)));
+                return intersectedCells;
             }
             
+            float dx = endX - startX;
+            float dy = endY - startY;
+
+            int currentCellX = (int)Math.Floor(startX + 0.5f);
+            int currentCellY = (int)Math.Floor(startY + 0.5f);
             
+            int endCellX = (int)Math.Floor(endX + 0.5f);
+            int endCellY = (int)Math.Floor(endY + 0.5f);
+
+            int stepX = Math.Sign(dx);
+            int stepY = Math.Sign(dy);
+
+            float tDeltaX = (dx == 0) ? float.PositiveInfinity : Math.Abs(1.0f / dx);
+            float tDeltaY = (dy == 0) ? float.PositiveInfinity : Math.Abs(1.0f / dy);
+            
+            float nextVerticalBoundary = (stepX > 0) ? (float)Math.Floor(startX + 0.5f) + 0.5f : (float)Math.Floor(startX - 0.5f) + 0.5f;
+            float nextHorizontalBoundary = (stepY > 0) ? (float)Math.Floor(startY + 0.5f) + 0.5f : (float)Math.Floor(startY - 0.5f) + 0.5f;
+
+            float tMaxX = (dx == 0) ? float.PositiveInfinity : (nextVerticalBoundary - startX) / dx;
+            float tMaxY = (dy == 0) ? float.PositiveInfinity : (nextHorizontalBoundary - startY) / dy;
+
+            (float, float) lastIntersection = (startX, startY);
+
+            while (currentCellX != endCellX || currentCellY != endCellY)
+            {
+                if (tMaxX < tMaxY)
+                {
+                    float t = tMaxX;
+                    if (t > 1.0f) break;
+
+                    float intersectX = startX + t * dx;
+                    float intersectY = startY + t * dy;
+                    
+                    intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY, lastIntersection, (intersectX, intersectY)));
+                    lastIntersection = (intersectX, intersectY);
+                    
+                    currentCellX += stepX;
+                    tMaxX += tDeltaX;
+                }
+                else
+                {
+                    float t = tMaxY;
+                    if (t > 1.0f) break;
+                    
+                    float intersectX = startX + t * dx;
+                    float intersectY = startY + t * dy;
+
+                    intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY, lastIntersection, (intersectX, intersectY)));
+                    lastIntersection = (intersectX, intersectY);
+
+                    currentCellY += stepY;
+                    tMaxY += tDeltaY;
+                }
+            }
+            
+            intersectedCells.Add(new CellIntersectionData(endCellX, endCellY, lastIntersection, (endX, endY)));
+
+            return intersectedCells;
         }
     }
 }
