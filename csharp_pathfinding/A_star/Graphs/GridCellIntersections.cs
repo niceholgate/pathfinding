@@ -66,6 +66,7 @@ namespace AStarNickNS
         }
     }
     
+    // TODO: understand this, since it's from Gemini
     public static class GridCellIntersections
     {
         public static List<CellIntersectionData> GetCellIntersectionsWithLineSegment(
@@ -107,9 +108,10 @@ namespace AStarNickNS
 
             (float, float) lastIntersection = (startX, startY);
 
+            float epsilon = 1e-6f;
             while (currentCellX != endCellX || currentCellY != endCellY)
             {
-                if (tMaxX < tMaxY)
+                if (tMaxX < tMaxY - epsilon)
                 {
                     float t = tMaxX;
                     if (t > 1.0f) break;
@@ -123,7 +125,7 @@ namespace AStarNickNS
                     currentCellX += stepX;
                     tMaxX += tDeltaX;
                 }
-                else
+                else if (tMaxY < tMaxX - epsilon)
                 {
                     float t = tMaxY;
                     if (t > 1.0f) break;
@@ -135,6 +137,29 @@ namespace AStarNickNS
                     lastIntersection = (intersectX, intersectY);
 
                     currentCellY += stepY;
+                    tMaxY += tDeltaY;
+                }
+                else // Corner case
+                {
+                    float t = tMaxX; // tMaxX is approx tMaxY
+                    if (t > 1.0f) break;
+
+                    float intersectX = startX + t * dx;
+                    float intersectY = startY + t * dy;
+                    
+                    // Current cell
+                    intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY, lastIntersection, (intersectX, intersectY)));
+                    
+                    // Add the other 2 cells that share the corner. The 4th one will be the next current cell.
+                    // The intersection with these cells is just the corner point.
+                    intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY + stepY, (intersectX, intersectY), (intersectX, intersectY)));
+                    intersectedCells.Add(new CellIntersectionData(currentCellX + stepX, currentCellY, (intersectX, intersectY), (intersectX, intersectY)));
+
+                    lastIntersection = (intersectX, intersectY);
+                    
+                    currentCellX += stepX;
+                    currentCellY += stepY;
+                    tMaxX += tDeltaX;
                     tMaxY += tDeltaY;
                 }
             }

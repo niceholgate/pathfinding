@@ -23,7 +23,7 @@ namespace AStarTests.Graphs
             var actualIntersectionDistances = result.Select(r => r.IntersectedDistance).ToList();
 
             CollectionAssert.AreEqual(expectedCells, actualCells);
-            CollectionAssert.AreEqual(expectedIntersectonDistances, actualIntersectionDistances);
+            TestHelpers.AssertSequencesAreEqualWithinTolerance(expectedIntersectonDistances, actualIntersectionDistances, 0.0001f);
         }
 
         [TestMethod]
@@ -39,7 +39,7 @@ namespace AStarTests.Graphs
             var actualIntersectionDistances = result.Select(r => r.IntersectedDistance).ToList();
 
             CollectionAssert.AreEqual(expectedCells, actualCells);
-            CollectionAssert.AreEqual(expectedIntersectonDistances, actualIntersectionDistances);
+            TestHelpers.AssertSequencesAreEqualWithinTolerance(expectedIntersectonDistances, actualIntersectionDistances, 0.0001f);
         }
 
         [TestMethod]
@@ -75,7 +75,7 @@ namespace AStarTests.Graphs
             var actualIntersectionDistances = result.Select(r => r.IntersectedDistance).ToList();
             
             CollectionAssert.AreEqual(expectedCells, actualCells);
-            CollectionAssert.AreEqual(expectedIntersectonDistances, actualIntersectionDistances);
+            TestHelpers.AssertSequencesAreEqualWithinTolerance(expectedIntersectonDistances, actualIntersectionDistances, 0.0001f);
         }
 
         [TestMethod]

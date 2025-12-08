@@ -278,91 +278,69 @@ namespace AStarNickNS
             Places[label] = new GridPlace(label);
             return (GridPlace)Places[label];
         }
-    //
-    //     public List<GridPlace> SmoothPath(List<GridPlace> originalPath, double pathfinderSize)
-    //     {
-    //         // The smoothed path start at the same place as the original path 
-    //         int latestNodeIdx = 0;
-    //         List<GridPlace> smoothedPath = new() { originalPath[0] };
-    //     
-    //         int idx = 1;
-    //         while (idx < originalPath.Count)
-    //         {
-    //             GridPlace here = originalPath[idx];
-    //             
-    //             // The smoothed path ends at the same place as the original path 
-    //             if (idx == originalPath.Count - 1)
-    //             {
-    //                 smoothedPath.Add(here);
-    //                 break;
-    //             }
-    //             
-    //             // Get the intersections data (2 coordinates and 1 terrain cost value)
-    //             // for each cell intersected by the line segment between 'here' and the last node
-    //             List<CellIntersectionData> intersections = GetCellIntersectionsWithLineSegment(start, end);
-    //             
-    //             
-    //             // If the line segment between 'here' and the last node is blocked,
-    //             // the previous path location needs to become a node on the smoothed path ...
-    //             if (IsLineSegmentBlocked(originalPath[latestNodeIdx], here, pathfinderSize))
-    //             {
-    //                 latestNodeIdx = idx - 1;
-    //                 smoothedPath.Add(originalPath[latestNodeIdx]);
-    //             }
-    //             // Likewise if the line segment becomes slower (due to terrain costs) than the
-    //             // ... otherwise continue
-    //             
-    //             idx++;
-    //         }
-    //         
-    //         return smoothedPath;
-    //     }
-    //     
-    //     public bool IsLineSegmentBlocked(GridPlace p1, GridPlace p2, double pathfinderSize)
-    //     {
-    //         // Get the intersected cells
-    //         
-    //         // Loop over the cells, checking for inaccessible cells
-    //         for (GridPlace gridPlace : intersected)
-    //         {
-    //             // Need to take slow terrain into account too
-    //             // Calculate the original path speed, expected smoothed speed,
-    //             // and consider it blocked if smoothed is slower?
-    //             if (!PathfinderCanFitCached(x, y, pathfinderSize))
-    //             {
-    //                 return true;
-    //             }
-    //         }
-    //         return false;
-    //     }
-    //
-    //     private List<CellIntersectionData> GetCellIntersectionsWithLineSegment(GridPlace start, GridPlace end)
-    //     {
-    //         
-    //     }
-    //     
-    //     private readonly struct CellIntersectionData
-    //     {
-    //         public readonly int x, y;
-    //         public readonly (float, float) int1, int2;
-    //
-    //         public CellIntersectionData(int x, int y, (float, float) int1, (float, float) int2)
-    //         {
-    //             this.x = x;
-    //             this.y = y;
-    //             this.int1 = int1;
-    //             this.int2 = int2;
-    //         }
-    //
-    //         public float IntersectedDistance
-    //         {
-    //             get
-    //             {
-    //                 float dx = int1.Item1 - int2.Item1;
-    //                 float dy = int1.Item2 - int2.Item2;
-    //                 return MathF.Sqrt(dx*dx + dy*dy);
-    //             }
-    //         }
-    //     }
+            // public List<GridPlace> SmoothPath(List<GridPlace> originalPath, double pathfinderSize)
+            // {
+            //     // The smoothed path start at the same place as the original path 
+            //     int latestNodeIdx = 0;
+            //     List<GridPlace> smoothedPath = new() { originalPath[0] };
+            //
+            //     int idx = 1;
+            //     while (idx < originalPath.Count)
+            //     {
+            //         GridPlace here = originalPath[idx];
+            //         
+            //         // The smoothed path ends at the same place as the original path 
+            //         if (idx == originalPath.Count - 1)
+            //         {
+            //             smoothedPath.Add(here);
+            //             break;
+            //         }
+            //         
+            //         // Get the intersections data (2 coordinates and 1 terrain cost value)
+            //         // for each cell intersected by the line segment between 'here' and the last node
+            //         List<CellIntersectionData> intersections = GetCellIntersectionsWithLineSegment(start, end);
+            //         
+            //         
+            //         // If the line segment between 'here' and the last node is blocked,
+            //         // the previous path location needs to become a node on the smoothed path ...
+            //         if (IsLineSegmentBlocked(originalPath[latestNodeIdx], here, pathfinderSize))
+            //         {
+            //             latestNodeIdx = idx - 1;
+            //             smoothedPath.Add(originalPath[latestNodeIdx]);
+            //         }
+            //         // Likewise if the line segment becomes slower (due to terrain costs) than the
+            //         // ... otherwise continue
+            //         
+            //         idx++;
+            //     }
+            //     
+            //     return smoothedPath;
+            // }
+            
+            // public bool IsLineSegmentBlocked(GridPlace p1, GridPlace p2, double pathfinderSize)
+            // {
+            //     // Get the intersected cells
+            //     
+            //     // Loop over the cells, checking for inaccessible cells
+            //     for (GridPlace gridPlace : intersected)
+            //     {
+            //         // Need to take slow terrain into account too
+            //         // Calculate the original path speed, expected smoothed speed,
+            //         // and consider it blocked if smoothed is slower?
+            //         if (!PathfinderCanFitCached(x, y, pathfinderSize))
+            //         {
+            //             return true;
+            //         }
+            //     }
+            //     return false;
+            // }
+            //
+            // private List<CellIntersectionData> GetCellIntersectionsWithLineSegment(GridPlace start, GridPlace end)
+            // {
+            //     
+            // }
+            
+            
+        }
     }
-}
+    
