@@ -36,6 +36,19 @@
           "lib/netstandard1.0/FibonacciHeap.dll": {}
         }
       },
+      "IsExternalInit/1.0.3": {
+        "type": "package",
+        "contentFiles": {
+          "contentFiles/cs/net5.0/IsExternalInit/IsExternalInit.cs": {
+            "buildAction": "Compile",
+            "codeLanguage": "cs",
+            "copyToOutput": false
+          }
+        },
+        "build": {
+          "build/IsExternalInit.props": {}
+        }
+      },
       "MathNet.Numerics/4.12.0": {
         "type": "package",
         "compile": {
@@ -2088,7 +2101,7 @@
       },
       "AStar/1.0.0": {
         "type": "project",
-        "framework": ".NETCoreApp,Version=v7.0",
+        "framework": ".NETStandard,Version=v2.1",
         "dependencies": {
           "FibonacciHeap": "2.0.2",
           "NicUtils": "1.0.0"
@@ -2102,7 +2115,7 @@
       },
       "NicUtils/1.0.0": {
         "type": "project",
-        "framework": ".NETCoreApp,Version=v7.0",
+        "framework": ".NETStandard,Version=v2.1",
         "dependencies": {
           "FibonacciHeap": "2.0.2",
           "MSTest.TestFramework": "3.1.1",
@@ -2206,6 +2219,29 @@
         "fibonacciheap.2.0.2.nupkg.sha512",
         "fibonacciheap.nuspec",
         "lib/netstandard1.0/FibonacciHeap.dll"
+      ]
+    },
+    "IsExternalInit/1.0.3": {
+      "sha512": "jcdN7vpDwjnV7U9KGCv/oNIWHJ/RIbyrpVsLQL2qbj6Cbi5U3iafKsaMn1rP+qCbkLbkB0v6oAwbVEkqrUnlyg==",
+      "type": "package",
+      "path": "isexternalinit/1.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "build/IsExternalInit.props",
+        "content/net20/IsExternalInit/IsExternalInit.cs",
+        "content/net40/IsExternalInit/IsExternalInit.cs",
+        "content/net5.0/IsExternalInit/IsExternalInit.cs",
+        "content/netstandard1.0/IsExternalInit/IsExternalInit.cs",
+        "content/netstandard2.0/IsExternalInit/IsExternalInit.cs",
+        "contentFiles/cs/net20/IsExternalInit/IsExternalInit.cs",
+        "contentFiles/cs/net40/IsExternalInit/IsExternalInit.cs",
+        "contentFiles/cs/net5.0/IsExternalInit/IsExternalInit.cs",
+        "contentFiles/cs/netstandard1.0/IsExternalInit/IsExternalInit.cs",
+        "contentFiles/cs/netstandard2.0/IsExternalInit/IsExternalInit.cs",
+        "icon.png",
+        "isexternalinit.1.0.3.nupkg.sha512",
+        "isexternalinit.nuspec"
       ]
     },
     "MathNet.Numerics/4.12.0": {
@@ -6737,35 +6773,37 @@
     },
     "NicUtils/1.0.0": {
       "type": "project",
-      "path": "../../../csharp_projects/utils/NicUtils/NicUtils.csproj",
-      "msbuildProject": "../../../csharp_projects/utils/NicUtils/NicUtils.csproj"
+      "path": "../../../CSharpUseful/NicUtils/NicUtils.csproj",
+      "msbuildProject": "../../../CSharpUseful/NicUtils/NicUtils.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net7.0": [
       "AStar >= 1.0.0",
       "FibonacciHeap >= 2.0.2",
+      "IsExternalInit >= 1.0.3",
       "MSTest.TestAdapter >= 3.10.4",
       "MSTest.TestFramework >= 3.10.4",
       "Microsoft.NET.Test.Sdk >= 17.5.0",
       "NSubstitute >= 5.3.0",
+      "NicUtils >= 1.0.0",
       "coverlet.collector >= 3.2.0"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\micro\\.nuget\\packages\\": {}
+    "C:\\Users\\niceh\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
+      "projectUniqueName": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
       "projectName": "AStarTests",
-      "projectPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
-      "packagesPath": "C:\\Users\\micro\\.nuget\\packages\\",
-      "outputPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\obj\\",
+      "projectPath": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
+      "packagesPath": "C:\\Users\\niceh\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\micro\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\niceh\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net7.0"
@@ -6777,8 +6815,11 @@
         "net7.0": {
           "targetAlias": "net7.0",
           "projectReferences": {
-            "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj": {
-              "projectPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj"
+            "C:\\Users\\niceh\\dev\\CSharpUseful\\NicUtils\\NicUtils.csproj": {
+              "projectPath": "C:\\Users\\niceh\\dev\\CSharpUseful\\NicUtils\\NicUtils.csproj"
+            },
+            "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj": {
+              "projectPath": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj"
             }
           }
         }
@@ -6796,6 +6837,12 @@
           "FibonacciHeap": {
             "target": "Package",
             "version": "[2.0.2, )"
+          },
+          "IsExternalInit": {
+            "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+            "suppressParent": "All",
+            "target": "Package",
+            "version": "[1.0.3, )"
           },
           "MSTest.TestAdapter": {
             "target": "Package",
@@ -6834,7 +6881,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Users\\niceh\\.dotnet\\sdk\\7.0.410\\RuntimeIdentifierGraph.json"
       }
     }
   }

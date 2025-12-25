@@ -1,30 +1,30 @@
 {
   "format": 1,
   "restore": {
-    "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj": {}
+    "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj": {}
   },
   "projects": {
-    "C:\\dev\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj": {
+    "C:\\Users\\niceh\\dev\\CSharpUseful\\NicUtils\\NicUtils.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\dev\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj",
+        "projectUniqueName": "C:\\Users\\niceh\\dev\\CSharpUseful\\NicUtils\\NicUtils.csproj",
         "projectName": "NicUtils",
-        "projectPath": "C:\\dev\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj",
-        "packagesPath": "C:\\Users\\micro\\.nuget\\packages\\",
-        "outputPath": "C:\\dev\\csharp_projects\\utils\\NicUtils\\obj\\",
+        "projectPath": "C:\\Users\\niceh\\dev\\CSharpUseful\\NicUtils\\NicUtils.csproj",
+        "packagesPath": "C:\\Users\\niceh\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\niceh\\dev\\CSharpUseful\\NicUtils\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\micro\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\niceh\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
-          "net7.0"
+          "netstandard2.1"
         ],
         "sources": {
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net7.0": {
-            "targetAlias": "net7.0",
+          "netstandard2.1": {
+            "targetAlias": "netstandard2.1",
             "projectReferences": {}
           }
         },
@@ -35,12 +35,18 @@
         }
       },
       "frameworks": {
-        "net7.0": {
-          "targetAlias": "net7.0",
+        "netstandard2.1": {
+          "targetAlias": "netstandard2.1",
           "dependencies": {
             "FibonacciHeap": {
               "target": "Package",
               "version": "[2.0.2, )"
+            },
+            "IsExternalInit": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )"
             },
             "MSTest.TestFramework": {
               "target": "Package",
@@ -63,25 +69,25 @@
           "assetTargetFallback": true,
           "warn": true,
           "frameworkReferences": {
-            "Microsoft.NETCore.App": {
+            "NETStandard.Library": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Users\\niceh\\.dotnet\\sdk\\7.0.410\\RuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj": {
+    "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
+        "projectUniqueName": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
         "projectName": "AStarTests",
-        "projectPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
-        "packagesPath": "C:\\Users\\micro\\.nuget\\packages\\",
-        "outputPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\obj\\",
+        "projectPath": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\AStarTests.csproj",
+        "packagesPath": "C:\\Users\\niceh\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\AStarTests\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\micro\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\niceh\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net7.0"
@@ -93,8 +99,11 @@
           "net7.0": {
             "targetAlias": "net7.0",
             "projectReferences": {
-              "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj": {
-                "projectPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj"
+              "C:\\Users\\niceh\\dev\\CSharpUseful\\NicUtils\\NicUtils.csproj": {
+                "projectPath": "C:\\Users\\niceh\\dev\\CSharpUseful\\NicUtils\\NicUtils.csproj"
+              },
+              "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj": {
+                "projectPath": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj"
               }
             }
           }
@@ -112,6 +121,12 @@
             "FibonacciHeap": {
               "target": "Package",
               "version": "[2.0.2, )"
+            },
+            "IsExternalInit": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )"
             },
             "MSTest.TestAdapter": {
               "target": "Package",
@@ -150,34 +165,34 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Users\\niceh\\.dotnet\\sdk\\7.0.410\\RuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj": {
+    "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj",
+        "projectUniqueName": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj",
         "projectName": "AStar",
-        "projectPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj",
-        "packagesPath": "C:\\Users\\micro\\.nuget\\packages\\",
-        "outputPath": "C:\\dev\\pathfinding\\csharp_pathfinding\\A_star\\obj\\",
+        "projectPath": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\A_star\\AStar.csproj",
+        "packagesPath": "C:\\Users\\niceh\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\niceh\\dev\\pathfinding\\csharp_pathfinding\\A_star\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\micro\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\niceh\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
-          "net7.0"
+          "netstandard2.1"
         ],
         "sources": {
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net7.0": {
-            "targetAlias": "net7.0",
+          "netstandard2.1": {
+            "targetAlias": "netstandard2.1",
             "projectReferences": {
-              "C:\\dev\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj": {
-                "projectPath": "C:\\dev\\csharp_projects\\utils\\NicUtils\\NicUtils.csproj"
+              "C:\\Users\\niceh\\dev\\CSharpUseful\\NicUtils\\NicUtils.csproj": {
+                "projectPath": "C:\\Users\\niceh\\dev\\CSharpUseful\\NicUtils\\NicUtils.csproj"
               }
             }
           }
@@ -189,12 +204,18 @@
         }
       },
       "frameworks": {
-        "net7.0": {
-          "targetAlias": "net7.0",
+        "netstandard2.1": {
+          "targetAlias": "netstandard2.1",
           "dependencies": {
             "FibonacciHeap": {
               "target": "Package",
               "version": "[2.0.2, )"
+            },
+            "IsExternalInit": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )"
             }
           },
           "imports": [
@@ -209,11 +230,11 @@
           "assetTargetFallback": true,
           "warn": true,
           "frameworkReferences": {
-            "Microsoft.NETCore.App": {
+            "NETStandard.Library": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Users\\niceh\\.dotnet\\sdk\\7.0.410\\RuntimeIdentifierGraph.json"
         }
       }
     }

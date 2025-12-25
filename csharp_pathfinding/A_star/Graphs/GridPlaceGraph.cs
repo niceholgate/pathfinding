@@ -264,7 +264,7 @@ namespace AStarNickNS
                 throw new ArgumentException("GridPlaceGraph only supports building from .csv files");
             }
             
-            List<List<double>> gridCosts = new CSVReader(dataFile, false).GetData<double>();
+            List<List<double>> gridCosts = new CSVReader(dataFile, false).GetData<double>(false);
             BuildFromArray(gridCosts.ToRectangularArray());
         }
 

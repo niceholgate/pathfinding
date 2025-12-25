@@ -8,7 +8,7 @@ namespace AStarNickNS
 {
     public partial class GenericPlaceGraph : PlaceGraph<string>
     {
-        private readonly Dictionary<PlacePair, double> costs = new();
+        private readonly Dictionary<PlacePair, double> costs = new Dictionary<PlacePair, double>();
 
         //public override Dictionary<Place<string>, double> GetImplicitNeighboursWithCosts(Place<string> place) {
         //    return new Dictionary<Place<string>, double>();

@@ -3,6 +3,8 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
 	<Platforms>AnyCPU;x64</Platforms>
 	<PlatformTarget>x64</PlatformTarget>
     <Configuration>Debug</Configuration>
@@ -16,11 +18,15 @@
 
   <ItemGroup>
     <PackageReference Include="FibonacciHeap" Version="2.0.2" />
+    <PackageReference Include="IsExternalInit" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\csharp_projects\utils\NicUtils\NicUtils.csproj" />
+    <ProjectReference Include="C:\Users\niceh\dev\CSharpUseful\NicUtils\NicUtils.csproj" />
   </ItemGroup>
 
 </Project>
