@@ -66,7 +66,41 @@ namespace AStarNickNS
         }
     }
     
-    // TODO: understand this, since it's from Gemini
+    /*
+      Uses a grid traversal algorithm, which is a variant of the Amanatides and Woo algorithm commonly used in ray tracing for finding voxel intersections. Its purpose is
+      to determine every grid cell that a line segment passes through, from a start cell to an end cell.
+
+      1. Initialization
+       - Direction and Steps: It first calculates the direction of the line (dx, dy) and determines the direction of traversal for each axis (signDx, signDy), which will be either +1 or -1.
+       - Start and End Cells: It sets the starting cell (currentCellX, currentCellY) and the target end cell (endCellX, endCellY).
+       - t-values: This is the core of the algorithm. It uses a parametric representation of the line P(t) = start + t * direction.
+           - tDeltaX and tDeltaY: These values represent how far you must move along the line (in terms of t) to cross one full grid cell in the X or Y direction, respectively. It's calculated from the inverse of the
+             line's direction vector components.
+           - tMaxX and tMaxY: These values represent the total distance (in terms of t) from the start of the line to the next grid line crossing in the X or Y direction.
+
+      2. The Main Traversal Loop
+      The algorithm proceeds in a loop, stepping from one cell to the next until it reaches the end cell.
+
+       - The Decision: In each iteration, it compares tMaxX and tMaxY.
+           - If tMaxX < tMaxY, it means the line will hit a vertical grid line first. Therefore, the next cell to enter is in the X direction. The algorithm updates currentCellX and increments tMaxX by tDeltaX (to set
+             it up for the next vertical crossing).
+           - If tMaxY < tMaxX, it means the line will hit a horizontal grid line first. The next cell is in the Y direction, so it updates currentCellY and increments tMaxY by tDeltaY.
+       - Corner Case: If tMaxX and tMaxY are nearly equal, it means the line passes very close to a corner of a cell. In this implementation, it records intersections with the three cells that touch that corner before
+         moving diagonally to the next cell.
+
+      3. Recording Intersections
+       - With each step, the algorithm calculates the precise intersection point on the grid line that is being crossed.
+       - It creates a CellIntersectionData object for the cell it is leaving. This object stores the cell's coordinates (currentCellX, currentCellY), the entry point (lastIntersection), and the exit point (the newly
+         calculated intersection point).
+       - The lastIntersection is then updated to the current exit point, which becomes the entry point for the next cell in the path.
+
+      4. Termination
+       - The loop continues until currentCellX and currentCellY match the end cell's coordinates.
+       - A t > 1.0f check ensures the traversal doesn't go beyond the bounds of the line segment (where t=0 is the start and t=1 is the end).
+       - Finally, after the loop, it adds the last segment, which is from the final grid line crossing to the actual end point of the line, and associates it with the end cell.
+
+      In summary, the algorithm efficiently "walks" along the line from cell to cell by repeatedly calculating which grid boundary (vertical or horizontal) is closer and taking a step in that direction.
+     */
     public static class GridCellIntersections
     {
         public static List<CellIntersectionData> GetCellIntersectionsWithLineSegment(
@@ -99,9 +133,13 @@ namespace AStarNickNS
             int endCellX = end.x;
             int endCellY = end.y;
 
+            //  parametric representation of the line P(t) = start + t * direction
+            
+            // how far you must move along the line (in terms of t) to cross one full grid cell in the X or Y direction
             float tDeltaX = (dx == 0) ? float.PositiveInfinity : Math.Abs(1.0f / dx);
             float tDeltaY = (dy == 0) ? float.PositiveInfinity : Math.Abs(1.0f / dy);
 
+            // the total distance (in terms of t) from the start of the line to the next grid line crossing in the X or Y direction
             float tMaxX = dx == 0 ? float.PositiveInfinity : signDx * 0.5f / dx;
             float tMaxY = dy == 0 ? float.PositiveInfinity : signDy * 0.5f / dy;
 
@@ -110,6 +148,7 @@ namespace AStarNickNS
             float epsilon = 1e-6f;
             while (currentCellX != endCellX || currentCellY != endCellY)
             {
+                // the line will hit a vertical grid line first
                 if (tMaxX < tMaxY - epsilon)
                 {
                     if (tMaxX > 1.0f) break;
@@ -123,6 +162,7 @@ namespace AStarNickNS
                     currentCellX += signDx;
                     tMaxX += tDeltaX;
                 }
+                // the line will hit a horizontal grid line first
                 else if (tMaxY < tMaxX - epsilon)
                 {
                     if (tMaxY > 1.0f) break;
@@ -136,9 +176,9 @@ namespace AStarNickNS
                     currentCellY += signDy;
                     tMaxY += tDeltaY;
                 }
-                else // Corner case
+                //  If tMaxX and tMaxY are nearly equal, it means the line passes very close to a corner of a cell
+                else
                 {
-                    // tMaxX is approx tMaxY
                     if (tMaxX > 1.0f) break;
 
                     float intersectX = startX + tMaxX * dx;
