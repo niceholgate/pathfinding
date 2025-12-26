@@ -65,9 +65,9 @@ namespace AStarTests.Graphs
         [TestMethod]
         public void TestGetCellIntersectionsWithLineSegment_SameCell()
         {
-            var start = (0, 0);
-            var end = (0, 0);
-            var expectedCells = new List<(int, int)> { (0, 0) };
+            var start = (5, 3);
+            var end = (5, 3);
+            var expectedCells = new List<(int, int)> { (5, 3) };
             var expectedIntersectonDistances = new List<float> { 0.0f };
             
             var result = GridCellIntersections.GetCellIntersectionsWithLineSegment(start, end);

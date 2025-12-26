@@ -74,12 +74,14 @@ namespace AStarNickNS
         {
             var intersectedCells = new List<CellIntersectionData>();
 
+            // Get start and end as floats
             float startX = start.x;
             float startY = start.y;
             float endX = end.x;
             float endY = end.y;
 
-            if (startX == endX && startY == endY)
+            // Handle the case where start and end are the same point
+            if (start.x == end.x && start.y == end.y)
             {
                 intersectedCells.Add(new CellIntersectionData(start.x, start.y, (startX, startY), (endX, endY)));
                 return intersectedCells;
@@ -88,23 +90,20 @@ namespace AStarNickNS
             float dx = endX - startX;
             float dy = endY - startY;
 
-            int currentCellX = (int)Math.Floor(startX + 0.5f);
-            int currentCellY = (int)Math.Floor(startY + 0.5f);
+            int signDx = Math.Sign(dx);
+            int signDy = Math.Sign(dy);
             
-            int endCellX = (int)Math.Floor(endX + 0.5f);
-            int endCellY = (int)Math.Floor(endY + 0.5f);
-
-            int stepX = Math.Sign(dx);
-            int stepY = Math.Sign(dy);
+            int currentCellX = start.x;
+            int currentCellY = start.y;
+            
+            int endCellX = end.x;
+            int endCellY = end.y;
 
             float tDeltaX = (dx == 0) ? float.PositiveInfinity : Math.Abs(1.0f / dx);
             float tDeltaY = (dy == 0) ? float.PositiveInfinity : Math.Abs(1.0f / dy);
-            
-            float nextVerticalBoundary = (stepX > 0) ? (float)Math.Floor(startX + 0.5f) + 0.5f : (float)Math.Floor(startX - 0.5f) + 0.5f;
-            float nextHorizontalBoundary = (stepY > 0) ? (float)Math.Floor(startY + 0.5f) + 0.5f : (float)Math.Floor(startY - 0.5f) + 0.5f;
 
-            float tMaxX = (dx == 0) ? float.PositiveInfinity : (nextVerticalBoundary - startX) / dx;
-            float tMaxY = (dy == 0) ? float.PositiveInfinity : (nextHorizontalBoundary - startY) / dy;
+            float tMaxX = dx == 0 ? float.PositiveInfinity : signDx * 0.5f / dx;
+            float tMaxY = dy == 0 ? float.PositiveInfinity : signDy * 0.5f / dy;
 
             (float, float) lastIntersection = (startX, startY);
 
@@ -113,52 +112,50 @@ namespace AStarNickNS
             {
                 if (tMaxX < tMaxY - epsilon)
                 {
-                    float t = tMaxX;
-                    if (t > 1.0f) break;
+                    if (tMaxX > 1.0f) break;
 
-                    float intersectX = startX + t * dx;
-                    float intersectY = startY + t * dy;
+                    float intersectX = startX + tMaxX * dx;
+                    float intersectY = startY + tMaxX * dy;
                     
                     intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY, lastIntersection, (intersectX, intersectY)));
                     lastIntersection = (intersectX, intersectY);
                     
-                    currentCellX += stepX;
+                    currentCellX += signDx;
                     tMaxX += tDeltaX;
                 }
                 else if (tMaxY < tMaxX - epsilon)
                 {
-                    float t = tMaxY;
-                    if (t > 1.0f) break;
+                    if (tMaxY > 1.0f) break;
                     
-                    float intersectX = startX + t * dx;
-                    float intersectY = startY + t * dy;
+                    float intersectX = startX + tMaxY * dx;
+                    float intersectY = startY + tMaxY * dy;
 
                     intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY, lastIntersection, (intersectX, intersectY)));
                     lastIntersection = (intersectX, intersectY);
 
-                    currentCellY += stepY;
+                    currentCellY += signDy;
                     tMaxY += tDeltaY;
                 }
                 else // Corner case
                 {
-                    float t = tMaxX; // tMaxX is approx tMaxY
-                    if (t > 1.0f) break;
+                    // tMaxX is approx tMaxY
+                    if (tMaxX > 1.0f) break;
 
-                    float intersectX = startX + t * dx;
-                    float intersectY = startY + t * dy;
+                    float intersectX = startX + tMaxX * dx;
+                    float intersectY = startY + tMaxX * dy;
                     
                     // Current cell
                     intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY, lastIntersection, (intersectX, intersectY)));
                     
                     // Add the other 2 cells that share the corner. The 4th one will be the next current cell.
                     // The intersection with these cells is just the corner point.
-                    intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY + stepY, (intersectX, intersectY), (intersectX, intersectY)));
-                    intersectedCells.Add(new CellIntersectionData(currentCellX + stepX, currentCellY, (intersectX, intersectY), (intersectX, intersectY)));
+                    intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY + signDy, (intersectX, intersectY), (intersectX, intersectY)));
+                    intersectedCells.Add(new CellIntersectionData(currentCellX + signDx, currentCellY, (intersectX, intersectY), (intersectX, intersectY)));
 
                     lastIntersection = (intersectX, intersectY);
                     
-                    currentCellX += stepX;
-                    currentCellY += stepY;
+                    currentCellX += signDx;
+                    currentCellY += signDy;
                     tMaxX += tDeltaX;
                     tMaxY += tDeltaY;
                 }
