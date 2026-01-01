@@ -29,10 +29,13 @@ namespace AStarTests
             { 1, 1, 1, 1, 1, 1 }, // 9
             { 1, 1, 1, 1, 0, 0 }  // 10
         };
+
+        private IPathfinderObstacleIntersector mockIntersector;
         
         [TestInitialize]
         public void Initialize() {
             gridTerrainCosts = gridTerrainCosts.Transpose();
+            mockIntersector = getMockIntersector();
         }
 
         [TestMethod]
@@ -195,8 +198,6 @@ namespace AStarTests
         [TestMethod]
         public void TestPathfinderCanFitCached()
         {
-            var mockIntersector = getMockIntersector();
-            
             sut = new GridPlaceGraph(true, mockIntersector,
                 new HashSet<double>{0.9, 1.1, 2.9, 3.1, 2*Math.Sqrt(2) - 0.01, 2*Math.Sqrt(2) + 0.01});
             sut.BuildFromArray(gridTerrainCosts);
@@ -225,8 +226,6 @@ namespace AStarTests
         [TestMethod]
         public void TestPathfinderCanFitCached_SelectivelyCalledWhenTerrainGridAccessibilityUpdated()
         {
-            var mockIntersector = getMockIntersector();
-            
             sut = new GridPlaceGraph(true, mockIntersector,
                 new HashSet<double>{0.9, 2*Math.Sqrt(2) + 0.01});
             sut.BuildFromArray(gridTerrainCosts);
@@ -259,8 +258,6 @@ namespace AStarTests
         [TestMethod]
         public void TestPathfinderCanFitCached_FitsWhenSizeAndGapAreEqualAndEven()
         {
-            var mockIntersector = getMockIntersector();
-            
             sut = new GridPlaceGraph(true, mockIntersector,
                 new HashSet<double>{0.9, 1.9});
             sut.BuildFromArray(gridTerrainCosts);
@@ -282,6 +279,82 @@ namespace AStarTests
             // Due to caching, Intersector did not need to perform any further calcs after Build
             mockIntersector.Received(83)
                 .CoordinateWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+        }
+        
+        // Refer to grid_path_smoothing_concept.png and walls_test.csv
+        [TestMethod]
+        public void TestSmoothPathAroundBlockages()
+        {
+            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
+                new HashSet<double>{0.9, 1.9});
+            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
+
+            List<GridPlace> originalPath = new()
+            {
+                new GridPlace((0, 2)), new GridPlace((0, 3)), new GridPlace((1, 4)), new GridPlace((1, 5)),
+                new GridPlace((1, 6)), new GridPlace((2, 7)), new GridPlace((2, 8)), new GridPlace((3, 8)),
+                new GridPlace((4, 8)), new GridPlace((5, 8)), new GridPlace((6, 8)), new GridPlace((7, 8)),
+                new GridPlace((8, 8)), new GridPlace((9, 8)), new GridPlace((10, 9)), new GridPlace((11, 9)),
+                new GridPlace((12, 9)), new GridPlace((13, 9)), new GridPlace((14, 9)), new GridPlace((15, 9)),
+                new GridPlace((16, 9)), new GridPlace((17, 9)), new GridPlace((18, 9)), new GridPlace((19, 9)),
+                new GridPlace((20, 9)), new GridPlace((21, 9)), new GridPlace((22, 9)), new GridPlace((22, 10)),
+                new GridPlace((22, 11)), new GridPlace((22, 12)), new GridPlace((21, 12)), new GridPlace((20, 12)),
+                new GridPlace((19, 13))
+            };
+            
+            List<GridPlace> expectedSmoothPath = new()
+            {
+                originalPath[0], originalPath[6], originalPath[26], originalPath[29], originalPath[32]
+            };
+
+            List<GridPlace> actualSmoothPath = sut.SmoothPath(originalPath, 0.9);
+            CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
+        }
+        
+        // Refer to grid_path_smoothing_swamp_issue.png and walls_and_swamps_test.csv
+        [TestMethod]
+        public void TestSmoothPathAroundSwamps()
+        {
+            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
+                new HashSet<double>{0.9, 1.9});
+            sut.BuildFromFile("../../../Resources/excel_mazes/walls_and_swamps_test.csv");
+
+            List<GridPlace> originalPath = new()
+            {
+                new GridPlace((4, 4)), new GridPlace((5, 5)), new GridPlace((6, 5)), new GridPlace((7, 5)),
+                new GridPlace((8, 5)), new GridPlace((9, 6)), new GridPlace((9, 7)), new GridPlace((8, 8))
+            };
+            
+            List<GridPlace> expectedSmoothPath = new()
+            {
+                originalPath[0], originalPath[4], originalPath[5], originalPath[7]
+            };
+
+            List<GridPlace> actualSmoothPath = sut.SmoothPath(originalPath, 0.9);
+            CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
+        }
+        
+        [TestMethod]
+        public void TestSmoothPathIncludingBlockages_ThrowsException()
+        {
+            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
+                new HashSet<double>{0.9, 1.9});
+            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
+        
+            List<GridPlace> originalPath = new()
+            {
+                new GridPlace((0, 2)), new GridPlace((0, 3)), new GridPlace((1, 4)), new GridPlace((1, 5)),
+                new GridPlace((1, 6)), new GridPlace((2, 7)), new GridPlace((3, 7)), new GridPlace((3, 8)),
+                new GridPlace((4, 8)), new GridPlace((5, 8)), new GridPlace((6, 8)), new GridPlace((7, 8)),
+                new GridPlace((8, 8)), new GridPlace((9, 8)), new GridPlace((10, 9)), new GridPlace((11, 9)),
+                new GridPlace((12, 9)), new GridPlace((13, 9)), new GridPlace((14, 9)), new GridPlace((15, 9)),
+                new GridPlace((16, 9)), new GridPlace((17, 9)), new GridPlace((18, 9)), new GridPlace((19, 9)),
+                new GridPlace((20, 9)), new GridPlace((21, 9)), new GridPlace((22, 9)), new GridPlace((23, 9)),
+            };
+            
+            TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
+                () => sut.SmoothPath(originalPath, 0.9),
+                "Cannot smooth a path that goes through blocked cell/s! (Label = (3, 7))");
         }
         
         private IPathfinderObstacleIntersector getMockIntersector()

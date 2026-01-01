@@ -278,69 +278,75 @@ namespace AStarNickNS
             Places[label] = new GridPlace(label);
             return (GridPlace)Places[label];
         }
-            // public List<GridPlace> SmoothPath(List<GridPlace> originalPath, double pathfinderSize)
-            // {
-            //     // The smoothed path start at the same place as the original path 
-            //     int latestNodeIdx = 0;
-            //     List<GridPlace> smoothedPath = new() { originalPath[0] };
-            //
-            //     int idx = 1;
-            //     while (idx < originalPath.Count)
-            //     {
-            //         GridPlace here = originalPath[idx];
-            //         
-            //         // The smoothed path ends at the same place as the original path 
-            //         if (idx == originalPath.Count - 1)
-            //         {
-            //             smoothedPath.Add(here);
-            //             break;
-            //         }
-            //         
-            //         // Get the intersections data (2 coordinates and 1 terrain cost value)
-            //         // for each cell intersected by the line segment between 'here' and the last node
-            //         List<CellIntersectionData> intersections = GetCellIntersectionsWithLineSegment(start, end);
-            //         
-            //         
-            //         // If the line segment between 'here' and the last node is blocked,
-            //         // the previous path location needs to become a node on the smoothed path ...
-            //         if (IsLineSegmentBlocked(originalPath[latestNodeIdx], here, pathfinderSize))
-            //         {
-            //             latestNodeIdx = idx - 1;
-            //             smoothedPath.Add(originalPath[latestNodeIdx]);
-            //         }
-            //         // Likewise if the line segment becomes slower (due to terrain costs) than the
-            //         // ... otherwise continue
-            //         
-            //         idx++;
-            //     }
-            //     
-            //     return smoothedPath;
-            // }
+       
+        public List<GridPlace> SmoothPath(List<GridPlace> originalPath, double pathfinderSize)
+        {
+            // Check that the original path is valid
+            foreach (GridPlace place in originalPath)
+            {
+                if (GetTerrainCost(place.Label) <= 0)
+                {
+                    throw new ArgumentException($"Cannot smooth a path that goes through blocked cell/s! (Label = {place.Label})");
+                }
+            }
             
-            // public bool IsLineSegmentBlocked(GridPlace p1, GridPlace p2, double pathfinderSize)
-            // {
-            //     // Get the intersected cells
-            //     
-            //     // Loop over the cells, checking for inaccessible cells
-            //     for (GridPlace gridPlace : intersected)
-            //     {
-            //         // Need to take slow terrain into account too
-            //         // Calculate the original path speed, expected smoothed speed,
-            //         // and consider it blocked if smoothed is slower?
-            //         if (!PathfinderCanFitCached(x, y, pathfinderSize))
-            //         {
-            //             return true;
-            //         }
-            //     }
-            //     return false;
-            // }
-            //
-            // private List<CellIntersectionData> GetCellIntersectionsWithLineSegment(GridPlace start, GridPlace end)
-            // {
-            //     
-            // }
+            // If the original path has 2 or fewer nodes, it can't be smoothed
+            if (originalPath.Count <= 2) return new List<GridPlace>(originalPath);
             
-            
+           // The smoothed path starts at the same place as the original path 
+           int latestNodeIdx = 0;
+           List<GridPlace> smoothedPath = new() { originalPath[0] };
+       
+           int idx = 1;
+           while (idx < originalPath.Count)
+           {
+               // The smoothed path ends at the same place as the original path 
+               if (idx == originalPath.Count - 1)
+               {
+                   smoothedPath.Add(originalPath[idx]);
+                   break;
+               }
+               
+               // Get the intersections data (2 coordinates and 1 terrain cost value)
+               // for each cell intersected by the line segment between 'here' and the last node
+               List<CellIntersectionData> intersectedCells = GridCellIntersections.GetCellIntersectionsWithLineSegment(
+                   originalPath[latestNodeIdx].Label, originalPath[idx].Label);
+               
+               // If the line segment between 'here' and the last node is blocked,
+               // or if the line segment becomes slower (due to terrain costs) than the original path segment,
+               // then the previous path location needs to become a node on the smoothed path...
+               bool isLineSegmentBlocked = intersectedCells.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
+               List<GridPlace> originalPathSegment = originalPath.GetRange(latestNodeIdx, idx - latestNodeIdx + 1);
+               if (isLineSegmentBlocked
+                   || IsLineSegmentSlowerThanOriginalPathSegment(intersectedCells, originalPathSegment))
+               {
+                   latestNodeIdx = idx - 1;
+                   smoothedPath.Add(originalPath[latestNodeIdx]);
+               }
+
+               // ... otherwise continue
+               idx++;
+           }
+           
+           return smoothedPath;
         }
+            
+        private bool IsLineSegmentSlowerThanOriginalPathSegment(
+            List<CellIntersectionData> intersectedCells, List<GridPlace> originalPathSegment)
+        {
+            double originalPathSegmentCost = 0.0;
+            for (int i = 1; i < originalPathSegment.Count; i++)
+            {
+                originalPathSegmentCost += CostToLeave(originalPathSegment[i-1].Label, originalPathSegment[i].Label);
+            }
+            
+            double lineSegmentCost = intersectedCells.Sum(cell =>
+                cell.IntersectedDistance * GetTerrainCost((cell.x, cell.y)));
+
+            return lineSegmentCost > originalPathSegmentCost;
+        }
+            
+            
     }
+}
     
