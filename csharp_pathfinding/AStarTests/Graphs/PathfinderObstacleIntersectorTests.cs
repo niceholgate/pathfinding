@@ -58,6 +58,17 @@ public class PathfinderObstacleIntersectorTests
     }
     
     [TestMethod]
+    public void TestLargePathfinderPrefersCellCornerFarthestFromCornerObstacle()
+    {
+        gridTerrainCosts = gridTerrainCosts.Transpose();
+        PathfinderObstacleIntersector sut = new()
+        {
+            GridTerrainCosts = gridTerrainCosts
+        };
+        Assert.AreEqual((1.5, 5.5), sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) - 0.01));
+    }
+    
+    [TestMethod]
     public void TestCoordinateWherePathfinderDoesNotIntersectAnyObstacles_UninitialisedThrowsException()
     {
         PathfinderObstacleIntersector sut = new();
