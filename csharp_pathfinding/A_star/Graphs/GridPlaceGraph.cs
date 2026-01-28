@@ -17,7 +17,7 @@ namespace AStarNickNS
         
         // don't need to worry about caching invalidation on this one
         // - just stores the last seen coordinate where a pathfinder fits
-        public Dictionary<double, (double, double)?[,]> PathfinderFitsCoords { get; set; }
+        public Dictionary<double, List<(double, double)>[,]> PathfinderFitsCoords { get; set; }
 
         private double[,] _gridTerrainCosts = new double[1,1];
 
@@ -40,7 +40,7 @@ namespace AStarNickNS
             DiagonalNeighbours = diagonalNeighbours;
             _intersector = pathfinderObstacleIntersector;
             PathfinderObstacleIntersectionsCache = new Dictionary<double, bool?[,]> { { 0.9, null } };
-            PathfinderFitsCoords = new Dictionary<double, (double, double)?[,]> { { 0.9, null } };
+            PathfinderFitsCoords = new Dictionary<double, List<(double, double)>[,]>() { { 0.9, null } };
             _descendingOrderedPathfinderSizes = PathfinderObstacleIntersectionsCache.Keys
                 .OrderByDescending(k => k).ToList();
         }
@@ -51,7 +51,7 @@ namespace AStarNickNS
             DiagonalNeighbours = diagonalNeighbours;
             _intersector = pathfinderObstacleIntersector;
             PathfinderObstacleIntersectionsCache = new Dictionary<double, bool?[,]>();
-            PathfinderFitsCoords = new Dictionary<double, (double, double)?[,]>();
+            PathfinderFitsCoords = new Dictionary<double, List<(double, double)>[,]>();
             foreach (double pathfinderSize in pathfinderSizes)
             {
                 PathfinderObstacleIntersectionsCache.Add(pathfinderSize, null);
@@ -74,10 +74,10 @@ namespace AStarNickNS
         {
             if (PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] == null)
             {
-                PathfinderFitsCoords[pathfinderSize][x, y] =
-                    _intersector.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(x, y, pathfinderSize);
-                PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] =
-                    PathfinderFitsCoords[pathfinderSize][x, y] == null;
+                List<(double, double)> fitCoordinates =
+                    _intersector.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(x, y, pathfinderSize);
+                PathfinderFitsCoords[pathfinderSize][x, y] = fitCoordinates;
+                PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] = fitCoordinates.Count == 0;
             }
             return !PathfinderObstacleIntersectionsCache[pathfinderSize][x, y].Value;
         }
@@ -238,7 +238,7 @@ namespace AStarNickNS
             foreach (double pathfinderSize in _descendingOrderedPathfinderSizes)
             {
                 PathfinderObstacleIntersectionsCache[pathfinderSize] = new bool?[width, height];
-                PathfinderFitsCoords[pathfinderSize] = new (double, double)?[width, height];
+                PathfinderFitsCoords[pathfinderSize] = new List<(double, double)>[width, height];
                 for (int y = 0; y < height; y++)
                 {
                     for (int x = 0; x < width; x++)

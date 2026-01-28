@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using NicUtils;
 
 namespace AStarNickNS
@@ -15,14 +16,14 @@ namespace AStarNickNS
             (0.0, 0.0), (0.5, 0.5), (-0.5, 0.5), (-0.5, -0.5), (0.5, -0.5)
         };
 
-        public (double, double)? CoordinateWherePathfinderDoesNotIntersectAnyObstacles(int x, int y, double pathfinderSize)
+        public List<(double, double)> CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(int x, int y, double pathfinderSize)
         {
             if (GridTerrainCosts == null || GridTerrainCosts.Length == 0)
             {
                 throw new IOException("GridTerrainCosts not yet initialised!");
             }
             
-            if (GetTerrainCost(x, y) <= 0) return null;
+            if (GetTerrainCost(x, y) <= 0) return new List<(double, double)>();
                 
             double halfWidth = pathfinderSize / 2;
             double radiusSq = halfWidth * halfWidth;
@@ -47,33 +48,17 @@ namespace AStarNickNS
                 }
             }
 
-            if (coordinatesWithoutIntersections.Count == 1)
-            {
-                // If only one position can be occupied, return it.
-                return coordinatesWithoutIntersections[0];
-            } 
             if (coordinatesWithoutIntersections.Count > 1)
             {
                 // If there are multiple positions to choose from, choose the one that is maximally distant
                 // from the cell's nearest obstructed cell.
                 (int, int) nearestObstructedCell = FindNearestedObstructedCell(x, y);
-                double maxDistSq = double.MinValue;
-                (double, double) bestCoordinate = coordinatesWithoutIntersections[0];
-                foreach ((double, double) coord in coordinatesWithoutIntersections)
-                {
-                    double distSq = Distances2D.GetDistance(coord, nearestObstructedCell,
-                        Distances2D.HeuristicType.EuclidianSquared);
-                    if (distSq > maxDistSq)
-                    {
-                        maxDistSq = distSq;
-                        bestCoordinate = coord;
-                    }
-                }
-                return bestCoordinate;
+                return coordinatesWithoutIntersections.OrderByDescending(c => 
+                    Math.Pow(c.Item1 - nearestObstructedCell.Item1, 2) + Math.Pow(c.Item2 - nearestObstructedCell.Item2, 2)
+                ).ToList();
             }
             
-            // Intersections were found for all positions on the cell.
-            return null;
+            return coordinatesWithoutIntersections;
         }
 
         private bool CircleIntersectsWithAnyObstacle(List<(int, int)> cells, double circleCentreX, double circleCentreY,

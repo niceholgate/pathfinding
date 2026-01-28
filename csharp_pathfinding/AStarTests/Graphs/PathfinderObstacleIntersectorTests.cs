@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using AStarNickNS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NicUtils;
@@ -34,27 +35,27 @@ public class PathfinderObstacleIntersectorTests
         };
 
         // Inside a size 1 square                            x, y
-        Assert.IsNotNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 0.9));
-        Assert.IsNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 1.1));
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 0.9).Any());
+        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 1.1).Any());
             
         // Inside a size 3 square
-        Assert.IsNotNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(1, 2, 2.9));
-        Assert.IsNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(1, 2, 3.1));
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(1, 2, 2.9).Any());
+        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(1, 2, 3.1).Any());
             
         // Intersect with a corner
-        Assert.IsNotNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9));
-        Assert.IsNotNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) - 0.01));
-        Assert.IsNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) + 0.01));
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9).Any());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) - 0.01).Any());
+        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) + 0.01).Any());
         
         // Respond to changes in the gridTerrainCosts
         gridTerrainCosts[3, 4] = 1;
-        Assert.IsNotNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9));
-        Assert.IsNotNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) - 0.01));
-        Assert.IsNotNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) + 0.01));
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9).Any());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) - 0.01).Any());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) + 0.01).Any());
         gridTerrainCosts[3, 4] = 0;
-        Assert.IsNotNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9));
-        Assert.IsNotNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) - 0.01));
-        Assert.IsNull(sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) + 0.01));
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9).Any());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) - 0.01).Any());
+        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) + 0.01).Any());
     }
     
     [TestMethod]
@@ -65,7 +66,7 @@ public class PathfinderObstacleIntersectorTests
         {
             GridTerrainCosts = gridTerrainCosts
         };
-        Assert.AreEqual((1.5, 5.5), sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) - 0.01));
+        Assert.AreEqual((1.5, 5.5), sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*Math.Sqrt(2) - 0.01)[0]);
     }
     
     [TestMethod]
@@ -73,7 +74,7 @@ public class PathfinderObstacleIntersectorTests
     {
         PathfinderObstacleIntersector sut = new();
         TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-            () => sut.CoordinateWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 0.9),
+            () => sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 0.9),
             "GridTerrainCosts not yet initialised!");
     }
 }
