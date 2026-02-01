@@ -13,17 +13,31 @@ namespace AStarNickNS
 
         private readonly List<(double, double)> GRID_CORNER_DELTAS = new()
         {
-            (0.0, 0.0), (0.5, 0.5), (-0.5, 0.5), (-0.5, -0.5), (0.5, -0.5)
+            (0.5, 0.5), (-0.5, 0.5), (-0.5, -0.5), (0.5, -0.5)
         };
 
-        public List<(double, double)> CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(int x, int y, double pathfinderSize)
+        public OccupiableCellCoordinates CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(int x, int y, double pathfinderSize)
         {
             if (GridTerrainCosts == null || GridTerrainCosts.Length == 0)
             {
                 throw new IOException("GridTerrainCosts not yet initialised!");
             }
             
-            if (GetTerrainCost(x, y) <= 0) return new List<(double, double)>();
+            OccupiableCellCoordinates occ = new OccupiableCellCoordinates {
+                Centre = null,
+                CornersFarthestFromBlockages = new List<(double, double)>(),
+                OtherCorners = new List<(double, double)>(),
+                AllCoordsOccupiable = false
+            };
+            
+            if (GetTerrainCost(x, y) <= 0) return occ;
+            
+            // Sub-cell pathfinders just go to the center
+            if (pathfinderSize <= 1.0)
+            {
+                occ.Centre = (x, y);
+                return occ;
+            }
                 
             double halfWidth = pathfinderSize / 2;
             double radiusSq = halfWidth * halfWidth;
@@ -36,29 +50,55 @@ namespace AStarNickNS
             }
             
             // The pathfinder fits in this cell if it can stand on any part of the cell with no intersections with obstacles.
-            List<(double, double)> coordinatesWithoutIntersections = new();
+            occ.Centre = CircleIntersectsWithAnyObstacle(cells, cx, cy, radiusSq)
+                ? null : (cx, cy);
+
+            List<(double, double)> cornersWithoutIntersections = new();
             foreach ((double, double) cornerDelta in GRID_CORNER_DELTAS)
             {
                 double circleCentreX = cx + cornerDelta.Item1;
                 double circleCentreY = cy + cornerDelta.Item2;
                 if (!CircleIntersectsWithAnyObstacle(cells, circleCentreX, circleCentreY, radiusSq))
                 {
-                    // We found a spot (circleCentreX, circleCentreY) in this cell (x, y) where the pathfinder fits
-                    coordinatesWithoutIntersections.Add((circleCentreX, circleCentreY));
+                    // We found a corner (circleCentreX, circleCentreY) of this cell (x, y) where the pathfinder fits
+                    cornersWithoutIntersections.Add((circleCentreX, circleCentreY));
                 }
             }
 
-            if (coordinatesWithoutIntersections.Count > 1)
+            if (cornersWithoutIntersections.Count == 0) return occ;
+            
+            if (cornersWithoutIntersections.Count == 1)
             {
-                // If there are multiple positions to choose from, choose the one that is maximally distant
-                // from the cell's nearest obstructed cell.
-                (int, int) nearestObstructedCell = FindNearestedObstructedCell(x, y);
-                return coordinatesWithoutIntersections.OrderByDescending(c => 
-                    Math.Pow(c.Item1 - nearestObstructedCell.Item1, 2) + Math.Pow(c.Item2 - nearestObstructedCell.Item2, 2)
-                ).ToList();
+                // Only one corner to choose from.
+                occ.CornersFarthestFromBlockages = cornersWithoutIntersections;
+                return occ;
             }
             
-            return coordinatesWithoutIntersections;
+            occ.AllCoordsOccupiable = cornersWithoutIntersections.Count == 4;
+
+            // If there are multiple corners to choose from, find the one/s maximally distant
+            // from the cell's nearest obstructed cell.
+            (int, int) nearestObstructedCell = FindNearestedObstructedCell(x, y);
+            List<double> distancesSq = new();
+            double maxDistanceSq = double.MinValue;
+            foreach ((double, double) corner in cornersWithoutIntersections)
+            {
+                distancesSq.Add(Distances2D.GetDistance(corner, nearestObstructedCell, Distances2D.HeuristicType.EuclidianSquared));
+                if (distancesSq.Last() > maxDistanceSq) maxDistanceSq = distancesSq.Last();
+            }
+            for (int i = 0; i < cornersWithoutIntersections.Count; i++)
+            {
+                if (Math.Abs(distancesSq[i] - maxDistanceSq) < 1e-9)
+                {
+                    occ.CornersFarthestFromBlockages.Add(cornersWithoutIntersections[i]);
+                }
+                else
+                {
+                    occ.OtherCorners.Add(cornersWithoutIntersections[i]);
+                }
+            }
+
+            return occ;
         }
 
         private bool CircleIntersectsWithAnyObstacle(List<(int, int)> cells, double circleCentreX, double circleCentreY,
@@ -176,5 +216,17 @@ namespace AStarNickNS
             }
             throw new Exception("This should not be reached - could not find an obstructed cell");
         }
+    }
+
+    public struct OccupiableCellCoordinates
+    {
+        public (double, double)? Centre { get; set; }
+        public List<(double, double)> CornersFarthestFromBlockages { get; set; }
+        public List<(double, double)> OtherCorners { get; set; }
+        public bool Occupiable()
+        {
+            return Centre != null || CornersFarthestFromBlockages.Count > 0;
+        }
+        public bool AllCoordsOccupiable { get; set; }
     }
 }

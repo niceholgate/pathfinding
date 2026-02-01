@@ -17,7 +17,7 @@ namespace AStarNickNS
         
         // don't need to worry about caching invalidation on this one
         // - just stores the last seen coordinate where a pathfinder fits
-        public Dictionary<double, List<(double, double)>[,]> PathfinderFitsCoords { get; set; }
+        public Dictionary<double, OccupiableCellCoordinates[,]> PathfinderFitsCoords { get; set; }
 
         private double[,] _gridTerrainCosts = new double[1,1];
 
@@ -40,7 +40,7 @@ namespace AStarNickNS
             DiagonalNeighbours = diagonalNeighbours;
             _intersector = pathfinderObstacleIntersector;
             PathfinderObstacleIntersectionsCache = new Dictionary<double, bool?[,]> { { 0.9, null } };
-            PathfinderFitsCoords = new Dictionary<double, List<(double, double)>[,]>() { { 0.9, null } };
+            PathfinderFitsCoords = new Dictionary<double, OccupiableCellCoordinates[,]>() { { 0.9, null } };
             _descendingOrderedPathfinderSizes = PathfinderObstacleIntersectionsCache.Keys
                 .OrderByDescending(k => k).ToList();
         }
@@ -51,7 +51,7 @@ namespace AStarNickNS
             DiagonalNeighbours = diagonalNeighbours;
             _intersector = pathfinderObstacleIntersector;
             PathfinderObstacleIntersectionsCache = new Dictionary<double, bool?[,]>();
-            PathfinderFitsCoords = new Dictionary<double, List<(double, double)>[,]>();
+            PathfinderFitsCoords = new Dictionary<double, OccupiableCellCoordinates[,]>();
             foreach (double pathfinderSize in pathfinderSizes)
             {
                 PathfinderObstacleIntersectionsCache.Add(pathfinderSize, null);
@@ -74,10 +74,10 @@ namespace AStarNickNS
         {
             if (PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] == null)
             {
-                List<(double, double)> fitCoordinates =
+                OccupiableCellCoordinates fitCoordinates =
                     _intersector.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(x, y, pathfinderSize);
                 PathfinderFitsCoords[pathfinderSize][x, y] = fitCoordinates;
-                PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] = fitCoordinates.Count == 0;
+                PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] = !fitCoordinates.Occupiable();
             }
             return !PathfinderObstacleIntersectionsCache[pathfinderSize][x, y].Value;
         }
@@ -141,8 +141,11 @@ namespace AStarNickNS
                         {
                             if (cellY < 0 || cellY >= _gridTerrainCosts.GetLength(1)) continue;
                             if (previousPathfinderSize != null &&
-                                !PathfinderObstacleIntersectionsCache[previousPathfinderSize.Value][cellX, cellY].Value)
+                                !PathfinderObstacleIntersectionsCache[previousPathfinderSize.Value][cellX, cellY].Value &&
+                                PathfinderFitsCoords[previousPathfinderSize.Value][cellX, cellY].AllCoordsOccupiable)
                             {
+                                PathfinderFitsCoords[pathfinderSize][cellX, cellY] =
+                                    PathfinderFitsCoords[previousPathfinderSize.Value][cellX, cellY];
                                 PathfinderObstacleIntersectionsCache[pathfinderSize][cellX, cellY] = false;
                                 continue;
                             }
@@ -238,14 +241,17 @@ namespace AStarNickNS
             foreach (double pathfinderSize in _descendingOrderedPathfinderSizes)
             {
                 PathfinderObstacleIntersectionsCache[pathfinderSize] = new bool?[width, height];
-                PathfinderFitsCoords[pathfinderSize] = new List<(double, double)>[width, height];
+                PathfinderFitsCoords[pathfinderSize] = new OccupiableCellCoordinates[width, height];
                 for (int y = 0; y < height; y++)
                 {
                     for (int x = 0; x < width; x++)
                     {
                         if (previousPathfinderSize != null &&
-                            !PathfinderObstacleIntersectionsCache[previousPathfinderSize.Value][x, y].Value)
+                            !PathfinderObstacleIntersectionsCache[previousPathfinderSize.Value][x, y].Value &&
+                            PathfinderFitsCoords[previousPathfinderSize.Value][x, y].AllCoordsOccupiable)
                         {
+                            PathfinderFitsCoords[pathfinderSize][x, y] =
+                                PathfinderFitsCoords[previousPathfinderSize.Value][x, y];
                             PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] = false;
                             continue;
                         }
@@ -313,14 +319,26 @@ namespace AStarNickNS
                    originalPath[latestNodeIdx].Label, originalPath[idx].Label);
                
                // If the line segment between 'here' and the last node is blocked,
+               // or if the line segment goes too close to a blockage,
                // or if the line segment becomes slower (due to terrain costs) than the original path segment,
                // then the previous path location needs to become a node on the smoothed path...
+               
+               // TODO: See pathsmoothingissue-treat-line-segment-as-blocked-if-passes-near-blockage.png
+               // Should also treat the line segment as blocked if it passes very close to a blockage (according to the pathfinder size).
+               // As a temporary solution, let's try selecting the new smoothed node as "idx - ceil(pathfinderSize)" instead of "idx - 1".
                bool isLineSegmentBlocked = intersectedCells.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
                List<GridPlace> originalPathSegment = originalPath.GetRange(latestNodeIdx, idx - latestNodeIdx + 1);
                if (isLineSegmentBlocked
                    || IsLineSegmentSlowerThanOriginalPathSegment(intersectedCells, originalPathSegment))
                {
-                   latestNodeIdx = idx - 1;
+                   // latestNodeIdx = idx - 1;
+                   
+                   int oldLatestNodeIdx = latestNodeIdx;
+                   int stepback = (int)Math.Ceiling(pathfinderSize);
+                   latestNodeIdx = Math.Max(idx - stepback, oldLatestNodeIdx + 1);
+                   // // If the step back was more than 1, adjust idx backward accordingly
+                   idx -= stepback - 1;
+                   
                    smoothedPath.Add(originalPath[latestNodeIdx]);
                }
 
