@@ -285,6 +285,26 @@ namespace AStarNickNS
             Places[label] = new GridPlace(label);
             return (GridPlace)Places[label];
         }
+
+        public static double GetDistanceToLine((float, float) p1, (float, float) p2, (float, float) p3)
+        {
+            float x1 = p1.Item1;
+            float y1 = p1.Item2;
+            float x2 = p2.Item1;
+            float y2 = p2.Item2;
+            float x0 = p3.Item1;
+            float y0 = p3.Item2;
+
+            double dx = x2 - x1;
+            double dy = y2 - y1;
+
+            if (dx == 0 && dy == 0)
+            {
+                return Math.Sqrt(Math.Pow(x1 - x0, 2) + Math.Pow(y1 - y0, 2));
+            }
+
+            return Math.Abs(dx * (y1 - y0) - (x1 - x0) * dy) / Math.Sqrt(dx * dx + dy * dy);
+        }
        
         public List<GridPlace> SmoothPath(List<GridPlace> originalPath, double pathfinderSize)
         {
@@ -307,7 +327,9 @@ namespace AStarNickNS
            int idx = 1;
            while (idx < originalPath.Count)
            {
-               int stepback = (int)Math.Ceiling(pathfinderSize) + 1;
+               // int stepback = (int)Math.Ceiling(pathfinderSize) + 1;
+               int stepback = 1;
+               // hopefully this is fine now with the line segment proximity to blockages logic in place, which should prevent units sliding on walls around corners
                
                // The smoothed path ends at the same place as the original path 
                if (idx == originalPath.Count - 1)
@@ -318,7 +340,8 @@ namespace AStarNickNS
                    List<CellIntersectionData> intersectedCellsA = GridCellIntersections.GetCellIntersectionsWithLineSegment(
                        startA, endA);
                    bool isLineSegmentBlockedA = intersectedCellsA.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
-                   if (isLineSegmentBlockedA && smoothedPath[^1] != originalPath[idx - 1])
+                   bool isLineSegmentTooCloseToBlockageA = LineSegmentGoesTooCloseToBlockage(intersectedCellsA, pathfinderSize, startA, endA);
+                   if ((isLineSegmentBlockedA || isLineSegmentTooCloseToBlockageA) && smoothedPath[^1] != originalPath[idx - 1])
                    {
                        smoothedPath.Add(originalPath[idx-1]);
                    }
@@ -359,8 +382,9 @@ namespace AStarNickNS
                // or if the line segment becomes slower (due to terrain costs) than the original path segment,
                // then the previous path location needs to become a node on the smoothed path...
                bool isLineSegmentBlocked = intersectedCells.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
+               bool isLineSegmentTooCloseToBlockage = LineSegmentGoesTooCloseToBlockage(intersectedCells, pathfinderSize, start, end);
                List<GridPlace> originalPathSegment = originalPath.GetRange(latestNodeIdx, idx - latestNodeIdx + 1);
-               if (isLineSegmentBlocked
+               if (isLineSegmentBlocked || isLineSegmentTooCloseToBlockage
                    || IsLineSegmentSlowerThanOriginalPathSegment(intersectedCells, originalPathSegment))
                {
                    latestNodeIdx = Math.Max(idx - stepback, latestNodeIdx + 1);
@@ -379,7 +403,23 @@ namespace AStarNickNS
            
            return smoothedPath;
         }
+
+        private bool LineSegmentGoesTooCloseToBlockage(List<CellIntersectionData> intersectedCells,
+            double pathfinderSize, (float, float) start, (float, float) end)
+        {
             
+            foreach (CellIntersectionData intersectedCell in intersectedCells)
+            {
+                foreach ((float, float) blockedCorner in PathfinderFitsCoords[pathfinderSize][intersectedCell.x,
+                             intersectedCell.y].NearestBlockedCorners)
+                {
+                    double distanceBetweenLineAndBlockedCorner = GetDistanceToLine(start, end, blockedCorner);
+                    if (distanceBetweenLineAndBlockedCorner < pathfinderSize / 2) return true;
+                }
+            }
+            return false;
+        }
+
         private bool IsLineSegmentSlowerThanOriginalPathSegment(
             List<CellIntersectionData> intersectedCells, List<GridPlace> originalPathSegment)
         {

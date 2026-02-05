@@ -72,6 +72,46 @@ public class PathfinderObstacleIntersectorTests
     }
     
     [TestMethod]
+    public void TestNoCornersFarthestFromBlockagesAndNoNearestBlockedCornersWhenFarFromBlockages()
+    {
+        gridTerrainCosts = gridTerrainCosts.Transpose();
+        PathfinderObstacleIntersector sut = new()
+        {
+            GridTerrainCosts = gridTerrainCosts
+        };
+        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(1, 7, 0.8);
+        Assert.IsTrue(occ.Occupiable());
+        Assert.AreEqual(0, occ.CornersFarthestFromBlockages.Count);
+        Assert.AreEqual(0, occ.NearestBlockedCorners.Count);
+    }
+    
+    [TestMethod]
+    public void TestNearestBlockedCornersFourCorners()
+    {
+        gridTerrainCosts = gridTerrainCosts.Transpose();
+        PathfinderObstacleIntersector sut = new()
+        {
+            GridTerrainCosts = gridTerrainCosts
+        };
+        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 8, 0.8);
+        Assert.IsTrue(occ.Occupiable());
+        Assert.AreEqual(4, occ.NearestBlockedCorners.Count);
+    }
+    
+    [TestMethod]
+    public void TestNearestBlockedCornersOneCorner()
+    {
+        gridTerrainCosts = gridTerrainCosts.Transpose();
+        PathfinderObstacleIntersector sut = new()
+        {
+            GridTerrainCosts = gridTerrainCosts
+        };
+        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.8);
+        Assert.IsTrue(occ.Occupiable());
+        Assert.AreEqual(1, occ.NearestBlockedCorners.Count);
+    }
+    
+    [TestMethod]
     public void TestLargePathfinderPrefersCellTwoCornersFarthestFromInLineObstacle()
     {
         gridTerrainCosts = gridTerrainCosts.Transpose();

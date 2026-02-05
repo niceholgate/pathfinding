@@ -26,11 +26,15 @@ namespace AStarNickNS
             OccupiableCellCoordinates occ = new OccupiableCellCoordinates {
                 Centre = null,
                 CornersFarthestFromBlockages = new List<(double, double)>(),
+                NearestBlockedCorners = new List<(double, double)>(),
                 OtherCorners = new List<(double, double)>(),
                 AllCoordsOccupiable = false
             };
             
             if (GetTerrainCost(x, y) <= 0) return occ;
+            
+            List<(int, int)> nearestObstructedCells = FindNearestObstructedCells(x, y, pathfinderSize);
+            occ.NearestBlockedCorners = FindNearestObstructedCorners(nearestObstructedCells, x, y);
             
             // Sub-cell pathfinders just go to the center
             if (pathfinderSize <= 1.0)
@@ -77,18 +81,23 @@ namespace AStarNickNS
             occ.AllCoordsOccupiable = cornersWithoutIntersections.Count == 4;
 
             // If there are multiple corners to choose from, find the one/s maximally distant
-            // from the cell's nearest obstructed cell.
-            (int, int) nearestObstructedCell = FindNearestObstructedCell(x, y);
-            List<double> distancesSq = new();
-            double maxDistanceSq = double.MinValue;
+            // from the cell's nearest obstructed cell(s).
+            List<double> minDistancesSq = new();
+            double maxMinDistanceSq = double.MinValue;
             foreach ((double, double) corner in cornersWithoutIntersections)
             {
-                distancesSq.Add(Distances2D.GetDistance(corner, nearestObstructedCell, Distances2D.HeuristicType.EuclidianSquared));
-                if (distancesSq.Last() > maxDistanceSq) maxDistanceSq = distancesSq.Last();
+                double minCornerDistSq = double.MaxValue;
+                foreach ((int, int) obs in nearestObstructedCells)
+                {
+                    double d2 = Distances2D.GetDistance(corner, obs, Distances2D.HeuristicType.EuclidianSquared);
+                    if (d2 < minCornerDistSq) minCornerDistSq = d2;
+                }
+                minDistancesSq.Add(minCornerDistSq);
+                if (minCornerDistSq > maxMinDistanceSq) maxMinDistanceSq = minCornerDistSq;
             }
             for (int i = 0; i < cornersWithoutIntersections.Count; i++)
             {
-                if (Math.Abs(distancesSq[i] - maxDistanceSq) < 1e-9)
+                if (Math.Abs(minDistancesSq[i] - maxMinDistanceSq) < 1e-9)
                 {
                     occ.CornersFarthestFromBlockages.Add(cornersWithoutIntersections[i]);
                 }
@@ -145,22 +154,56 @@ namespace AStarNickNS
                          || y < 0 || y >= GridTerrainCosts.GetLength(1);
         }
 
-        // TODO: also do this for each cell on a candidate smoothed path segment. If the line is too close to a blockage, it counts as blocked line of sight.
-        private (int, int) FindNearestObstructedCell(int x, int y)
+        private List<(double, double)> FindNearestObstructedCorners(List<(int, int)> nearestObstructedCells, int x, int y)
         {
-            // This algo could exit early after the pathfinder radius is exceeded, but currently it does not
-            // because we shouldn't even be here if there are no nearby obstructions
-            // (because the center of the cell would be accessible and we wouldn't be checking corners).
-            // Or maybe we shouldn't default to the center? Always go to an edge if it's further?
-            // That would mean small pathfinders always go to edges even if the center is free and represents
-            // a tighter path to follow.
+            List<(double, double)> nearestObstructedCorners = new List<(double, double)>();
+            foreach ((int x, int y) obstructedCell in nearestObstructedCells)
+            {
+                List<double> nearestX = new List<double>();
+                if (obstructedCell.x == x)
+                {
+                    nearestX.Add(obstructedCell.x + 0.5);
+                    nearestX.Add(obstructedCell.x - 0.5);
+                } else if (obstructedCell.x < x)
+                {
+                    nearestX.Add(obstructedCell.x + 0.5);
+                } else
+                {
+                    nearestX.Add(obstructedCell.x - 0.5);
+                }
+                
+                List<double> nearestY = new List<double>();
+                if (obstructedCell.y == y)
+                {
+                    nearestY.Add(obstructedCell.y + 0.5);
+                    nearestY.Add(obstructedCell.y - 0.5);
+                } else if (obstructedCell.y < y)
+                {
+                    nearestY.Add(obstructedCell.y + 0.5);
+                } else
+                {
+                    nearestY.Add(obstructedCell.y - 0.5);
+                }
+
+                foreach (double X in nearestX)
+                {
+                    foreach (double Y in nearestY) nearestObstructedCorners.Add((X, Y));
+                }
+                
+            }
+            return nearestObstructedCorners;
+        }
+        
+        private List<(int, int)> FindNearestObstructedCells(int x, int y, double pathfinderSize)
+        {
+            List<(int, int)> closestCells = new List<(int, int)>();
             if (GetTerrainCost(x, y) <= 0)
             {
-                return (x, y);
+                return closestCells;
             }
 
-            // Search in expanding square perimeters
-            int maxDimension = Math.Max(GridTerrainCosts.GetLength(0), GridTerrainCosts.GetLength(1));
+            // Search in expanding square perimeters - no need to search cells that the pathfinder could never touch from this cell
+            int maxDimension = (int)Math.Ceiling(0.5 + pathfinderSize / 2);
 
             for (int d = 1; d <= maxDimension; d++)
             {
@@ -198,24 +241,32 @@ namespace AStarNickNS
 
                 if (obstructedCellsOnPerimeter.Count > 0)
                 {
-                    (int, int) closestCell = obstructedCellsOnPerimeter[0];
-                    double minDistanceSq = Distances2D.GetDistance(closestCell, (x, y),
-                        Distances2D.HeuristicType.EuclidianSquared);
-
+                    double minDistanceSq = double.MaxValue;
+                    // First pass: find min distance
                     foreach ((int, int) cell in obstructedCellsOnPerimeter)
                     {
-                        double distSq = Distances2D.GetDistance(cell, (x, y),
-                                Distances2D.HeuristicType.EuclidianSquared);
+                        double distSq = Distances2D.GetDistance(cell, (x, y), Distances2D.HeuristicType.EuclidianSquared);
                         if (distSq < minDistanceSq)
                         {
                             minDistanceSq = distSq;
-                            closestCell = cell;
                         }
                     }
-                    return closestCell;
+                    
+                    // Second pass: collect all cells with that distance
+                    foreach ((int, int) cell in obstructedCellsOnPerimeter)
+                    {
+                        double distSq = Distances2D.GetDistance(cell, (x, y), Distances2D.HeuristicType.EuclidianSquared);
+                        if (Math.Abs(distSq - minDistanceSq) < 1e-9)
+                        {
+                            closestCells.Add(cell);
+                        }
+                    }
+
+                    break;
                 }
             }
-            throw new Exception("This should not be reached - could not find an obstructed cell");
+            
+            return closestCells;
         }
     }
 
@@ -224,6 +275,7 @@ namespace AStarNickNS
         public (double, double)? Centre { get; set; }
         public List<(double, double)> CornersFarthestFromBlockages { get; set; }
         public List<(double, double)> OtherCorners { get; set; }
+        public List<(double, double)> NearestBlockedCorners { get; set; }
         public bool Occupiable()
         {
             return Centre != null || CornersFarthestFromBlockages.Count > 0;

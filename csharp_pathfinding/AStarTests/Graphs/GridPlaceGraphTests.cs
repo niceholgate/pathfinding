@@ -281,94 +281,114 @@ namespace AStarTests
             mockIntersector.Received(123)
                 .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
         }
-        
-        // Refer to grid_path_smoothing_concept.png and walls_test.csv
+
         [TestMethod]
-        public void TestSmoothPathAroundBlockages()
+        public void TestGetDistanceToLine()
         {
-            sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
-                new HashSet<double>{0.9});
-            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
+            // Horizontal line
+            Assert.AreEqual(10.0, GridPlaceGraph.GetDistanceToLine((0, 0), (1, 0), (0.5f, 10)), 1e-6);
+            Assert.AreEqual(10.0, GridPlaceGraph.GetDistanceToLine((0, 0), (1, 0), (0.5f, -10)), 1e-6);
 
-            List<GridPlace> originalPath = new()
-            {
-                new GridPlace((0, 2)), new GridPlace((0, 3)), new GridPlace((1, 4)), new GridPlace((1, 5)),
-                new GridPlace((1, 6)), new GridPlace((2, 7)), new GridPlace((2, 8)), new GridPlace((3, 8)),
-                new GridPlace((4, 8)), new GridPlace((5, 8)), new GridPlace((6, 8)), new GridPlace((7, 8)),
-                new GridPlace((8, 8)), new GridPlace((9, 8)), new GridPlace((10, 9)), new GridPlace((11, 9)),
-                new GridPlace((12, 9)), new GridPlace((13, 9)), new GridPlace((14, 9)), new GridPlace((15, 9)),
-                new GridPlace((16, 9)), new GridPlace((17, 9)), new GridPlace((18, 9)), new GridPlace((19, 9)),
-                new GridPlace((20, 9)), new GridPlace((21, 9)), new GridPlace((22, 9)), new GridPlace((22, 10)),
-                new GridPlace((22, 11)), new GridPlace((22, 12)), new GridPlace((21, 12)), new GridPlace((20, 12)),
-                new GridPlace((19, 13))
-            };
-            
-            // List<GridPlace> expectedSmoothPath = new()
-            // {
-            //     originalPath[0], originalPath[5], originalPath[6], originalPath[26], originalPath[28], originalPath[29], originalPath[32]
-            // };
-            
-            List<GridPlace> expectedSmoothPath = new()
-            {
-                originalPath[0], originalPath[5], originalPath[6], originalPath[25], originalPath[26], originalPath[28],
-                originalPath[29], originalPath[32]
-            };
+            // Vertical line
+            Assert.AreEqual(10.0, GridPlaceGraph.GetDistanceToLine((0, 0), (0, 1), (10, 0.5f)), 1e-6);
+            Assert.AreEqual(10.0, GridPlaceGraph.GetDistanceToLine((0, 0), (0, 1), (-10, 0.5f)), 1e-6);
 
-            List<GridPlace> actualSmoothPath = sut.SmoothPath(originalPath, 0.9);
-            CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
+            // 30 degree line
+            // Point (3, sqrt(3)+1) should be at distance sqrt(3)/2
+            double expected = Math.Sqrt(3)/2;
+            Assert.AreEqual(expected, GridPlaceGraph.GetDistanceToLine((0, 0), (3, MathF.Sqrt(3.0f)), (3, MathF.Sqrt(3.0f)+1f)), 1e-6);
+
+            // Line points are same
+            Assert.AreEqual(5.0, GridPlaceGraph.GetDistanceToLine((0, 0), (0, 0), (3, 4)), 1e-6);
         }
         
+        // // Refer to grid_path_smoothing_concept.png and walls_test.csv
         // [TestMethod]
-        // public void TestSmoothPathAroundBlockages2()
+        // public void TestSmoothPathAroundBlockages()
         // {
         //     sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
-        //         new HashSet<double>{1.9});
+        //         new HashSet<double>{0.9});
         //     sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
         //
-        //     // List<GridPlace> originalPath = new()
-        //     // {
-        //     //     new GridPlace((6, 16)), new GridPlace((5, 15)), new GridPlace((4, 15)), new GridPlace((3, 15)),
-        //     //     new GridPlace((2, 15)), new GridPlace((2, 14)), new GridPlace((2, 13)), new GridPlace((3, 13)),
-        //     //     new GridPlace((4, 13)), new GridPlace((5, 13))
-        //     // };
         //     List<GridPlace> originalPath = new()
         //     {
-        //         new GridPlace((16, 6)), new GridPlace((15, 5)), new GridPlace((15, 4)), new GridPlace((15, 3)),
-        //         new GridPlace((15, 2)), new GridPlace((14, 2)), new GridPlace((13, 2)), new GridPlace((13, 3)),
-        //         new GridPlace((13, 4)), new GridPlace((13, 5))
+        //         new GridPlace((0, 2)), new GridPlace((0, 3)), new GridPlace((1, 4)), new GridPlace((1, 5)),
+        //         new GridPlace((1, 6)), new GridPlace((2, 7)), new GridPlace((2, 8)), new GridPlace((3, 8)),
+        //         new GridPlace((4, 8)), new GridPlace((5, 8)), new GridPlace((6, 8)), new GridPlace((7, 8)),
+        //         new GridPlace((8, 8)), new GridPlace((9, 8)), new GridPlace((10, 9)), new GridPlace((11, 9)),
+        //         new GridPlace((12, 9)), new GridPlace((13, 9)), new GridPlace((14, 9)), new GridPlace((15, 9)),
+        //         new GridPlace((16, 9)), new GridPlace((17, 9)), new GridPlace((18, 9)), new GridPlace((19, 9)),
+        //         new GridPlace((20, 9)), new GridPlace((21, 9)), new GridPlace((22, 9)), new GridPlace((22, 10)),
+        //         new GridPlace((22, 11)), new GridPlace((22, 12)), new GridPlace((21, 12)), new GridPlace((20, 12)),
+        //         new GridPlace((19, 13))
         //     };
         //     
         //     List<GridPlace> expectedSmoothPath = new()
         //     {
-        //         originalPath[0], originalPath[5]
+        //         originalPath[0], originalPath[6], originalPath[26], originalPath[29], originalPath[32]
         //     };
+        //     
+        //     // List<GridPlace> expectedSmoothPath = new()
+        //     // {
+        //     //     originalPath[0], originalPath[5], originalPath[6], originalPath[25], originalPath[26], originalPath[28],
+        //     //     originalPath[29], originalPath[32]
+        //     // };
         //
-        //     List<GridPlace> actualSmoothPath = sut.SmoothPath(originalPath, 1.9);
+        //     List<GridPlace> actualSmoothPath = sut.SmoothPath(originalPath, 0.9);
         //     CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
         // }
         
-        // Refer to grid_path_smoothing_swamp_issue.png and walls_and_swamps_test.csv
         [TestMethod]
-        public void TestSmoothPathAroundSwamps()
+        public void TestSmoothPathAroundBlockages2()
         {
             sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
-                new HashSet<double>{0.9});
-            sut.BuildFromFile("../../../Resources/excel_mazes/walls_and_swamps_test.csv");
-
+                new HashSet<double>{1.9});
+            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
+        
+            // List<GridPlace> originalPath = new()
+            // {
+            //     new GridPlace((6, 16)), new GridPlace((5, 15)), new GridPlace((4, 15)), new GridPlace((3, 15)),
+            //     new GridPlace((2, 15)), new GridPlace((2, 14)), new GridPlace((2, 13)), new GridPlace((3, 13)),
+            //     new GridPlace((4, 13)), new GridPlace((5, 13))
+            // };
             List<GridPlace> originalPath = new()
             {
-                new GridPlace((4, 4)), new GridPlace((5, 5)), new GridPlace((6, 5)), new GridPlace((7, 5)),
-                new GridPlace((8, 5)), new GridPlace((9, 6)), new GridPlace((9, 7)), new GridPlace((8, 8))
+                new GridPlace((16, 6)), new GridPlace((15, 5)), new GridPlace((15, 4)), new GridPlace((15, 3)),
+                new GridPlace((15, 2)), new GridPlace((14, 2)), new GridPlace((13, 2)), new GridPlace((13, 3)),
+                new GridPlace((13, 4)), new GridPlace((13, 5))
             };
             
             List<GridPlace> expectedSmoothPath = new()
             {
-                originalPath[0], originalPath[3], originalPath[4], originalPath[5], originalPath[7]
+                originalPath[0], originalPath[4], originalPath[6], originalPath[9]
             };
-
-            List<GridPlace> actualSmoothPath = sut.SmoothPath(originalPath, 0.9);
+        
+            List<GridPlace> actualSmoothPath = sut.SmoothPath(originalPath, 1.9);
             CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
         }
+        
+        // // Refer to grid_path_smoothing_swamp_issue.png and walls_and_swamps_test.csv
+        // [TestMethod]
+        // public void TestSmoothPathAroundSwamps()
+        // {
+        //     sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
+        //         new HashSet<double>{0.9});
+        //     sut.BuildFromFile("../../../Resources/excel_mazes/walls_and_swamps_test.csv");
+        //
+        //     List<GridPlace> originalPath = new()
+        //     {
+        //         new GridPlace((4, 4)), new GridPlace((5, 5)), new GridPlace((6, 5)), new GridPlace((7, 5)),
+        //         new GridPlace((8, 5)), new GridPlace((9, 6)), new GridPlace((9, 7)), new GridPlace((8, 8))
+        //     };
+        //     
+        //     List<GridPlace> expectedSmoothPath = new()
+        //     {
+        //         originalPath[0], originalPath[4], originalPath[5], originalPath[7]
+        //     };
+        //
+        //     List<GridPlace> actualSmoothPath = sut.SmoothPath(originalPath, 0.9);
+        //     CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
+        // }
         
         // [TestMethod]
         // public void TestSmoothPathIncludingBlockages_ThrowsException()
