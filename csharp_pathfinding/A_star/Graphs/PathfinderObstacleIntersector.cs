@@ -78,7 +78,7 @@ namespace AStarNickNS
 
             // If there are multiple corners to choose from, find the one/s maximally distant
             // from the cell's nearest obstructed cell.
-            (int, int) nearestObstructedCell = FindNearestedObstructedCell(x, y);
+            (int, int) nearestObstructedCell = FindNearestObstructedCell(x, y);
             List<double> distancesSq = new();
             double maxDistanceSq = double.MinValue;
             foreach ((double, double) corner in cornersWithoutIntersections)
@@ -145,7 +145,8 @@ namespace AStarNickNS
                          || y < 0 || y >= GridTerrainCosts.GetLength(1);
         }
 
-        private (int, int) FindNearestedObstructedCell(int x, int y)
+        // TODO: also do this for each cell on a candidate smoothed path segment. If the line is too close to a blockage, it counts as blocked line of sight.
+        private (int, int) FindNearestObstructedCell(int x, int y)
         {
             // This algo could exit early after the pathfinder radius is exceeded, but currently it does not
             // because we shouldn't even be here if there are no nearby obstructions

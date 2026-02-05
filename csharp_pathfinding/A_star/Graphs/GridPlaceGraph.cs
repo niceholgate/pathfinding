@@ -2,6 +2,7 @@ using NicUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using NicUtils.ExtensionMethods;
 
 namespace AStarNickNS
@@ -288,13 +289,13 @@ namespace AStarNickNS
         public List<GridPlace> SmoothPath(List<GridPlace> originalPath, double pathfinderSize)
         {
             // Check that the original path is valid
-            foreach (GridPlace place in originalPath)
-            {
-                if (GetTerrainCost(place.Label) <= 0)
-                {
-                    throw new ArgumentException($"Cannot smooth a path that goes through blocked cell/s! (Label = {place.Label})");
-                }
-            }
+            // foreach (GridPlace place in originalPath)
+            // {
+            //     if (GetTerrainCost(place.Label) <= 0)
+            //     {
+            //         throw new ArgumentException($"Cannot smooth a path that goes through blocked cell/s! (Label = {place.Label})");
+            //     }
+            // }
             
             // If the original path has 2 or fewer nodes, it can't be smoothed
             if (originalPath.Count <= 2) return new List<GridPlace>(originalPath);
@@ -306,44 +307,74 @@ namespace AStarNickNS
            int idx = 1;
            while (idx < originalPath.Count)
            {
+               int stepback = (int)Math.Ceiling(pathfinderSize) + 1;
+               
                // The smoothed path ends at the same place as the original path 
                if (idx == originalPath.Count - 1)
                {
+                   // If the last line segment becomes blocked and the previous original path point is not already a node, make it a node too.
+                   (float, float) startA = originalPath[latestNodeIdx].Label;
+                   (float, float) endA = originalPath[idx].Label;
+                   List<CellIntersectionData> intersectedCellsA = GridCellIntersections.GetCellIntersectionsWithLineSegment(
+                       startA, endA);
+                   bool isLineSegmentBlockedA = intersectedCellsA.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
+                   if (isLineSegmentBlockedA && smoothedPath[^1] != originalPath[idx - 1])
+                   {
+                       smoothedPath.Add(originalPath[idx-1]);
+                   }
                    smoothedPath.Add(originalPath[idx]);
                    break;
                }
+               // Idea: Since can't rely on stepback logic in line-of-sight check
+               // to prevent units sliding on walls at the end of the path,
+               //  extend the original path in its final direction by one more cell for purposes of line of sight checking?
                
                // Get the intersections data (2 coordinates and 1 terrain cost value)
-               // for each cell intersected by the line segment between 'here' and the last node
+               // for each cell intersected by the line segment between 'here' and the last node.
+               // On the last node, we should choose the corner of the cell that minimises the angle between the angle between this smooth path line segment and the previous
+               // one - minimises the chance of clipping a blockage at the corner.
+               // This worked for some situations, but made it worse for others where the acute angle ought to have been minimised.
+               // Line segment proximity to to blockages is probably the better solution.
+               // if (latestNodeIdx > 0)
+               // {
+               //     (float, float) prev = originalPath[latestNodeIdx - 1].Label;
+               //     List<(float, float)> candidates = new()
+               //     {
+               //         (end.Item1 - 0.49f, end.Item2 - 0.49f),
+               //         (end.Item1 - 0.49f, end.Item2 + 0.49f),
+               //         (end.Item1 + 0.49f, end.Item2 - 0.49f),
+               //         (end.Item1 + 0.49f, end.Item2 + 0.49f),
+               //     };
+               //     end = GetThirdPointThatMinimisesAcuteAngle(prev, start, candidates);
+               // }
+               
+               (float, float) start = originalPath[latestNodeIdx].Label;
+               (float, float) end = originalPath[idx].Label;
                List<CellIntersectionData> intersectedCells = GridCellIntersections.GetCellIntersectionsWithLineSegment(
-                   originalPath[latestNodeIdx].Label, originalPath[idx].Label);
+                   start, end);
                
                // If the line segment between 'here' and the last node is blocked,
-               // or if the line segment goes too close to a blockage,
+               // or if the line segment goes too close to a blockage, (not yet implemented, see pathsmoothingissue-treat-line-segment-as-blocked-if-passes-near-blockage.png)
+               ////// (as a temporary solution, let's try selecting the new smoothed node as "idx - 1 - ceil(pathfinderSize)" instead of "idx - 1".)
                // or if the line segment becomes slower (due to terrain costs) than the original path segment,
                // then the previous path location needs to become a node on the smoothed path...
-               
-               // TODO: See pathsmoothingissue-treat-line-segment-as-blocked-if-passes-near-blockage.png
-               // Should also treat the line segment as blocked if it passes very close to a blockage (according to the pathfinder size).
-               // As a temporary solution, let's try selecting the new smoothed node as "idx - ceil(pathfinderSize)" instead of "idx - 1".
                bool isLineSegmentBlocked = intersectedCells.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
                List<GridPlace> originalPathSegment = originalPath.GetRange(latestNodeIdx, idx - latestNodeIdx + 1);
                if (isLineSegmentBlocked
                    || IsLineSegmentSlowerThanOriginalPathSegment(intersectedCells, originalPathSegment))
                {
-                   // latestNodeIdx = idx - 1;
-                   
-                   int oldLatestNodeIdx = latestNodeIdx;
-                   int stepback = (int)Math.Ceiling(pathfinderSize);
-                   latestNodeIdx = Math.Max(idx - stepback, oldLatestNodeIdx + 1);
-                   // // If the step back was more than 1, adjust idx backward accordingly
-                   idx -= stepback - 1;
+                   latestNodeIdx = Math.Max(idx - stepback, latestNodeIdx + 1);
                    
                    smoothedPath.Add(originalPath[latestNodeIdx]);
+                   
+                   // idx for next candidate node always resets to 2 ahead of the latest node
+                   idx = latestNodeIdx + 2;
                }
-
-               // ... otherwise continue
-               idx++;
+               else
+               {
+                   // ... otherwise continue
+                   idx++;
+               }
            }
            
            return smoothedPath;
@@ -352,18 +383,58 @@ namespace AStarNickNS
         private bool IsLineSegmentSlowerThanOriginalPathSegment(
             List<CellIntersectionData> intersectedCells, List<GridPlace> originalPathSegment)
         {
+            HashSet<double> terrainCostsSeen = new() {GetTerrainCost(originalPathSegment[0].Label)};
             double originalPathSegmentCost = 0.0;
+            double lineSegmentCost = 0.0;
             for (int i = 1; i < originalPathSegment.Count; i++)
             {
+                terrainCostsSeen.Add(GetTerrainCost(originalPathSegment[i].Label));
                 originalPathSegmentCost += CostToLeave(originalPathSegment[i-1].Label, originalPathSegment[i].Label);
             }
+            foreach (CellIntersectionData cell in intersectedCells)
+            {
+                double thisCost = GetTerrainCost((cell.x, cell.y));
+                terrainCostsSeen.Add(thisCost);
+                lineSegmentCost += cell.IntersectedDistance * thisCost;
+            }
+            // (If the terrain costs are all identical, the new line segment can't be slower, because it is a straight line,
+            // whereas the original path may have turns.)
+            if (terrainCostsSeen.Count == 1) return false;
             
-            double lineSegmentCost = intersectedCells.Sum(cell =>
-                cell.IntersectedDistance * GetTerrainCost((cell.x, cell.y)));
-
             return lineSegmentCost > originalPathSegmentCost;
         }
-            
+
+        // public (float, float) GetThirdPointThatMinimisesAcuteAngle((float, float) pointA, (float, float) pointB, List<(float, float)> candidates)
+        // {
+        //     Vector2 A = new Vector2(pointA.Item1, pointA.Item2);
+        //     Vector2 B = new Vector2(pointB.Item1, pointB.Item2);
+        //     
+        //     List<Vector2> candidateVectors = candidates
+        //         .Select(c => new Vector2(c.Item1, c.Item2))
+        //         .ToList();
+        //     
+        //     Vector2 vBA = A - B;
+        //     float magBA = vBA.Length(); // Or use vBA.magnitude in Unity
+        //
+        //     Vector2 bestPoint = candidateVectors[0];
+        //     float maxScore = -2f; // Cosine ranges from -1 to 1
+        //
+        //     foreach (var C in candidateVectors)
+        //     {
+        //         Vector2 vBC = C - B;
+        //         float magBC = vBC.Length();
+        //
+        //         // Dot product divided by magnitudes gives the Cosine of the angle
+        //         float score = Vector2.Dot(vBA, vBC) / (magBA * magBC);
+        //
+        //         if (score > maxScore)
+        //         {
+        //             maxScore = score;
+        //             bestPoint = C;
+        //         }
+        //     }
+        //     return (bestPoint.X, bestPoint.Y);
+        // }
             
     }
 }

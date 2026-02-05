@@ -91,5 +91,19 @@ namespace AStarTests.Graphs
             CollectionAssert.AreEqual(expectedCells, actualCells);
             Assert.AreEqual(MathF.Sqrt(2*2+1*1), result.Sum(r => r.IntersectedDistance), 0.001f);
         }
+        
+        [TestMethod]
+        public void TestGetCellIntersectionsWithLineSegment_EndAtCorner()
+        {
+            var start = (0, 0);
+            var end = (2.49f, 0.51f);
+            var result = GridCellIntersections.GetCellIntersectionsWithLineSegment(start, end);
+            
+            var expectedCells = new List<(int, int)> { (0, 0), (1, 0), (2, 0), (2, 1) };
+            var actualCells = result.Select(r => (r.x, r.y)).ToList();
+
+            CollectionAssert.AreEqual(expectedCells, actualCells);
+            Assert.AreEqual(MathF.Sqrt(2.49f*2.49f+0.51f*0.51f), result.Sum(r => r.IntersectedDistance), 0.001f);
+        }
     }
 }
