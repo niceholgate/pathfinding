@@ -7,9 +7,9 @@ namespace AStarNickNS
     public readonly struct CellIntersectionData
     {
         public readonly int x, y;
-        public readonly (float, float) int1, int2;
+        public readonly (double, double) int1, int2;
 
-        public CellIntersectionData(int x, int y, (float, float) int1, (float, float) int2)
+        public CellIntersectionData(int x, int y, (double, double) int1, (double, double) int2)
         {
             this.x = x;
             this.y = y;
@@ -17,55 +17,55 @@ namespace AStarNickNS
             this.int2 = int2;
         }
 
-        public float IntersectedDistance
+        public double IntersectedDistance
         {
             get
             {
-                float dx = int1.Item1 - int2.Item1;
-                float dy = int1.Item2 - int2.Item2;
-                return MathF.Sqrt(dx * dx + dy * dy);
+                double dx = int1.Item1 - int2.Item1;
+                double dy = int1.Item2 - int2.Item2;
+                return Math.Sqrt(dx * dx + dy * dy);
             }
         }
     }
 
-    public class Line
-    {
-        public float M { get; }
-        public float C { get; }
-        
-        public Line(float m, float c)
-        {
-            M = m;
-            C = c;
-        }
-        
-        public Line((int x, int y) start, (int x, int y) end)
-        {
-            if (end.x == start.x)
-            {
-                M = float.PositiveInfinity; // Vertical line
-                C = start.x; // Store x-intercept
-            }
-            else
-            {
-                M = (float)(end.y - start.y) / (end.x - start.x);
-                C = start.y - M * start.x;
-            }
-        }
-
-        public float X(float y)
-        {
-            if (float.IsPositiveInfinity(M)) return C; // Vertical line
-            if (M == 0) throw new InvalidOperationException("Cannot calculate Y for a horizontal line.");
-            return (y - C) / M;
-        }
-        
-        public float Y(float x)
-        {
-            if (float.IsPositiveInfinity(M)) throw new InvalidOperationException("Cannot calculate Y for a vertical line.");
-            return M * x + C;
-        }
-    }
+    // public class Line
+    // {
+    //     public float M { get; }
+    //     public float C { get; }
+    //     
+    //     public Line(float m, float c)
+    //     {
+    //         M = m;
+    //         C = c;
+    //     }
+    //     
+    //     public Line((int x, int y) start, (int x, int y) end)
+    //     {
+    //         if (end.x == start.x)
+    //         {
+    //             M = float.PositiveInfinity; // Vertical line
+    //             C = start.x; // Store x-intercept
+    //         }
+    //         else
+    //         {
+    //             M = (float)(end.y - start.y) / (end.x - start.x);
+    //             C = start.y - M * start.x;
+    //         }
+    //     }
+    //
+    //     public float X(float y)
+    //     {
+    //         if (float.IsPositiveInfinity(M)) return C; // Vertical line
+    //         if (M == 0) throw new InvalidOperationException("Cannot calculate Y for a horizontal line.");
+    //         return (y - C) / M;
+    //     }
+    //     
+    //     public float Y(float x)
+    //     {
+    //         if (float.IsPositiveInfinity(M)) throw new InvalidOperationException("Cannot calculate Y for a vertical line.");
+    //         return M * x + C;
+    //     }
+    // }
     
     /*
       Uses a grid traversal algorithm, which is a variant of the Amanatides and Woo algorithm commonly used in ray tracing for finding voxel intersections. Its purpose is
@@ -105,7 +105,7 @@ namespace AStarNickNS
     public static class GridCellIntersections
     {
         public static List<CellIntersectionData> GetCellIntersectionsWithLineSegment(
-            (float x, float y) start, (float x, float y) end)
+            (double x, double y) start, (double x, double y) end)
         {
             var intersectedCells = new List<CellIntersectionData>();
             
@@ -122,8 +122,8 @@ namespace AStarNickNS
                 return intersectedCells;
             }
             
-            float dx = end.x - start.x;
-            float dy = end.y - start.y;
+            double dx = end.x - start.x;
+            double dy = end.y - start.y;
 
             int signDx = Math.Sign(dx);
             int signDy = Math.Sign(dy);
@@ -131,33 +131,33 @@ namespace AStarNickNS
             //  parametric representation of the line P(t) = start + t * direction
             
             // how far you must move along the line (in terms of t) to cross one full grid cell in the X or Y direction
-            float tDeltaX = (dx == 0) ? float.PositiveInfinity : Math.Abs(1.0f / dx);
-            float tDeltaY = (dy == 0) ? float.PositiveInfinity : Math.Abs(1.0f / dy);
+            double tDeltaX = (dx == 0) ? float.PositiveInfinity : Math.Abs(1.0f / dx);
+            double tDeltaY = (dy == 0) ? float.PositiveInfinity : Math.Abs(1.0f / dy);
 
             // the total distance (in terms of t) from the start of the line to the next grid line crossing in the X or Y direction
-            float tMaxX;
+            double tMaxX;
             if (dx == 0)
             {
-                tMaxX = float.PositiveInfinity;
+                tMaxX = double.PositiveInfinity;
             }
             else
             {
-                float nextBoundaryX = currentCellX + signDx * 0.5f;
+                double nextBoundaryX = currentCellX + signDx * 0.5f;
                 tMaxX = (nextBoundaryX - start.x) / dx;
             }
 
-            float tMaxY;
+            double tMaxY;
             if (dy == 0)
             {
-                tMaxY = float.PositiveInfinity;
+                tMaxY = double.PositiveInfinity;
             }
             else
             {
-                float nextBoundaryY = currentCellY + signDy * 0.5f;
+                double nextBoundaryY = currentCellY + signDy * 0.5f;
                 tMaxY = (nextBoundaryY - start.y) / dy;
             }
 
-            (float, float) lastIntersection = (start.x, start.y);
+            (double, double) lastIntersection = (start.x, start.y);
 
             float epsilon = 1e-6f;
             while (currentCellX != endCellX || currentCellY != endCellY)
@@ -167,8 +167,8 @@ namespace AStarNickNS
                 {
                     if (tMaxX > 1.0f) break;
 
-                    float intersectX = start.x + tMaxX * dx;
-                    float intersectY = start.y + tMaxX * dy;
+                    double intersectX = start.x + tMaxX * dx;
+                    double intersectY = start.y + tMaxX * dy;
                     
                     intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY, lastIntersection, (intersectX, intersectY)));
                     lastIntersection = (intersectX, intersectY);
@@ -181,8 +181,8 @@ namespace AStarNickNS
                 {
                     if (tMaxY > 1.0f) break;
                     
-                    float intersectX = start.x + tMaxY * dx;
-                    float intersectY = start.y + tMaxY * dy;
+                    double intersectX = start.x + tMaxY * dx;
+                    double intersectY = start.y + tMaxY * dy;
 
                     intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY, lastIntersection, (intersectX, intersectY)));
                     lastIntersection = (intersectX, intersectY);
@@ -195,8 +195,8 @@ namespace AStarNickNS
                 {
                     if (tMaxX > 1.0f) break;
 
-                    float intersectX = start.x + tMaxX * dx;
-                    float intersectY = start.y + tMaxX * dy;
+                    double intersectX = start.x + tMaxX * dx;
+                    double intersectY = start.y + tMaxX * dy;
                     
                     // Current cell
                     intersectedCells.Add(new CellIntersectionData(currentCellX, currentCellY, lastIntersection, (intersectX, intersectY)));

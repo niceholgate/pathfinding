@@ -286,15 +286,15 @@ namespace AStarNickNS
             return (GridPlace)Places[label];
         }
 
-        public static double GetDistanceToLine((float, float) p1, (float, float) p2, (float, float) p3)
+        public static double GetDistanceToLineSegment((double x, double y) p1, (double x, double y) p2, (double x, double y) p3)
         {
-            float x1 = p1.Item1;
-            float y1 = p1.Item2;
-            float x2 = p2.Item1;
-            float y2 = p2.Item2;
-            float x0 = p3.Item1;
-            float y0 = p3.Item2;
-
+            double x1 = p1.x;
+            double y1 = p1.y;
+            double x2 = p2.x;
+            double y2 = p2.y;
+            double x0 = p3.x;
+            double y0 = p3.y;
+            
             double dx = x2 - x1;
             double dy = y2 - y1;
 
@@ -303,13 +303,87 @@ namespace AStarNickNS
                 return Math.Sqrt(Math.Pow(x1 - x0, 2) + Math.Pow(y1 - y0, 2));
             }
 
-            return Math.Abs(dx * (y1 - y0) - (x1 - x0) * dy) / Math.Sqrt(dx * dx + dy * dy);
+            // Calculate the t parameter of the projection of p3 onto the line segment p1-p2
+            // t = [(p3-p1) . (p2-p1)] / |p2-p1|^2
+            double t = ((x0 - x1) * dx + (y0 - y1) * dy) / (dx * dx + dy * dy);
+
+            if (t <= 0)
+            {
+                // p0 is closest to p1
+                return Math.Sqrt(Math.Pow(x1 - x0, 2) + Math.Pow(y1 - y0, 2));
+            }
+            
+            if (t >= 1)
+            {
+                // p0 is closest to p2
+                return Math.Sqrt(Math.Pow(x2 - x0, 2) + Math.Pow(y2 - y0, 2));
+            }
+
+            // p0 is closest to the projection on the segment
+            double projX = x1 + t * dx;
+            double projY = y1 + t * dy;
+            return Math.Sqrt(Math.Pow(projX - x0, 2) + Math.Pow(projY - y0, 2));
         }
-       
-        public List<GridPlace> SmoothPath(List<GridPlace> originalPath, double pathfinderSize)
+
+        /*
+         * Turn a Dijkstra path (List<GridPlace> which only indicates which cells to visit - not which corners of those cells can+should be used)
+         * into the actual path to follow wrt. where the pathfinder fits. This involves choosing cell corners which are accessible to the pathfinder (owing to its size)
+         * and which will help prevent it from sliding along corner obstacles due to over-smoothing - this is achieved by choosing corners that are maximally
+         * distant from their nearest obstacle (pre-calculated inside the GridPlaceGraph, according to pathfinder size).
+         */
+        public List<(double, double)> GetOccupiablePath(List<GridPlace> originalPath, double pathfinderSize)
+        {
+            List<(double, double)> occPath = new();
+            
+            (int x, int y) = originalPath[0].Label;
+            OccupiableCellCoordinates firstPlace = PathfinderFitsCoords[pathfinderSize][x, y];
+            (x, y) = originalPath[1].Label;
+            occPath.Add(GetBestNextPathPosition((x, y), firstPlace));
+        
+            for (int i = 1; i < originalPath.Count; i++)
+            {
+                (x, y) = originalPath[i].Label;
+                OccupiableCellCoordinates nextPlace = PathfinderFitsCoords[pathfinderSize][x, y];
+                occPath.Add(GetBestNextPathPosition(occPath[^1], nextPlace));
+            }
+            
+            return occPath;
+        }
+        
+        private (double, double) GetBestNextPathPosition((double, double) refCoords, OccupiableCellCoordinates nextPlace)
+        {
+            if (nextPlace.Centre != null)
+            {
+                // If every coordinate can be occupied, or if only the center can be occupied, go to the center
+                if (nextPlace.AllCoordsOccupiable || nextPlace.CornersFarthestFromBlockages.Count == 0) return nextPlace.Centre.Value;
+            }
+        
+            // If only one corner is farthest from blockages, go to that corner
+            if (nextPlace.CornersFarthestFromBlockages.Count == 1) return nextPlace.CornersFarthestFromBlockages[0];
+        
+            // If two corners are farthest from blockages, go to the one closest to refCoords
+            (double, double) c1 = nextPlace.CornersFarthestFromBlockages[0];
+            (double, double) c2 = nextPlace.CornersFarthestFromBlockages[1];
+            if (Math.Abs(c1.Item1 - c2.Item1) < 1E-3)
+            {
+                if (Math.Abs(c1.Item2 - refCoords.Item2) < Math.Abs(c2.Item2 - refCoords.Item2))
+                {
+                    return c1;
+                }
+                return c2;
+            }
+            // These corners should never be diagonally opposed, so the alternative is c1.Item2 == c2.Item2
+            if (Math.Abs(c1.Item1 - refCoords.Item1) < Math.Abs(c2.Item1 - refCoords.Item1))
+            {
+                return c1;
+            }
+            return c2;
+        }
+        
+        public List<(double, double)> SmoothPath(List<(double, double)> occupiablePath, List<GridPlace> originalPath, double pathfinderSize)
         {
             // Check that the original path is valid
-            // foreach (GridPlace place in originalPath)
+            // foreach (GridPlace place in occupiablePath)
             // {
             //     if (GetTerrainCost(place.Label) <= 0)
             //     {
@@ -318,34 +392,31 @@ namespace AStarNickNS
             // }
             
             // If the original path has 2 or fewer nodes, it can't be smoothed
-            if (originalPath.Count <= 2) return new List<GridPlace>(originalPath);
+            if (occupiablePath.Count <= 2) return new List<(double, double)>(occupiablePath);
             
            // The smoothed path starts at the same place as the original path 
            int latestNodeIdx = 0;
-           List<GridPlace> smoothedPath = new() { originalPath[0] };
+           List<(double, double)> smoothedPath = new() { occupiablePath[0] };
        
-           int idx = 1;
-           while (idx < originalPath.Count)
+           int idx = 0;
+           while (idx < occupiablePath.Count)
            {
-               // int stepback = (int)Math.Ceiling(pathfinderSize) + 1;
-               int stepback = 1;
-               // hopefully this is fine now with the line segment proximity to blockages logic in place, which should prevent units sliding on walls around corners
-               
+               idx++;
                // The smoothed path ends at the same place as the original path 
-               if (idx == originalPath.Count - 1)
+               if (idx == occupiablePath.Count - 1)
                {
-                   // If the last line segment becomes blocked and the previous original path point is not already a node, make it a node too.
-                   (float, float) startA = originalPath[latestNodeIdx].Label;
-                   (float, float) endA = originalPath[idx].Label;
-                   List<CellIntersectionData> intersectedCellsA = GridCellIntersections.GetCellIntersectionsWithLineSegment(
-                       startA, endA);
-                   bool isLineSegmentBlockedA = intersectedCellsA.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
-                   bool isLineSegmentTooCloseToBlockageA = LineSegmentGoesTooCloseToBlockage(intersectedCellsA, pathfinderSize, startA, endA);
-                   if ((isLineSegmentBlockedA || isLineSegmentTooCloseToBlockageA) && smoothedPath[^1] != originalPath[idx - 1])
-                   {
-                       smoothedPath.Add(originalPath[idx-1]);
-                   }
-                   smoothedPath.Add(originalPath[idx]);
+                   // // If the last line segment becomes blocked and the previous original path point is not already a node, make it a node too.
+                   // (double, double) startA = occupiablePath[latestNodeIdx];
+                   // (double, double) endA = occupiablePath[idx];
+                   // List<CellIntersectionData> intersectedCellsA = GridCellIntersections.GetCellIntersectionsWithLineSegment(
+                   //     startA, endA);
+                   // bool isLineSegmentBlockedA = intersectedCellsA.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
+                   // bool isLineSegmentTooCloseToBlockageA = LineSegmentGoesTooCloseToBlockage(intersectedCellsA, pathfinderSize, startA, endA);
+                   // if ((isLineSegmentBlockedA || isLineSegmentTooCloseToBlockageA) && smoothedPath[^1] != occupiablePath[idx - 1])
+                   // {
+                   //     smoothedPath.Add(occupiablePath[idx-1]);
+                   // }
+                   smoothedPath.Add(occupiablePath[idx]);
                    break;
                }
                // Idea: Since can't rely on stepback logic in line-of-sight check
@@ -360,7 +431,7 @@ namespace AStarNickNS
                // Line segment proximity to to blockages is probably the better solution.
                // if (latestNodeIdx > 0)
                // {
-               //     (float, float) prev = originalPath[latestNodeIdx - 1].Label;
+               //     (float, float) prev = occupiablePath[latestNodeIdx - 1].Label;
                //     List<(float, float)> candidates = new()
                //     {
                //         (end.Item1 - 0.49f, end.Item2 - 0.49f),
@@ -371,8 +442,8 @@ namespace AStarNickNS
                //     end = GetThirdPointThatMinimisesAcuteAngle(prev, start, candidates);
                // }
                
-               (float, float) start = originalPath[latestNodeIdx].Label;
-               (float, float) end = originalPath[idx].Label;
+               (double, double) start = occupiablePath[latestNodeIdx];
+               (double, double) end = occupiablePath[idx];
                List<CellIntersectionData> intersectedCells = GridCellIntersections.GetCellIntersectionsWithLineSegment(
                    start, end);
                
@@ -381,31 +452,35 @@ namespace AStarNickNS
                ////// (as a temporary solution, let's try selecting the new smoothed node as "idx - 1 - ceil(pathfinderSize)" instead of "idx - 1".)
                // or if the line segment becomes slower (due to terrain costs) than the original path segment,
                // then the previous path location needs to become a node on the smoothed path...
-               bool isLineSegmentBlocked = intersectedCells.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
-               bool isLineSegmentTooCloseToBlockage = LineSegmentGoesTooCloseToBlockage(intersectedCells, pathfinderSize, start, end);
+               
+               bool lineSegmentBlocked = intersectedCells.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
+               if (lineSegmentBlocked)
+               {
+                   latestNodeIdx = idx - 1;
+                   smoothedPath.Add(occupiablePath[latestNodeIdx]);
+                   continue;
+               }
+               bool lineSegmentTooCloseToBlockage = LineSegmentGoesTooCloseToBlockage(intersectedCells, pathfinderSize, start, end);
+               if (lineSegmentTooCloseToBlockage)
+               {
+                   latestNodeIdx = idx - 1;
+                   smoothedPath.Add(occupiablePath[latestNodeIdx]);
+                   continue;
+               }
                List<GridPlace> originalPathSegment = originalPath.GetRange(latestNodeIdx, idx - latestNodeIdx + 1);
-               if (isLineSegmentBlocked || isLineSegmentTooCloseToBlockage
-                   || IsLineSegmentSlowerThanOriginalPathSegment(intersectedCells, originalPathSegment))
+               if (IsLineSegmentSlowerThanOriginalPathSegment(intersectedCells, originalPathSegment))
                {
-                   latestNodeIdx = Math.Max(idx - stepback, latestNodeIdx + 1);
-                   
-                   smoothedPath.Add(originalPath[latestNodeIdx]);
-                   
-                   // idx for next candidate node always resets to 2 ahead of the latest node
-                   idx = latestNodeIdx + 2;
+                   latestNodeIdx = idx - 1;
+                   smoothedPath.Add(occupiablePath[latestNodeIdx]);
                }
-               else
-               {
-                   // ... otherwise continue
-                   idx++;
-               }
+               // ... otherwise continue
            }
            
            return smoothedPath;
         }
 
         private bool LineSegmentGoesTooCloseToBlockage(List<CellIntersectionData> intersectedCells,
-            double pathfinderSize, (float, float) start, (float, float) end)
+            double pathfinderSize, (double, double) start, (double, double) end)
         {
             
             foreach (CellIntersectionData intersectedCell in intersectedCells)
@@ -413,13 +488,17 @@ namespace AStarNickNS
                 foreach ((float, float) blockedCorner in PathfinderFitsCoords[pathfinderSize][intersectedCell.x,
                              intersectedCell.y].NearestBlockedCorners)
                 {
-                    double distanceBetweenLineAndBlockedCorner = GetDistanceToLine(start, end, blockedCorner);
-                    if (distanceBetweenLineAndBlockedCorner < pathfinderSize / 2) return true;
+                    double distanceBetweenLineAndBlockedCorner = GetDistanceToLineSegment(start, end, blockedCorner);
+                    if (distanceBetweenLineAndBlockedCorner < pathfinderSize / 2)
+                    {
+                        return true;
+                    }
                 }
             }
             return false;
         }
 
+        // TODO: replace originalPathSegment cost with the intersection-data-cost of the occupiablePath?
         private bool IsLineSegmentSlowerThanOriginalPathSegment(
             List<CellIntersectionData> intersectedCells, List<GridPlace> originalPathSegment)
         {
