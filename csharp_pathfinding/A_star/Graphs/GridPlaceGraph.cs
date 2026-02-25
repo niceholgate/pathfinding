@@ -104,8 +104,19 @@ namespace AStarNickNS
             {
                 return false;
             }
+
+            if (!PathfinderFitsOnBoundary(diagType, xFrom, yFrom, xTo, yTo, pathfinderSize))
+            {
+                return false;
+            }
+            
             
             return PlaceExists(to) && PathfinderCanFitCached(xTo, yTo, pathfinderSize);
+        }
+
+        private bool PathfinderFitsOnBoundary(int diagType, int xFrom, int yFrom, int xTo, int yTo, double pathfinderSize)
+        {
+            return false;
         }
 
         public double GetTerrainCost((int, int) label)
