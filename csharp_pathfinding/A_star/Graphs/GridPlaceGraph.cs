@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using NicUtils.ExtensionMethods;
 
 namespace AStarNickNS
@@ -116,7 +117,75 @@ namespace AStarNickNS
 
         private bool PathfinderFitsOnBoundary(int diagType, int xFrom, int yFrom, int xTo, int yTo, double pathfinderSize)
         {
-            return false;
+            double halfSize = pathfinderSize / 2.0;
+
+            if (diagType != 0) // Diagonal
+            {
+                double vx = (xFrom + xTo) / 2.0;
+                double vy = (yFrom + yTo) / 2.0;
+                
+                int dx = xTo - xFrom;
+                int dy = yTo - yFrom;
+                
+                // Perpendicular diagonal direction
+                int px = dy;
+                int py = -dx;
+                
+                for (int k = 0; ; k++)
+                {
+                    double dist = k * SQRT2;
+                    if (dist > halfSize + 1e-9) break;
+                    
+                    if (IsVertexBlocked(vx + k * px, vy + k * py)) return false;
+                    if (k > 0 && IsVertexBlocked(vx - k * px, vy - k * py)) return false;
+                }
+            }
+            else // Orthogonal
+            {
+                double mx = (xFrom + xTo) / 2.0;
+                double my = (yFrom + yTo) / 2.0;
+                
+                if (xFrom != xTo) // Horizontal
+                {
+                    for (int k = 0; ; k++)
+                    {
+                        double dist = k + 0.5;
+                        if (dist > halfSize + 1e-9) break;
+                        
+                        if (IsVertexBlocked(mx, my + dist)) return false;
+                        if (IsVertexBlocked(mx, my - dist)) return false;
+                    }
+                }
+                else // Vertical
+                {
+                    for (int k = 0; ; k++)
+                    {
+                        double dist = k + 0.5;
+                        if (dist > halfSize + 1e-9) break;
+                        
+                        if (IsVertexBlocked(mx + dist, my)) return false;
+                        if (IsVertexBlocked(mx - dist, my)) return false;
+                    }
+                }
+            }
+            
+            return true;
+        }
+
+        private bool IsCellBlocked(int x, int y)
+        {
+            if (x < 0 || x >= GetWidth() || y < 0 || y >= GetHeight()) return false;
+            return _gridTerrainCosts[x, y] <= 0;
+        }
+
+        private bool IsVertexBlocked(double vx, double vy)
+        {
+            int x1 = (int)(vx - 0.5);
+            int x2 = (int)(vx + 0.5);
+            int y1 = (int)(vy - 0.5);
+            int y2 = (int)(vy + 0.5);
+
+            return IsCellBlocked(x1, y1) || IsCellBlocked(x1, y2) || IsCellBlocked(x2, y1) || IsCellBlocked(x2, y2);
         }
 
         public double GetTerrainCost((int, int) label)
@@ -293,7 +362,10 @@ namespace AStarNickNS
             return (GridPlace)Places[label];
         }
 
-        public static double GetDistanceToLineSegment((double x, double y) p1, (double x, double y) p2, (double x, double y) p0)
+        public static double GetDistanceToLineSegment(
+            (double x, double y) p1,
+            (double x, double y) p2,
+            (double x, double y) p0)
         {
             (double x1, double y1) = p1;
             (double x2, double y2) = p2;
@@ -325,17 +397,20 @@ namespace AStarNickNS
          * and which will help prevent it from sliding along corner obstacles due to over-smoothing - this is achieved by choosing corners that are maximally
          * distant from their nearest obstacle (pre-calculated inside the GridPlaceGraph, according to pathfinder size).
          */
-        public List<(double, double)> GetOccupiablePath(List<GridPlace> originalPath, double pathfinderSize)
+        public List<(double, double)> GetOccupiablePath(List<GridPlace> originalPath, double pathfinderSize,
+            CancellationToken token=new())
         {
+            // TODO: what to do if the original path is only 1 long?
             List<(double, double)> occPath = new();
             
             (int x, int y) = originalPath[0].Label;
             OccupiableCellCoordinates firstPlace = PathfinderFitsCoords[pathfinderSize][x, y];
-            (x, y) = originalPath[1].Label;
+            (x, y) = originalPath[0].Label;
             occPath.Add(GetBestNextPathPosition((x, y), firstPlace));
         
             for (int i = 1; i < originalPath.Count; i++)
             {
+                token.ThrowIfCancellationRequested();
                 (x, y) = originalPath[i].Label;
                 OccupiableCellCoordinates nextPlace = PathfinderFitsCoords[pathfinderSize][x, y];
                 occPath.Add(GetBestNextPathPosition(occPath[^1], nextPlace));
@@ -344,7 +419,8 @@ namespace AStarNickNS
             return occPath;
         }
         
-        private (double, double) GetBestNextPathPosition((double, double) refCoords, OccupiableCellCoordinates nextPlace)
+        private (double, double) GetBestNextPathPosition((double, double) refCoords,
+            OccupiableCellCoordinates nextPlace)
         {
             if (nextPlace.Centre != null)
             {
@@ -374,7 +450,8 @@ namespace AStarNickNS
             return c2;
         }
         
-        public List<(double, double)> SmoothPath(List<(double, double)> occupiablePath, List<GridPlace> originalPath, double pathfinderSize)
+        public List<(double, double)> SmoothPath(List<(double, double)> occupiablePath, List<GridPlace> originalPath,
+            double pathfinderSize, CancellationToken token=new())
         {
             // If the original path has 2 or fewer nodes, it can't be smoothed
             if (occupiablePath.Count <= 2) return new List<(double, double)>(occupiablePath);
@@ -386,6 +463,8 @@ namespace AStarNickNS
             int idx = 0;
             while (idx < occupiablePath.Count)
             {
+                token.ThrowIfCancellationRequested();
+                
                 idx++;
                 // The smoothed path ends at the same place as the original path 
                 if (idx == occupiablePath.Count - 1)

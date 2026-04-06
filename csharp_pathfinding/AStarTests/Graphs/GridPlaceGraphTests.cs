@@ -72,6 +72,22 @@ namespace AStarTests
             // Squeezing between corners (but not edges) that are closer together than the pathfinder's size is blocked
             Assert.IsFalse(sut.IsBlocked((1, 11), (1, 12), 0.9));
             Assert.IsTrue(sut.IsBlocked((1, 11), (1, 12), 1.6));
+            
+            // (and same but diagonally)
+            double[,] gridTerrainCosts2 = {
+                { 1, 1, 1, 1, 1, 1 }, // 0
+                { 1, 1, 1, 1, 0, 1 }, // 1
+                { 1, 1, 1, 1, 1, 1 }, // 2
+                { 1, 1, 1, 1, 1, 1 }, // 3
+                { 1, 0, 1, 1, 1, 1 }, // 4
+                { 1, 1, 1, 1, 1, 1 }, // 5
+                { 1, 1, 1, 1, 1, 1 }  // 6
+            };
+            GridPlaceGraph sut2 = new(true, new PathfinderObstacleIntersector(),
+            new HashSet<double>{2*Math.Sqrt(2) - 0.01, 2*Math.Sqrt(2) + 0.01});
+            sut2.BuildFromArray(gridTerrainCosts2);
+            Assert.IsFalse(sut2.IsBlocked((2, 2), (3, 3), 2*Math.Sqrt(2) - 0.01));
+            Assert.IsTrue(sut2.IsBlocked((2, 2), (3, 3), 2*Math.Sqrt(2) + 0.01));
         }
         
         [TestMethod]

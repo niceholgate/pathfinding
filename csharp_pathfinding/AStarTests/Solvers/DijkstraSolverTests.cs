@@ -127,7 +127,7 @@ namespace AStarTests {
             
             // Test larger pathfinders.
             yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 36.24, true, 0.9 };
-            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 77.31, true, 1.9 };
+            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 87.84, true, 1.9 };
         }
 
         [TestMethod]
