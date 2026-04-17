@@ -112,33 +112,33 @@ namespace AStarTests {
         {
             // Test various mazes with/without diagonality, including with "swamps" (higher movement cost areas).
             // Small pathfinders only (they're smaller than the cell size i.e. they fit anywhere).
-            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58, true, 0.9 };
-            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58, false, 0.9 };
-            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22, true, 0.9 };
-            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22, false, 0.9 };
-            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 51.41, true, 0.9 };
-            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 52, false, 0.9 };
-            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40, true, 0.9 };
-            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40, false, 0.9 };
-            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 39.41, true, 0.9 };
-            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 40, false, 0.9 };
-            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 14.83, true, 0.9 };
-            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 18, false, 0.9 };
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58f, true, 0.9f };
+            yield return new object[] { "spiral_test.csv", (0, 0), (9, 9), 58f, false, 0.9f };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22f, true, 0.9f };
+            yield return new object[] { "spiral_hole1_test.csv", (0, 0), (9, 9), 22f, false, 0.9f };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 51.41f, true, 0.9f };
+            yield return new object[] { "spiral_hole2_test.csv", (0, 0), (9, 9), 52f, false, 0.9f };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40f, true, 0.9f };
+            yield return new object[] { "spiral_hole3_test.csv", (0, 0), (9, 9), 40f, false, 0.9f };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 39.41f, true, 0.9f };
+            yield return new object[] { "walls_test.csv", (7, 12), (26, 15), 40f, false, 0.9f };
+            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 14.83f, true, 0.9f };
+            yield return new object[] { "walls_and_swamps_test.csv", (4, 1), (6, 7), 18f, false, 0.9f };
             
             // Test larger pathfinders.
-            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 36.24, true, 0.9 };
-            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 87.84, true, 1.9 };
+            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 36.24f, true, 0.9f };
+            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 87.84f, true, 1.9f };
         }
 
         [TestMethod]
         [DynamicData(nameof(PathfinderTestData))]
         public virtual void TestFindsShortestPathGridPlaceGraph(string mazeFile, (int, int) start, (int, int) target,
-            double expectedPathCost, bool diagonalNeighbours, double pathfinderSize)
+            float expectedPathCost, bool diagonalNeighbours, float pathfinderSize)
         {
             GridPlaceGraph graph = new(
                 diagonalNeighbours,
                 new PathfinderObstacleIntersector(), 
-                new HashSet<double>{pathfinderSize});
+                new HashSet<float>{pathfinderSize});
             graph.BuildFromFile($"../../../Resources/excel_mazes/{mazeFile}");
             _sutGridPlace = new DijkstraSolver<GridPlace, (int, int)>(graph);
             var startPlace = (GridPlace)graph.Places[start];
@@ -149,7 +149,7 @@ namespace AStarTests {
             TestHelpers.AssertEqualWithinTolerance(
                 expectedPathCost,
                 graph.GetPathCost(path.Select(place => place.Label).ToList()),
-                0.01);
+                0.01f);
         }
         
         [TestMethod]

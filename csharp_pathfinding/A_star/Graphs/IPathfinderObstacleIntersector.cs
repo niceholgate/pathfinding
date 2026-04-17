@@ -6,8 +6,8 @@ namespace AStarNickNS
     public interface IPathfinderObstacleIntersector
     {
         public OccupiableCellCoordinates CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(int x, int y,
-            double pathfinderSize);
+            float pathfinderSize);
 
-        public double[,] GridTerrainCosts { get; set; }
+        public float[,] GridTerrainCosts { get; set; }
     }
 }

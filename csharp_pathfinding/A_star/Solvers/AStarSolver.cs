@@ -17,12 +17,12 @@ namespace AStarNickNS
         }
         
         protected override void UpdateFrontier(
-            FibonacciHeap<TPlace, double> frontier,
+            FibonacciHeap<TPlace, float> frontier,
             TPlace neighbour,
-            double newCostForNeighbour,
+            float newCostForNeighbour,
             TPlace target)
         {
-            frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour, 
+            frontier.Insert(new FibonacciHeapNode<TPlace, float>(neighbour, 
                 newCostForNeighbour + neighbour.DistanceFrom(target, Distances2D.HeuristicType.Euclidian)));
         }
 

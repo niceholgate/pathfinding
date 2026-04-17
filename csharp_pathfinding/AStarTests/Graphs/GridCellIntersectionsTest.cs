@@ -16,14 +16,14 @@ namespace AStarTests.Graphs
             var start = (0, 0);
             var end = (3, 0);
             var expectedCells = new List<(int, int)> { (0, 0), (1, 0), (2, 0), (3, 0) };
-            var expectedIntersectonDistances = new List<double> { 0.5, 1.0, 1.0, 0.5 };
+            var expectedIntersectonDistances = new List<float> { 0.5f, 1.0f, 1.0f, 0.5f };
             
             var result = GridCellIntersections.GetCellIntersectionsWithLineSegment(start, end);
             var actualCells = result.Select(r => (r.x, r.y)).ToList();
             var actualIntersectionDistances = result.Select(r => r.IntersectedDistance).ToList();
 
             CollectionAssert.AreEqual(expectedCells, actualCells);
-            TestHelpers.AssertSequencesAreEqualWithinTolerance(expectedIntersectonDistances, actualIntersectionDistances, 0.0001);
+            TestHelpers.AssertSequencesAreEqualWithinTolerance(expectedIntersectonDistances, actualIntersectionDistances, 0.0001f);
         }
 
         [TestMethod]
@@ -32,7 +32,7 @@ namespace AStarTests.Graphs
             var start = (0, 0);
             var end = (0, 3);
             var expectedCells = new List<(int, int)> { (0, 0), (0, 1), (0, 2), (0, 3) };
-            var expectedIntersectonDistances = new List<double> { 0.5, 1.0, 1.0, 0.5 };
+            var expectedIntersectonDistances = new List<float> { 0.5f, 1.0f, 1.0f, 0.5f };
             
             var result = GridCellIntersections.GetCellIntersectionsWithLineSegment(start, end);
             var actualCells = result.Select(r => (r.x, r.y)).ToList();
@@ -48,18 +48,18 @@ namespace AStarTests.Graphs
             var start = (0, 0);
             var end = (3, 3);
             var expectedCells = new List<(int, int)> { (0, 0), (0, 1), (1, 0), (1, 1), (1, 2), (2, 1), (2, 2), (2, 3), (3, 2), (3, 3) };
-            var expectedIntersectonDistances = new List<double> { 
-                Math.Sqrt(2.0)/2, 0.0, 0.0,
-                Math.Sqrt(2.0), 0.0, 0.0, 
-                Math.Sqrt(2.0), 0.0, 0.0,
-                Math.Sqrt(2.0)/2 };
+            var expectedIntersectonDistances = new List<float> { 
+                MathF.Sqrt(2.0f)/2, 0.0f, 0.0f,
+                MathF.Sqrt(2.0f), 0.0f, 0.0f, 
+                MathF.Sqrt(2.0f), 0.0f, 0.0f,
+                MathF.Sqrt(2.0f)/2 };
             
             var result = GridCellIntersections.GetCellIntersectionsWithLineSegment(start, end);
             var actualCells = result.Select(r => (r.x, r.y)).ToList();
             var actualIntersectionDistances = result.Select(r => r.IntersectedDistance).ToList();
 
             CollectionAssert.AreEqual(expectedCells, actualCells);
-            TestHelpers.AssertSequencesAreEqualWithinTolerance(expectedIntersectonDistances, actualIntersectionDistances, 0.0001);
+            TestHelpers.AssertSequencesAreEqualWithinTolerance(expectedIntersectonDistances, actualIntersectionDistances, 0.0001f);
         }
 
         [TestMethod]
@@ -68,14 +68,14 @@ namespace AStarTests.Graphs
             var start = (5, 3);
             var end = (5, 3);
             var expectedCells = new List<(int, int)> { (5, 3) };
-            var expectedIntersectonDistances = new List<double> { 0.0f };
+            var expectedIntersectonDistances = new List<float> { 0.0f };
             
             var result = GridCellIntersections.GetCellIntersectionsWithLineSegment(start, end);
             var actualCells = result.Select(r => (r.x, r.y)).ToList();
             var actualIntersectionDistances = result.Select(r => r.IntersectedDistance).ToList();
             
             CollectionAssert.AreEqual(expectedCells, actualCells);
-            TestHelpers.AssertSequencesAreEqualWithinTolerance(expectedIntersectonDistances, actualIntersectionDistances, 0.0001);
+            TestHelpers.AssertSequencesAreEqualWithinTolerance(expectedIntersectonDistances, actualIntersectionDistances, 0.0001f);
         }
 
         [TestMethod]
@@ -89,7 +89,7 @@ namespace AStarTests.Graphs
             var actualCells = result.Select(r => (r.x, r.y)).ToList();
 
             CollectionAssert.AreEqual(expectedCells, actualCells);
-            Assert.AreEqual(Math.Sqrt(2*2+1*1), result.Sum(r => r.IntersectedDistance), 0.001);
+            Assert.AreEqual(MathF.Sqrt(2*2+1*1), result.Sum(r => r.IntersectedDistance), 0.001f);
         }
         
         [TestMethod]
@@ -103,7 +103,7 @@ namespace AStarTests.Graphs
             var actualCells = result.Select(r => (r.x, r.y)).ToList();
 
             CollectionAssert.AreEqual(expectedCells, actualCells);
-            Assert.AreEqual(Math.Sqrt(2.49*2.49+0.51*0.51), result.Sum(r => r.IntersectedDistance), 0.001);
+            Assert.AreEqual(MathF.Sqrt(2.49f*2.49f+0.51f*0.51f), result.Sum(r => r.IntersectedDistance), 0.001f);
         }
     }
 }

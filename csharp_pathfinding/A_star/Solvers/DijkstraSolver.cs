@@ -16,7 +16,7 @@ namespace AStarNickNS
             _graph = graph;
         }
         
-        public IEnumerable<TPlace> SolvePath(IPlace<TCoord> start, IPlace<TCoord> target, CancellationToken token=new(), double pathfinderSize=0.9)
+        public IEnumerable<TPlace> SolvePath(IPlace<TCoord> start, IPlace<TCoord> target, CancellationToken token=new(), float pathfinderSize=0.9f)
         {
             _graph.CheckDisjoint();
             if (!_graph.Places.ContainsKey(start.Label))
@@ -29,10 +29,10 @@ namespace AStarNickNS
                 throw new IOException($"The target place (\"{target.Label}\") is not on the graph!");
             }
 
-            FibonacciHeap<TPlace, double> frontier = new(0);
-            frontier.Insert(new FibonacciHeapNode<TPlace, double>((TPlace)start, 0));
+            FibonacciHeap<TPlace, float> frontier = new(0);
+            frontier.Insert(new FibonacciHeapNode<TPlace, float>((TPlace)start, 0));
             Dictionary<TPlace, TPlace> cameFrom = new();
-            Dictionary<TPlace, double> costSoFar = new() { { (TPlace)start, 0.0 } };
+            Dictionary<TPlace, float> costSoFar = new() { { (TPlace)start, 0.0f } };
             
             var visited = new HashSet<TPlace>();
             
@@ -48,9 +48,9 @@ namespace AStarNickNS
                 {
                     if (_graph.IsBlocked(current.Label, neighbour.Label, pathfinderSize)) continue;
                     
-                    double newCostForNeighbour = costSoFar[current] + current.CostToLeave(neighbour, _graph);
+                    float newCostForNeighbour = costSoFar[current] + current.CostToLeave(neighbour, _graph);
 
-                    if (costSoFar.TryGetValue(neighbour, out double neighbourCostSoFar) &&
+                    if (costSoFar.TryGetValue(neighbour, out float neighbourCostSoFar) &&
                         newCostForNeighbour >= neighbourCostSoFar) continue;
                     
                     costSoFar[neighbour] = newCostForNeighbour;
@@ -63,12 +63,12 @@ namespace AStarNickNS
         }
 
         protected virtual void UpdateFrontier(
-            FibonacciHeap<TPlace, double> frontier,
+            FibonacciHeap<TPlace, float> frontier,
             TPlace neighbour,
-            double newCostForNeighbour,
+            float newCostForNeighbour,
             TPlace target)
         {
-            frontier.Insert(new FibonacciHeapNode<TPlace, double>(neighbour, newCostForNeighbour));
+            frontier.Insert(new FibonacciHeapNode<TPlace, float>(neighbour, newCostForNeighbour));
         }
 
         private IEnumerable<TPlace> ReconstructPath(IPlace<TCoord> start, IPlace<TCoord> target, Dictionary<TPlace, TPlace> cameFrom)

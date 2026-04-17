@@ -15,7 +15,7 @@ namespace AStarNickNS
         private ISet<IPlaceAStar<(int x, int y)>> AStarNeighbours { get; }
         public ISet<IPlace<(int x, int y)>> Neighbours { get; }
 
-        public double CostToLeave(IPlace<(int x, int y)> to, PlaceGraph<(int x, int y)> graph)
+        public float CostToLeave(IPlace<(int x, int y)> to, PlaceGraph<(int x, int y)> graph)
         {
             return graph.CostToLeave(Label, to.Label);
         }
@@ -27,12 +27,12 @@ namespace AStarNickNS
             Neighbours = new HashSet<IPlace<(int x, int y)>>(AStarNeighbours);
         }
 
-        public double DistanceFrom(IPlaceAStar<(int x, int y)> other, Distances2D.HeuristicType heuristicType)
+        public float DistanceFrom(IPlaceAStar<(int x, int y)> other, Distances2D.HeuristicType heuristicType)
         {
-            return Distances2D.GetDistance(Label, other.Label, heuristicType);
-            //double[] thisLabelAsDoubles = { Label.Item1, Label.Item2 };
-            //double[] otherLabelAsDoubles = { other.Label.Item1, other.Label.Item2 };
-            //return Distances2D.GetDistance(thisLabelAsDoubles, otherLabelAsDoubles, heuristicType);
+            return (float)Distances2D.GetDistance(Label, other.Label, heuristicType);
+            //float[] thisLabelAsFloats = { Label.Item1, Label.Item2 };
+            //float[] otherLabelAsFloats = { other.Label.Item1, other.Label.Item2 };
+            //return (float)Distances2D.GetDistance(thisLabelAsFloats, otherLabelAsFloats, heuristicType);
         }
 
         public (int, int) N
