@@ -299,7 +299,7 @@ namespace AStarTests
             Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords[1.9f][5, 9].CornersFarthestFromBlockages);
             
             // Due to caching, Intersector did not need to perform any further calcs after Build
-            mockIntersector.Received(495)
+            mockIntersector.Received(159)
                 .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
             }
 
