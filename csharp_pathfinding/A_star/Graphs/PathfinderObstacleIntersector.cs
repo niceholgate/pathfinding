@@ -88,7 +88,7 @@ namespace AStarNickNS
                 float minCornerDistSq = float.MaxValue;
                 foreach ((int, int) obs in nearestObstructedCells)
                 {
-                    float d2 = (float)Distances2D.GetDistance(corner, obs, Distances2D.HeuristicType.EuclidianSquared);
+                    float d2 = Distances2D.GetDistance(corner, obs, Distances2D.HeuristicType.EuclidianSquared);
                     if (d2 < minCornerDistSq) minCornerDistSq = d2;
                 }
                 minDistancesSq.Add(minCornerDistSq);
@@ -244,7 +244,7 @@ namespace AStarNickNS
                     // First pass: find min distance
                     foreach ((int, int) cell in obstructedCellsOnPerimeter)
                     {
-                        float distSq = (float)Distances2D.GetDistance(cell, (x, y), Distances2D.HeuristicType.EuclidianSquared);
+                        float distSq = Distances2D.GetDistance(cell, (x, y), Distances2D.HeuristicType.EuclidianSquared);
                         if (distSq < minDistanceSq)
                         {
                             minDistanceSq = distSq;
@@ -254,7 +254,7 @@ namespace AStarNickNS
                     // Second pass: collect all cells with that distance
                     foreach ((int, int) cell in obstructedCellsOnPerimeter)
                     {
-                        float distSq = (float)Distances2D.GetDistance(cell, (x, y), Distances2D.HeuristicType.EuclidianSquared);
+                        float distSq = Distances2D.GetDistance(cell, (x, y), Distances2D.HeuristicType.EuclidianSquared);
                         if (MathF.Abs(distSq - minDistanceSq) < 1e-6f)
                         {
                             closestCells.Add(cell);

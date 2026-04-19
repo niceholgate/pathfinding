@@ -29,51 +29,27 @@ namespace AStarNickNS
 
         public float DistanceFrom(IPlaceAStar<(int x, int y)> other, Distances2D.HeuristicType heuristicType)
         {
-            return (float)Distances2D.GetDistance(Label, other.Label, heuristicType);
+            return Distances2D.GetDistance(Label, other.Label, heuristicType);
             //float[] thisLabelAsFloats = { Label.Item1, Label.Item2 };
             //float[] otherLabelAsFloats = { other.Label.Item1, other.Label.Item2 };
             //return (float)Distances2D.GetDistance(thisLabelAsFloats, otherLabelAsFloats, heuristicType);
         }
 
-        public (int, int) N
-        {
-            get { return (Label.x, Label.y - 1); }
-        }
+        public (int, int) N => (Label.x, Label.y - 1);
 
-        public (int, int) NE
-        {
-            get { return (Label.x + 1, Label.y - 1); }
-        }
+        public (int, int) NE => (Label.x + 1, Label.y - 1);
 
-        public (int, int) E
-        {
-            get { return (Label.x + 1, Label.y); }
-        }
+        public (int, int) E => (Label.x + 1, Label.y);
 
-        public (int, int) SE
-        {
-            get { return (Label.x + 1, Label.y + 1); }
-        }
+        public (int, int) SE => (Label.x + 1, Label.y + 1);
 
-        public (int, int) S
-        {
-            get { return (Label.x, Label.y + 1); }
-        }
+        public (int, int) S => (Label.x, Label.y + 1);
 
-        public (int, int) SW
-        {
-            get { return (Label.x - 1, Label.y + 1); }
-        }
+        public (int, int) SW => (Label.x - 1, Label.y + 1);
 
-        public (int, int) W
-        {
-            get { return (Label.x - 1, Label.y); }
-        }
+        public (int, int) W => (Label.x - 1, Label.y);
 
-        public (int, int) NW
-        {
-            get { return (Label.x - 1, Label.y - 1); }
-        }
+        public (int, int) NW => (Label.x - 1, Label.y - 1);
 
         public (int, int) DeltaFrom(GridPlace other)
         {
