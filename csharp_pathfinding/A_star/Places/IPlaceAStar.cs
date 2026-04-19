@@ -7,6 +7,6 @@ namespace AStarNickNS {
      */
     public interface IPlaceAStar<TCoord> : IPlace<TCoord>
     {
-        double DistanceFrom(IPlaceAStar<TCoord> other, Distances2D.HeuristicType heuristicType);
+        float DistanceFrom(IPlaceAStar<TCoord> other, Distances2D.HeuristicType heuristicType);
     }
 }

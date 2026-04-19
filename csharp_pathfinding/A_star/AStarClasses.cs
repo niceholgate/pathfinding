@@ -31,15 +31,15 @@
 //
 //     //    public CoordType Coord { get; }
 //
-//     //    public IDictionary<INode<CoordType>, double> GetNeighboursCosts() { return this.neighboursCosts; }
+//     //    public IDictionary<INode<CoordType>, float> GetNeighboursCosts() { return this.neighboursCosts; }
 //
-//     //    public virtual double GetCostToLeave(INode neighbour) { return neighboursCosts[neighbour]; }
+//     //    public virtual float GetCostToLeave(INode neighbour) { return neighboursCosts[neighbour]; }
 //     //}
 //
 //     //public class GenericNode : INode<GenericPlace> {
 //     //    public GenericPlace Coord { get; }
 //
-//     //    private Dictionary<INode, double> costsToReachExplicitNeighbours = new Dictionary<INode, double>();
+//     //    private Dictionary<INode, float> costsToReachExplicitNeighbours = new Dictionary<INode, float>();
 //
 //     //    public GenericNode(GenericPlace coord) {
 //     //        Coord = coord;
@@ -48,7 +48,7 @@
 //     //        }
 //     //    }
 //
-//     //    public double GetCostToLeave(INode neighbour) {
+//     //    public float GetCostToLeave(INode neighbour) {
 //     //        return costsToReachExplicitNeighbours[neighbour];
 //     //    }
 //
@@ -56,21 +56,21 @@
 //     //}
 //
 //     //public class Square : Node<GridCoords2D>, INodeAStar<GridCoords2D> {
-//     //    public static readonly double SQRT2 = Math.Sqrt(2.0);
+//     //    public static readonly float SQRT2 = MathF.Sqrt(2.0f);
 //
 //     //    public Square(GridCoords2D coord) : base(coord) { }
 //
-//     //    public double GetCostToLeave(Square neighbour) {
-//     //        double distance = neighbour.IsDiagonalNeighbour(this) ? SQRT2 : 1.0;
+//     //    public float GetCostToLeave(Square neighbour) {
+//     //        float distance = neighbour.IsDiagonalNeighbour(this) ? SQRT2 : 1.0f;
 //     //        return neighboursCosts[neighbour] * distance;
 //     //    }
 //
 //     //    private bool IsDiagonalNeighbour(Square other) { return Coord.IsDiagonalNeighbour(other.Coord); }
 //
-//     //    public double GetHeuristicDist(INodeAStar<GridCoords2D> other, Distances2D.HeuristicType heuristicType) {
-//     //        double[] thisLabelAsDoubles = { Coord.Label.Item1 , Coord.Label.Item2 };
-//     //        double[] otherLabelAsDoubles = { other.Coord.Label.Item1, other.Coord.Label.Item2 };
-//     //        return Distances2D.GetDistance(thisLabelAsDoubles, otherLabelAsDoubles, heuristicType);
+//     //    public float GetHeuristicDist(INodeAStar<GridCoords2D> other, Distances2D.HeuristicType heuristicType) {
+//     //        float[] thisLabelAsFloats = { Coord.Label.Item1 , Coord.Label.Item2 };
+//     //        float[] otherLabelAsFloats = { other.Coord.Label.Item1, other.Coord.Label.Item2 };
+//     //        return (float)Distances2D.GetDistance(thisLabelAsFloats, otherLabelAsFloats, heuristicType);
 //     //    }
 //     //}
 //
@@ -88,32 +88,32 @@
 //     //        //List<int[]> listInt = new List<int[]> { new int[] { 1, 2 }, new int[] { 0, -1 }, new int[] { 0, 1 }, new int[] { 1, 0 } };
 //     //        //int[] searchArrayInt = { 1, 2 };
 //
-//     //        //List<double[]> listDouble = new List<double[]> { new double[] { 1, 2 }, new double[] { 0, -1 }, new double[] { 0, 1 }, new double[] { 1, 0 } };
-//     //        //double[] searchArrayDouble = { 1.1, 2.0 };
+//     //        //List<float[]> listFloat = new List<float[]> { new float[] { 1, 2 }, new float[] { 0, -1 }, new float[] { 0, 1 }, new float[] { 1, 0 } };
+//     //        //float[] searchArrayFloat = { 1.1f, 2.0f };
 //
 //     //        //List<int>[] arrayInt = new List<int>[] { new List<int> { 1, 2 }, new List<int> { 0, -1 }, new List<int> { 0, 1 }, new List<int> { 1, 0 } };
 //     //        //List<int> searchListInt = new List<int> { 1, 2 };
 //
 //     //        //bool cont = Enumerables<int>.ContainsEnumerable(listInt, searchArrayInt);
-//     //        //bool cont2 = Enumerables<double>.ContainsEnumerable(listDouble, searchArrayDouble);
+//     //        //bool cont2 = Enumerables<float>.ContainsEnumerable(listFloat, searchArrayFloat);
 //     //        //bool cont3 = Enumerables<int>.ContainsEnumerable(arrayInt, searchListInt);
 //
-//     //        //double d = Distances2D.GetDistance(new double[2] { 3.0, 1.0 }, new double[2] { 6.0, 5.0 }, Distances2D.HeuristicType.Euclidian);
+//     //        //float d = (float)Distances2D.GetDistance(new float[2] { 3.0f, 1.0f }, new float[2] { 6.0f, 5.0f }, Distances2D.HeuristicType.Euclidian);
 //     //        //Console.WriteLine(d);
 //
 //     //        //Square squareTest1 = new Square(new GridCoords2D(0, 0));
 //     //        //Square squareTestDiag = new Square(new GridCoords2D(1, 1));
 //     //        //Square squareTestStra = new Square(new GridCoords2D(1, 0));
-//     //        //double hd = squareTest1.GetHeuristicDist(squareTestDiag, Distances2D.HeuristicType.Euclidian);
+//     //        //float hd = squareTest1.GetHeuristicDist(squareTestDiag, Distances2D.HeuristicType.Euclidian);
 //
-//     //        //var costsDict = new Dictionary<INode<GridCoords2D>, double>();
+//     //        //var costsDict = new Dictionary<INode<GridCoords2D>, float>();
 //     //        //costsDict.Add(squareTestDiag, 1);
 //     //        //costsDict.Add(squareTestStra, 1);
-//     //        //var costsDict2 = new Dictionary<INode<GridCoords2D>, double> { { squareTestDiag, 2 }, { squareTestStra, 4 } };
+//     //        //var costsDict2 = new Dictionary<INode<GridCoords2D>, float> { { squareTestDiag, 2 }, { squareTestStra, 4 } };
 //
 //     //        //squareTest1.neighboursCosts = costsDict;
-//     //        //double costDiag = squareTest1.GetCostToLeave(squareTestDiag);
-//     //        //double costStra = squareTest1.GetCostToLeave(squareTestStra);
+//     //        //float costDiag = squareTest1.GetCostToLeave(squareTestDiag);
+//     //        //float costStra = squareTest1.GetCostToLeave(squareTestStra);
 //
 //     //        //Console.WriteLine(hd);
 //     //    }

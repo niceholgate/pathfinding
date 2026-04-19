@@ -17,8 +17,8 @@ namespace AStarTests
         [TestMethod]
         public void TestDistanceFrom()
         {
-            double expectedDistance = Math.Sqrt(Math.Pow((-60) - (-3), 2.0) + Math.Pow((60 - 5), 2.0));
-            double result =
+            float expectedDistance = MathF.Sqrt(MathF.Pow((-60) - (-3), 2.0f) + MathF.Pow((60 - 5), 2.0f));
+            float result =
                 gridPlaceBase1.DistanceFrom(gridPlaceDistant1, NicUtils.Distances2D.HeuristicType.Euclidian);
             Assert.AreEqual(expectedDistance, result);
         }

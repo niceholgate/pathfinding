@@ -14,7 +14,7 @@ namespace AStarTests
     {
         private GridPlaceGraph sut;
 
-        private double[,] gridTerrainCosts = {
+        private float[,] gridTerrainCosts = {
             { 1, 0, 0, 0, 0, 1 }, // 0
             { 1, 1, 1, 0, 1, 1 }, // 1
             { 1, 1, 1, 0, 1, 1 }, // 2
@@ -43,38 +43,38 @@ namespace AStarTests
         public void TestIsBlocked()
         {
             sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
-                new HashSet<double>{0.9, 1.6, 2.1});
+                new HashSet<float>{0.9f, 1.6f, 2.1f});
             sut.BuildFromArray(gridTerrainCosts);
             
             // Moving to a non-existent place is blocked
-            Assert.IsTrue(sut.IsBlocked((0, 0), (-1, 0), 0.9));
+            Assert.IsTrue(sut.IsBlocked((0, 0), (-1, 0), 0.9f));
             
             // Moving into a >0 cost cell is not blocked
-            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1),0.9));
-            Assert.IsFalse(sut.IsBlocked((1, 0), (1, 1), 0.9));
+            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), 0.9f));
+            Assert.IsFalse(sut.IsBlocked((1, 0), (1, 1), 0.9f));
             
             // Moving into a <=0 cost cell is blocked
-            Assert.IsTrue(sut.IsBlocked((0, 0), (1, 0), 0.9));
-            Assert.IsTrue(sut.IsBlocked((2, 0), (1, 0), 0.9));
+            Assert.IsTrue(sut.IsBlocked((0, 0), (1, 0), 0.9f));
+            Assert.IsTrue(sut.IsBlocked((2, 0), (1, 0), 0.9f));
             
             // Moving diagonally right past a corner is blocked
-            Assert.IsTrue(sut.IsBlocked((2, 7), (3, 8), 0.9));
-            Assert.IsTrue(sut.IsBlocked((3, 8), (2, 7), 0.9));
+            Assert.IsTrue(sut.IsBlocked((2, 7), (3, 8), 0.9f));
+            Assert.IsTrue(sut.IsBlocked((3, 8), (2, 7), 0.9f));
             
             // Otherwise moving diagonally is not blocked
-            Assert.IsFalse(sut.IsBlocked((0, 7), (0, 8), 0.9));
-            Assert.IsFalse(sut.IsBlocked((0, 8), (0, 7), 0.9));
+            Assert.IsFalse(sut.IsBlocked((0, 7), (0, 8), 0.9f));
+            Assert.IsFalse(sut.IsBlocked((0, 8), (0, 7), 0.9f));
             
             // Moving to a place where the pathfinder can't fit is blocked
-            Assert.IsFalse(sut.IsBlocked((1, 3), (1, 2), 2.1));
-            Assert.IsTrue(sut.IsBlocked((1, 2), (2, 1), 2.1));
+            Assert.IsFalse(sut.IsBlocked((1, 3), (1, 2), 2.1f));
+            Assert.IsTrue(sut.IsBlocked((1, 2), (2, 1), 2.1f));
             
             // Squeezing between corners (but not edges) that are closer together than the pathfinder's size is blocked
-            Assert.IsFalse(sut.IsBlocked((1, 11), (1, 12), 0.9));
-            Assert.IsTrue(sut.IsBlocked((1, 11), (1, 12), 1.6));
+            Assert.IsFalse(sut.IsBlocked((1, 11), (1, 12), 0.9f));
+            Assert.IsTrue(sut.IsBlocked((1, 11), (1, 12), 1.6f));
             
             // (and same but diagonally)
-            double[,] gridTerrainCosts2 = {
+            float[,] gridTerrainCosts2 = {
                 { 1, 1, 1, 1, 1, 1 }, // 0
                 { 1, 1, 1, 1, 0, 1 }, // 1
                 { 1, 1, 1, 1, 1, 1 }, // 2
@@ -84,10 +84,10 @@ namespace AStarTests
                 { 1, 1, 1, 1, 1, 1 }  // 6
             };
             GridPlaceGraph sut2 = new(true, new PathfinderObstacleIntersector(),
-            new HashSet<double>{2*Math.Sqrt(2) - 0.01, 2*Math.Sqrt(2) + 0.01});
+            new HashSet<float>{2*MathF.Sqrt(2) - 0.01f, 2*MathF.Sqrt(2) + 0.01f});
             sut2.BuildFromArray(gridTerrainCosts2);
-            Assert.IsFalse(sut2.IsBlocked((2, 2), (3, 3), 2*Math.Sqrt(2) - 0.01));
-            Assert.IsTrue(sut2.IsBlocked((2, 2), (3, 3), 2*Math.Sqrt(2) + 0.01));
+            Assert.IsFalse(sut2.IsBlocked((2, 2), (3, 3), 2*MathF.Sqrt(2) - 0.01f));
+            Assert.IsTrue(sut2.IsBlocked((2, 2), (3, 3), 2*MathF.Sqrt(2) + 0.01f));
         }
         
         [TestMethod]
@@ -97,11 +97,11 @@ namespace AStarTests
             sut.BuildFromFile("../../../Resources/excel_mazes/3x3_test.csv");
 
             // Check the costs
-            Dictionary<(int, int), double> expectedCosts = new()
+            Dictionary<(int, int), float> expectedCosts = new()
             {
-                { (0, 0), 1.0 }, { (1, 0), 2.0 }, { (2, 0), 3.0 },
-                { (0, 1), 8.0 }, { (1, 1), 0.0 }, { (2, 1), 4.0 },
-                { (0, 2), 7.0 }, { (1, 2), 6.0 }, { (2, 2), 5.0 },
+                { (0, 0), 1.0f }, { (1, 0), 2.0f }, { (2, 0), 3.0f },
+                { (0, 1), 8.0f }, { (1, 1), 0.0f }, { (2, 1), 4.0f },
+                { (0, 2), 7.0f }, { (1, 2), 6.0f }, { (2, 2), 5.0f },
             };
 
             foreach (var item in expectedCosts) Assert.AreEqual(item.Value, sut.GetTerrainCost(item.Key));
@@ -130,10 +130,10 @@ namespace AStarTests
             // Check inaccessible Place
             foreach (var placeLabel in sut.Places.Keys)
             {
-                Assert.IsTrue(sut.IsBlocked(placeLabel, (1, 1), 0.9));
+                Assert.IsTrue(sut.IsBlocked(placeLabel, (1, 1), 0.9f));
             }
 
-            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), 0.9));
+            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), 0.9f));
         }
 
         [TestMethod]
@@ -143,11 +143,11 @@ namespace AStarTests
             sut.BuildFromFile("../../../Resources/excel_mazes/3x3_test.csv");
 
             // Check the costs
-            Dictionary<(int, int), double> expectedCosts = new()
+            Dictionary<(int, int), float> expectedCosts = new()
             {
-                { (0, 0), 1.0 }, { (1, 0), 2.0 }, { (2, 0), 3.0 },
-                { (0, 1), 8.0 }, { (1, 1), 0.0 }, { (2, 1), 4.0 },
-                { (0, 2), 7.0 }, { (1, 2), 6.0 }, { (2, 2), 5.0 },
+                { (0, 0), 1.0f }, { (1, 0), 2.0f }, { (2, 0), 3.0f },
+                { (0, 1), 8.0f }, { (1, 1), 0.0f }, { (2, 1), 4.0f },
+                { (0, 2), 7.0f }, { (1, 2), 6.0f }, { (2, 2), 5.0f },
             };
 
             foreach (var item in expectedCosts) Assert.AreEqual(item.Value, sut.GetTerrainCost(item.Key));
@@ -174,10 +174,10 @@ namespace AStarTests
             // Check inaccessible Place
             foreach (var placeLabel in sut.Places.Keys)
             {
-                Assert.IsTrue(sut.IsBlocked(placeLabel, (1, 1), 0.9));
+                Assert.IsTrue(sut.IsBlocked(placeLabel, (1, 1), 0.9f));
             }
 
-            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), 0.9));
+            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), 0.9f));
         }
         
         [TestMethod]
@@ -220,57 +220,57 @@ namespace AStarTests
         public void TestPathfinderCanFitCached()
         {
             sut = new GridPlaceGraph(true, mockIntersector,
-                new HashSet<double>{0.9, 1.1, 2.9, 3.1, 2*Math.Sqrt(2) - 0.01, 2*Math.Sqrt(2) + 0.01});
+                new HashSet<float>{0.9f, 1.1f, 2.9f, 3.1f, 2*MathF.Sqrt(2) - 0.01f, 2*MathF.Sqrt(2) + 0.01f});
             sut.BuildFromArray(gridTerrainCosts);
             
             mockIntersector.Received(495)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
         
             // Inside a size 1 square
-            Assert.IsTrue(sut.PathfinderCanFitCached(0, 0, 0.9));
-            Assert.IsFalse(sut.PathfinderCanFitCached(0, 0, 1.1));
-            
+            Assert.IsTrue(sut.PathfinderCanFitCached(0, 0, 0.9f));
+            Assert.IsFalse(sut.PathfinderCanFitCached(0, 0, 1.1f));
+
             // Inside a size 3 square
-            Assert.IsTrue(sut.PathfinderCanFitCached(1, 2, 2.9));
-            Assert.IsFalse(sut.PathfinderCanFitCached(1, 2, 3.1));
-            
+            Assert.IsTrue(sut.PathfinderCanFitCached(1, 2, 2.9f));
+            Assert.IsFalse(sut.PathfinderCanFitCached(1, 2, 3.1f));
+
             // Overlap with a corner
-            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, 0.9));
-            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, 2*Math.Sqrt(2) - 0.01));
-            Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, 2*Math.Sqrt(2) + 0.01));
+            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, 0.9f));
+            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, 2 * MathF.Sqrt(2.0f) - 0.01f));
+            Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, 2 * MathF.Sqrt(2.0f) + 0.01f));
             
             // Due to caching, Intersector did not need to perform any further calcs after Build
             mockIntersector.Received(495)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
-        }
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
+            }
         
         [TestMethod]
         public void TestPathfinderCanFitCached_SelectivelyCalledWhenTerrainGridAccessibilityUpdated()
         {
             sut = new GridPlaceGraph(true, mockIntersector,
-                new HashSet<double>{0.9, 2*Math.Sqrt(2) + 0.01});
+                new HashSet<float>{0.9f, 2*MathF.Sqrt(2) + 0.01f});
             sut.BuildFromArray(gridTerrainCosts);
             
             mockIntersector.Received(168)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
         
             // Initially, a collision
-            Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, 2*Math.Sqrt(2) + 0.01));
+            Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, 2*MathF.Sqrt(2) + 0.01f));
             
             // Caching means no further intersection checks
             mockIntersector.Received(168)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
 
             sut.SetTerrainCost((3, 7), 1);
             
             // No more collision
-            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, 2*Math.Sqrt(2) + 0.01));
+            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, 2*MathF.Sqrt(2) + 0.01f));
             
             // For bigger pathfinder, "radius" is 2 i.e. 25 cells. Should perform all 25 rechecks
             // Then for smaller pathfinder, "radius" is 1. Should perform all 9 rechecks since the large one can fit at coordinate (2, 8) after this change,
             // but not at every single corner on (2, 8) (in which case it would skip recheck for the central cell).
             mockIntersector.Received(168 + 25 + 9)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
         }
         
         // Initially, just calculated each cell's size accessibility from the middle of the cell.
@@ -281,27 +281,27 @@ namespace AStarTests
         public void TestPathfinderCanFitCached_FitsWhenSizeAndGapAreEqualAndEven()
         {
             sut = new GridPlaceGraph(true, mockIntersector,
-                new HashSet<double>{0.9, 1.9});
+                new HashSet<float>{0.9f, 1.9f});
             sut.BuildFromArray(gridTerrainCosts);
             
             mockIntersector.Received(159)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
         
             // Size 2 pathfinder can fit on either of the cells in a 2-width tunnel (by standing in the middle)
             // The results for PathfinderFitsCoords are deterministic the ordering of GRID_CORNER_DELTAS
-            Assert.IsTrue(sut.PathfinderCanFitCached(4, 8, 1.9));
-            Assert.Contains((4.5, 8.5), sut.PathfinderFitsCoords[1.9][4, 8].CornersFarthestFromBlockages);
-            Assert.IsTrue(sut.PathfinderCanFitCached(4, 9, 1.9));
-            Assert.Contains((3.5, 8.5), sut.PathfinderFitsCoords[1.9][4, 9].CornersFarthestFromBlockages);
-            Assert.IsTrue(sut.PathfinderCanFitCached(5, 8, 1.9));
-            Assert.Contains((4.5, 8.5), sut.PathfinderFitsCoords[1.9][5, 8].CornersFarthestFromBlockages);
-            Assert.IsTrue(sut.PathfinderCanFitCached(5, 9, 1.9));
-            Assert.Contains((4.5, 8.5), sut.PathfinderFitsCoords[1.9][5, 9].CornersFarthestFromBlockages);
+            Assert.IsTrue(sut.PathfinderCanFitCached(4, 8, 1.9f));
+            Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords[1.9f][4, 8].CornersFarthestFromBlockages);
+            Assert.IsTrue(sut.PathfinderCanFitCached(4, 9, 1.9f));
+            Assert.Contains((3.5f, 8.5f), sut.PathfinderFitsCoords[1.9f][4, 9].CornersFarthestFromBlockages);
+            Assert.IsTrue(sut.PathfinderCanFitCached(5, 8, 1.9f));
+            Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords[1.9f][5, 8].CornersFarthestFromBlockages);
+            Assert.IsTrue(sut.PathfinderCanFitCached(5, 9, 1.9f));
+            Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords[1.9f][5, 9].CornersFarthestFromBlockages);
             
             // Due to caching, Intersector did not need to perform any further calcs after Build
             mockIntersector.Received(159)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>());
-        }
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
+            }
 
         [TestMethod]
         public void TestGetDistanceToLineSegment()
@@ -309,32 +309,31 @@ namespace AStarTests
             ////////////// PROJECTION OF POINT IS WITHIN THE LINE SEGMENT
             
             // Horizontal line
-            Assert.AreEqual(10.0, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (0.5f, 10)), 1e-6);
-            Assert.AreEqual(10.0, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (0.5f, -10)), 1e-6);
+            Assert.AreEqual(10.0f, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (0.5f, 10)), 1e-6f);
+            Assert.AreEqual(10.0f, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (0.5f, -10)), 1e-6f);
 
             // Vertical line
-            Assert.AreEqual(10.0, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (0, 1), (10, 0.5f)), 1e-6);
-            Assert.AreEqual(10.0, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (0, 1), (-10, 0.5f)), 1e-6);
+            Assert.AreEqual(10.0f, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (0, 1), (10, 0.5f)), 1e-6f);
+            Assert.AreEqual(10.0f, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (0, 1), (-10, 0.5f)), 1e-6f);
 
             // 45 degree line
             // Point (0, 1) should be at distance 1/sqrt(2)
-            Assert.AreEqual(1/MathF.Sqrt(2.0f), GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 1), (0, 1)), 1e-6);
+            Assert.AreEqual(1/MathF.Sqrt(2.0f), GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 1), (0, 1)), 1e-6f);
 
             // Line points are same
-            Assert.AreEqual(5.0, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (0, 0), (3, 4)), 1e-6);
+            Assert.AreEqual(5.0f, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (0, 0), (3, 4)), 1e-6f);
             
             ////////////// PROJECTION OF POINT IS BEYOND THE LINE SEGMENT
-            Assert.AreEqual(MathF.Sqrt(2.0f), GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (2, 1)), 1e-6);
-            Assert.AreEqual(MathF.Sqrt(2.0f), GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (-1, 1)), 1e-6);
+            Assert.AreEqual(MathF.Sqrt(2.0f), GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (2, 1)), 1e-6f);
+            Assert.AreEqual(MathF.Sqrt(2.0f), GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (-1, 1)), 1e-6f);
         }
         
-        // Refer to grid_path_smoothing_concept.png and walls_test.csv
         [TestMethod]
         public void TestSmoothPathAroundBlockages()
         {
-            double pathfinderSize = 0.9;
+            float pathfinderSize = 0.9f;
             sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
-                new HashSet<double>{pathfinderSize});
+                new HashSet<float>{pathfinderSize});
             sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
         
             List<GridPlace> originalPath = new()
@@ -350,13 +349,13 @@ namespace AStarTests
                 new GridPlace((19, 13))
             };
             
-            List<(double, double)> expectedSmoothPath = new()
+            List<(float, float)> expectedSmoothPath = new()
             {
-                (0, 2), (2, 8), (22, 9), (22, 12), (19, 13)
+                (0f, 2f), (2f, 8f), (22f, 9f), (22f, 12f), (19f, 13f)
             };
             
-            List<(double, double)> occupiablePath = sut.GetOccupiablePath(originalPath, pathfinderSize);
-            List<(double, double)> actualSmoothPath = sut.SmoothPath(occupiablePath, originalPath, pathfinderSize);
+            List<(float, float)> occupiablePath = sut.GetOccupiablePath(originalPath, pathfinderSize);
+            List<(float, float)> actualSmoothPath = sut.SmoothPath(occupiablePath, originalPath, pathfinderSize);
         
             CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
         }
@@ -364,9 +363,9 @@ namespace AStarTests
         [TestMethod]
         public void TestSmoothPathAroundBlockages2()
         {
-            double pathfinderSize = 1.9;
+            float pathfinderSize = 1.9f;
             sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
-                new HashSet<double>{pathfinderSize});
+                new HashSet<float>{pathfinderSize});
             sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
             
             List<GridPlace> originalPath = new()
@@ -376,13 +375,13 @@ namespace AStarTests
                 new GridPlace((31, 8))
             };
             
-            List<(double, double)> expectedSmoothPath = new()
+            List<(float, float)> expectedSmoothPath = new()
             {
-                (25.5, 5.5), (25.5, 3.5), (28.5, 3.5), (31.0, 8.0)
+                (25.5f, 5.5f), (25.5f, 3.5f), (28.5f, 3.5f), (31.0f, 8.0f)
             };
             
-            List<(double, double)> occupiablePath = sut.GetOccupiablePath(originalPath, pathfinderSize);
-            List<(double, double)> actualSmoothPath = sut.SmoothPath(occupiablePath, originalPath, pathfinderSize);
+            List<(float, float)> occupiablePath = sut.GetOccupiablePath(originalPath, pathfinderSize);
+            List<(float, float)> actualSmoothPath = sut.SmoothPath(occupiablePath, originalPath, pathfinderSize);
             
             CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
         }
@@ -391,9 +390,9 @@ namespace AStarTests
         [TestMethod]
         public void TestSmoothPathAroundSwamps()
         {
-            double pathfinderSize = 0.9;
+            float pathfinderSize = 0.9f;
             sut = new GridPlaceGraph(true, new PathfinderObstacleIntersector(),
-                new HashSet<double>{pathfinderSize});
+                new HashSet<float>{pathfinderSize});
             sut.BuildFromFile("../../../Resources/excel_mazes/walls_and_swamps_test.csv");
         
             List<GridPlace> originalPath = new()
@@ -402,13 +401,13 @@ namespace AStarTests
                 new GridPlace((8, 5)), new GridPlace((9, 6)), new GridPlace((9, 7)), new GridPlace((8, 8))
             };
             
-            List<(double, double)> expectedSmoothPath = new()
+            List<(float, float)> expectedSmoothPath = new()
             {
-                (4, 4), (8, 5), (9,6), (8, 8)
+                (4f, 4f), (8f, 5f), (9f, 6f), (8f, 8f)
             };
         
-            List<(double, double)> occupiablePath = sut.GetOccupiablePath(originalPath, pathfinderSize);
-            List<(double, double)> actualSmoothPath = sut.SmoothPath(occupiablePath, originalPath, pathfinderSize);
+            List<(float, float)> occupiablePath = sut.GetOccupiablePath(originalPath, pathfinderSize);
+            List<(float, float)> actualSmoothPath = sut.SmoothPath(occupiablePath, originalPath, pathfinderSize);
             
             CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
         }
@@ -469,12 +468,12 @@ namespace AStarTests
             
             var mockIntersector = Substitute.For<IPathfinderObstacleIntersector>();
             mockIntersector
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<double>())
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>())
                 .Returns(callInfo =>
                 {
                     int x = callInfo.ArgAt<int>(0);
                     int y = callInfo.ArgAt<int>(1);
-                    double size = callInfo.ArgAt<double>(2);
+                    float size = callInfo.ArgAt<float>(2);
                     return concreteIntersector.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(x, y, size);
                 });
 

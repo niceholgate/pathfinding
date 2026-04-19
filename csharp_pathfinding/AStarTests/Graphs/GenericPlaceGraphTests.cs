@@ -24,7 +24,7 @@ namespace AStarTests
 
             Assert.Contains("G", sut.Places.Keys);
             Assert.DoesNotContain("H", sut.Places.Keys);
-            Assert.IsTrue(TestHelpers.AllEqual(sut.CostToLeave("A", "B"), sut.CostToLeave("B", "A"), 6.0));
+            Assert.IsTrue(TestHelpers.AllEqual(sut.CostToLeave("A", "B"), sut.CostToLeave("B", "A"), 6.0f));
         }
 
         [TestMethod]

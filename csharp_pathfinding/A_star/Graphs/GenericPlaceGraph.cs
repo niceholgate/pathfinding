@@ -8,13 +8,13 @@ namespace AStarNickNS
 {
     public partial class GenericPlaceGraph : PlaceGraph<string>
     {
-        private readonly Dictionary<PlacePair, double> costs = new Dictionary<PlacePair, double>();
+        private readonly Dictionary<PlacePair, float> costs = new Dictionary<PlacePair, float>();
 
-        //public override Dictionary<Place<string>, double> GetImplicitNeighboursWithCosts(Place<string> place) {
-        //    return new Dictionary<Place<string>, double>();
+        //public override Dictionary<Place<string>, float> GetImplicitNeighboursWithCosts(Place<string> place) {
+        //    return new Dictionary<Place<string>, float>();
         //}
 
-        protected override bool PlaceAccessible(string from, string to, double pathfinderSize)
+        protected override bool PlaceAccessible(string from, string to, float pathfinderSize)
         {
             return PlaceExists(to);
         }
@@ -38,19 +38,19 @@ namespace AStarNickNS
                 {
                     var place1 = match.Groups[1].Value;
                     var place2 = match.Groups[2].Value;
-                    var cost = double.Parse(match.Groups[3].Value);
+                    var cost = float.Parse(match.Groups[3].Value);
                     return (new PlacePair(place1, place2), cost);
                 })
                 .ToList();
 
             foreach (var (placePair, cost) in placePairsWithCosts)
             {
-                if (cost < 0.0)
+                if (cost < 0.0f)
                 {
                     throw new ArgumentException($"Cannot have a negative cost: {cost} for {placePair}");
                 }
 
-                if (GetCost(placePair) > 0.0)
+                if (GetCost(placePair) > 0.0f)
                 {
                     throw new ArgumentException($"Cannot specify the same pair of places more than once: {placePair}");
                 }
@@ -75,14 +75,14 @@ namespace AStarNickNS
             return (GenericPlace)Places[label];
         }
 
-        public override double CostToLeave(string place1, string place2)
+        public override float CostToLeave(string place1, string place2)
         {
             return GetCost(new PlacePair(place1, place2));
         }
 
-        private double GetCost(PlacePair placePair)
+        private float GetCost(PlacePair placePair)
         {
-            return costs.GetValueOrDefault(placePair, -1.0);
+            return costs.GetValueOrDefault(placePair, -1.0f);
         }
 
         // Ensure there is no duplication due to reversed labels by sorting pairs upon creation

@@ -17,25 +17,25 @@ namespace AStarTests
         [TestMethod]
         [DynamicData(nameof(PathfinderTestData))]
         public override void TestFindsShortestPathGridPlaceGraph(string mazeFile, (int, int) start, (int, int) target,
-            double expectedPathCost, bool diagonalNeighbours, double pathfinderSize)
+            float expectedPathCost, bool diagonalNeighbours, float pathfinderSize)
         {
             GridPlaceGraph graph = new(
                 diagonalNeighbours,
                 new PathfinderObstacleIntersector(),
-                new HashSet<double>{pathfinderSize});
+                new HashSet<float>{pathfinderSize});
             graph.BuildFromFile($"../../../Resources/excel_mazes/{mazeFile}");
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];
 
             List<GridPlace> path = _sut.SolvePath(startPlace, targetPlace, CancellationToken.None, pathfinderSize).ToList();
-            double pathCost = graph.GetPathCost(path.Select(place => place.Label).ToList());
+            float pathCost = graph.GetPathCost(path.Select(place => place.Label).ToList());
             Console.WriteLine($"pathCost: {pathCost}");
 
             TestHelpers.AssertEqualWithinTolerance(
                 expectedPathCost,
                 pathCost,
-                0.01);
+                0.01f);
         }
 
         [TestMethod]

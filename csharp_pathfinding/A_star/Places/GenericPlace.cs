@@ -11,7 +11,7 @@ namespace AStarNickNS
         public string Label { get; init; }
         public ISet<IPlace<string>> Neighbours { get; }
 
-        public double Cost { get; set; }
+        public float Cost { get; set; }
 
         public GenericPlace(string label)
         {
@@ -19,7 +19,7 @@ namespace AStarNickNS
             Neighbours = new HashSet<IPlace<string>>();
         }
 
-        //public GenericPlace(string label, GenericPlaceGraph graph, Dictionary<Place<string>, double> explicitNeighboursWithCosts)
+        //public GenericPlace(string label, GenericPlaceGraph graph, Dictionary<Place<string>, float> explicitNeighboursWithCosts)
         //    : base(label, graph) { }
 
         // GenericPlace has no implicit neighbours because it is described by text labels rather than a coordinate system
@@ -30,13 +30,13 @@ namespace AStarNickNS
         //}
 
         // TODO: ExplicitNeighboursWithCosts should be a getter accessing the Graph, not stored on the Place
-        //public override double GetCostToLeave(IPlace<string> neighbour) {
+        //public override float GetCostToLeave(IPlace<string> neighbour) {
         //    return ExplicitNeighboursWithCosts[neighbour];
         //}
 
         public override string ToString() => Label;
 
-        public double CostToLeave(IPlace<string> to, PlaceGraph<string> graph)
+        public float CostToLeave(IPlace<string> to, PlaceGraph<string> graph)
         {
             return graph.CostToLeave(Label, to.Label);
         }
