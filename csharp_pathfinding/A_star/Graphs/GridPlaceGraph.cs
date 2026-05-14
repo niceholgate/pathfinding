@@ -2,7 +2,6 @@ using NicUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Threading;
 using NicUtils.ExtensionMethods;
 
@@ -22,6 +21,7 @@ namespace AStarNickNS
         public Dictionary<float, OccupiableCellCoordinates[,]> PathfinderFitsCoords { get; set; }
 
         private float[,] _gridTerrainCosts = new float[1,1];
+        private bool[,] _blockages = new bool[1,1];
 
         private readonly IPathfinderObstacleIntersector _intersector;
 
@@ -77,7 +77,7 @@ namespace AStarNickNS
             if (PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] == null)
             {
                 OccupiableCellCoordinates fitCoordinates =
-                    _intersector.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(x, y, pathfinderSize, _gridTerrainCosts);
+                    _intersector.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(x, y, pathfinderSize, _blockages);
                 PathfinderFitsCoords[pathfinderSize][x, y] = fitCoordinates;
                 PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] = !fitCoordinates.Occupiable();
             }
@@ -206,6 +206,7 @@ namespace AStarNickNS
 
             float oldCost = _gridTerrainCosts[x, y];
             _gridTerrainCosts[x, y] = cost;
+            _blockages[x, y] = cost <= 0;
             
             // Only need to recompute PathfinderCanFitCached if there's a change in accessibility.
             if ((oldCost <= 0 && cost > 0) || (cost <= 0 && oldCost > 0))
@@ -279,11 +280,13 @@ namespace AStarNickNS
             _gridTerrainCosts = gridCosts;
             int height = gridCosts.GetLength(1);
             int width = gridCosts.GetLength(0);
+            _blockages = new bool[width, height];
             
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
+                    _blockages[x, y] = _gridTerrainCosts[x, y] <= 0;
                     // Create this Place
                     GridPlace here = GetPlaceOrCreate((x, y));
 
