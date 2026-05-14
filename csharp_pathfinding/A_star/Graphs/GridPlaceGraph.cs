@@ -77,7 +77,7 @@ namespace AStarNickNS
             if (PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] == null)
             {
                 OccupiableCellCoordinates fitCoordinates =
-                    _intersector.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(x, y, pathfinderSize);
+                    _intersector.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(x, y, pathfinderSize, _gridTerrainCosts);
                 PathfinderFitsCoords[pathfinderSize][x, y] = fitCoordinates;
                 PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] = !fitCoordinates.Occupiable();
             }
@@ -279,8 +279,6 @@ namespace AStarNickNS
             _gridTerrainCosts = gridCosts;
             int height = gridCosts.GetLength(1);
             int width = gridCosts.GetLength(0);
-            
-            _intersector.GridTerrainCosts = _gridTerrainCosts;
             
             for (int y = 0; y < height; y++)
             {

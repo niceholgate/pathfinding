@@ -8,18 +8,16 @@ namespace AStarNickNS
 
     public class PathfinderObstacleIntersector : IPathfinderObstacleIntersector
     {
-        public float[,] GridTerrainCosts { get; set; } = null;
-
         private readonly List<(float, float)> GRID_CORNER_DELTAS = new()
         {
             (0.5f, 0.5f), (-0.5f, 0.5f), (-0.5f, -0.5f), (0.5f, -0.5f)
         };
 
-        public OccupiableCellCoordinates CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(int x, int y, float pathfinderSize)
+        public OccupiableCellCoordinates CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(int x, int y, float pathfinderSize, float[,] gridTerrainCosts)
         {
-            if (GridTerrainCosts == null || GridTerrainCosts.Length == 0)
+            if (gridTerrainCosts == null || gridTerrainCosts.Length == 0)
             {
-                throw new IOException("GridTerrainCosts not yet initialised!");
+                throw new IOException("gridTerrainCosts empty!");
             }
             
             OccupiableCellCoordinates occ = new OccupiableCellCoordinates {
@@ -30,9 +28,9 @@ namespace AStarNickNS
                 AllCoordsOccupiable = false
             };
             
-            if (GetTerrainCost(x, y) <= 0) return occ;
+            if (GetTerrainCost(x, y, gridTerrainCosts) <= 0) return occ;
             
-            List<(int, int)> nearestObstructedCells = FindNearestObstructedCells(x, y, pathfinderSize);
+            List<(int, int)> nearestObstructedCells = FindNearestObstructedCells(x, y, pathfinderSize, gridTerrainCosts);
             occ.NearestBlockedCorners = FindNearestObstructedCorners(nearestObstructedCells, x, y);
             
             // Sub-cell pathfinders just go to the center
@@ -53,7 +51,7 @@ namespace AStarNickNS
             }
             
             // The pathfinder fits in this cell if it can stand on any part of the cell with no intersections with obstacles.
-            occ.Centre = CircleIntersectsWithAnyObstacle(cells, cx, cy, radiusSq)
+            occ.Centre = CircleIntersectsWithAnyObstacle(cells, cx, cy, radiusSq, gridTerrainCosts)
                 ? null : (cx, cy);
 
             List<(float, float)> cornersWithoutIntersections = new();
@@ -61,7 +59,7 @@ namespace AStarNickNS
             {
                 float circleCentreX = cx + cornerDelta.Item1;
                 float circleCentreY = cy + cornerDelta.Item2;
-                if (!CircleIntersectsWithAnyObstacle(cells, circleCentreX, circleCentreY, radiusSq))
+                if (!CircleIntersectsWithAnyObstacle(cells, circleCentreX, circleCentreY, radiusSq, gridTerrainCosts))
                 {
                     // We found a corner (circleCentreX, circleCentreY) of this cell (x, y) where the pathfinder fits
                     cornersWithoutIntersections.Add((circleCentreX, circleCentreY));
@@ -110,12 +108,12 @@ namespace AStarNickNS
         }
 
         private bool CircleIntersectsWithAnyObstacle(List<(int, int)> cells, float circleCentreX, float circleCentreY,
-            float circleRadiusSquared)
+            float circleRadiusSquared, float[,] gridTerrainCosts)
         {
             foreach ((int cellCentreX, int cellCentreY) in cells)
             {
                 // If this cell is an obstacle, check for intersection with the pathfinder's circle.
-                if (GetTerrainCost(cellCentreX, cellCentreY) <= 0
+                if (GetTerrainCost(cellCentreX, cellCentreY, gridTerrainCosts) <= 0
                     && CircleIntersectsCell(cellCentreX, cellCentreY, circleCentreX, circleCentreY,
                         circleRadiusSquared))
                 {
@@ -141,16 +139,16 @@ namespace AStarNickNS
             return distanceSquared <= circleRadiusSquared;
         }
 
-        private float GetTerrainCost(int x, int y)
+        private float GetTerrainCost(int x, int y, float[,] gridTerrainCosts)
         {
-            if (CoordinateOutOfBounds(x, y)) return 0;
-            return GridTerrainCosts[x, y];
+            if (CoordinateOutOfBounds(x, y, gridTerrainCosts)) return 0;
+            return gridTerrainCosts[x, y];
         }
 
-        private bool CoordinateOutOfBounds(int x, int y)
+        private bool CoordinateOutOfBounds(int x, int y, float[,] gridTerrainCosts)
         {
-            return x < 0 || x >= GridTerrainCosts.GetLength(0)
-                         || y < 0 || y >= GridTerrainCosts.GetLength(1);
+            return x < 0 || x >= gridTerrainCosts.GetLength(0)
+                         || y < 0 || y >= gridTerrainCosts.GetLength(1);
         }
 
         private List<(float, float)> FindNearestObstructedCorners(List<(int, int)> nearestObstructedCells, int x, int y)
@@ -193,10 +191,10 @@ namespace AStarNickNS
             return nearestObstructedCorners;
         }
         
-        private List<(int, int)> FindNearestObstructedCells(int x, int y, float pathfinderSize)
+        private List<(int, int)> FindNearestObstructedCells(int x, int y, float pathfinderSize, float[,] gridTerrainCosts)
         {
             List<(int, int)> closestCells = new List<(int, int)>();
-            if (GetTerrainCost(x, y) <= 0)
+            if (GetTerrainCost(x, y, gridTerrainCosts) <= 0)
             {
                 return closestCells;
             }
@@ -211,13 +209,13 @@ namespace AStarNickNS
                 for (int i = -d; i <= d; i++)
                 {
                     (int, int) topCell = (x + i, y - d);
-                    if (GetTerrainCost(topCell.Item1, topCell.Item2) <= 0)
+                    if (GetTerrainCost(topCell.Item1, topCell.Item2, gridTerrainCosts) <= 0)
                     {
                         obstructedCellsOnPerimeter.Add(topCell);
                     }
                     
                     (int, int) bottomCell = (x + i, y + d);
-                    if (GetTerrainCost(bottomCell.Item1, bottomCell.Item2) <= 0)
+                    if (GetTerrainCost(bottomCell.Item1, bottomCell.Item2, gridTerrainCosts) <= 0)
                     {
                         obstructedCellsOnPerimeter.Add(bottomCell);
                     }
@@ -227,12 +225,12 @@ namespace AStarNickNS
                 for (int i = -d + 1; i < d; i++)
                 {
                     (int, int) leftCell = (x - d, y + i);
-                    if (GetTerrainCost(leftCell.Item1, leftCell.Item2) <= 0)
+                    if (GetTerrainCost(leftCell.Item1, leftCell.Item2, gridTerrainCosts) <= 0)
                     {
                         obstructedCellsOnPerimeter.Add(leftCell);
                     }
                     (int, int) rightCell = (x + d, y + i);
-                    if (GetTerrainCost(rightCell.Item1, rightCell.Item2) <= 0)
+                    if (GetTerrainCost(rightCell.Item1, rightCell.Item2, gridTerrainCosts) <= 0)
                     {
                         obstructedCellsOnPerimeter.Add(rightCell);
                     }

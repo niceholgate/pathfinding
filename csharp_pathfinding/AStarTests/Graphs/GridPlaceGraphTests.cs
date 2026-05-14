@@ -224,7 +224,7 @@ namespace AStarTests
             sut.BuildFromArray(gridTerrainCosts);
             
             mockIntersector.Received(495)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>(), Arg.Any<float[,]>());
         
             // Inside a size 1 square
             Assert.IsTrue(sut.PathfinderCanFitCached(0, 0, 0.9f));
@@ -241,7 +241,7 @@ namespace AStarTests
             
             // Due to caching, Intersector did not need to perform any further calcs after Build
             mockIntersector.Received(495)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>(), Arg.Any<float[,]>());
             }
         
         [TestMethod]
@@ -252,14 +252,14 @@ namespace AStarTests
             sut.BuildFromArray(gridTerrainCosts);
             
             mockIntersector.Received(168)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>(), Arg.Any<float[,]>());
         
             // Initially, a collision
             Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, 2*MathF.Sqrt(2) + 0.01f));
             
             // Caching means no further intersection checks
             mockIntersector.Received(168)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>(), Arg.Any<float[,]>());
 
             sut.SetTerrainCost((3, 7), 1);
             
@@ -270,7 +270,7 @@ namespace AStarTests
             // Then for smaller pathfinder, "radius" is 1. Should perform all 9 rechecks since the large one can fit at coordinate (2, 8) after this change,
             // but not at every single corner on (2, 8) (in which case it would skip recheck for the central cell).
             mockIntersector.Received(168 + 25 + 9)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>(), Arg.Any<float[,]>());
         }
         
         // Initially, just calculated each cell's size accessibility from the middle of the cell.
@@ -285,7 +285,7 @@ namespace AStarTests
             sut.BuildFromArray(gridTerrainCosts);
             
             mockIntersector.Received(159)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>(), Arg.Any<float[,]>());
         
             // Size 2 pathfinder can fit on either of the cells in a 2-width tunnel (by standing in the middle)
             // The results for PathfinderFitsCoords are deterministic the ordering of GRID_CORNER_DELTAS
@@ -300,7 +300,7 @@ namespace AStarTests
             
             // Due to caching, Intersector did not need to perform any further calcs after Build
             mockIntersector.Received(159)
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>());
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>(), Arg.Any<float[,]>());
             }
 
         [TestMethod]
@@ -461,20 +461,18 @@ namespace AStarTests
         
         private IPathfinderObstacleIntersector getMockIntersector()
         {
-            PathfinderObstacleIntersector concreteIntersector = new()
-            {
-                GridTerrainCosts = gridTerrainCosts
-            };
+            PathfinderObstacleIntersector concreteIntersector = new();
             
             var mockIntersector = Substitute.For<IPathfinderObstacleIntersector>();
             mockIntersector
-                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>())
+                .CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<float>(), Arg.Any<float[,]>())
                 .Returns(callInfo =>
                 {
                     int x = callInfo.ArgAt<int>(0);
                     int y = callInfo.ArgAt<int>(1);
                     float size = callInfo.ArgAt<float>(2);
-                    return concreteIntersector.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(x, y, size);
+                    float[,] costs = callInfo.ArgAt<float[,]>(3);
+                    return concreteIntersector.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(x, y, size, costs);
                 });
 
             return mockIntersector;

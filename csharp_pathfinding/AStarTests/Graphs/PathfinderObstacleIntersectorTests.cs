@@ -28,44 +28,38 @@ public class PathfinderObstacleIntersectorTests
     public void TestCoordinateWherePathfinderDoesNotIntersectAnyObstacles_Happy()
     {
         gridTerrainCosts = gridTerrainCosts.Transpose();
-        PathfinderObstacleIntersector sut = new()
-        {
-            GridTerrainCosts = gridTerrainCosts
-        };
+        PathfinderObstacleIntersector sut = new();
 
         // Inside a size 1 square                            x, y
-        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 0.9f).Occupiable());
-        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 1.1f).Occupiable());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 0.9f, gridTerrainCosts).Occupiable());
+        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 1.1f, gridTerrainCosts).Occupiable());
             
         // Inside a size 3 square
-        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(1, 2, 2.9f).Occupiable());
-        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(1, 2, 3.1f).Occupiable());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(1, 2, 2.9f, gridTerrainCosts).Occupiable());
+        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(1, 2, 3.1f, gridTerrainCosts).Occupiable());
             
         // Intersect with a corner
-        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9f).Occupiable());
-        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) - 0.01f).Occupiable());
-        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) + 0.01f).Occupiable());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9f, gridTerrainCosts).Occupiable());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) - 0.01f, gridTerrainCosts).Occupiable());
+        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) + 0.01f, gridTerrainCosts).Occupiable());
         
         // Respond to changes in the gridTerrainCosts
         gridTerrainCosts[3, 4] = 1;
-        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9f).Occupiable());
-        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) - 0.01f).Occupiable());
-        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) + 0.01f).Occupiable());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9f, gridTerrainCosts).Occupiable());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) - 0.01f, gridTerrainCosts).Occupiable());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) + 0.01f, gridTerrainCosts).Occupiable());
         gridTerrainCosts[3, 4] = 0;
-        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9f).Occupiable());
-        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) - 0.01f).Occupiable());
-        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) + 0.01f).Occupiable());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.9f, gridTerrainCosts).Occupiable());
+        Assert.IsTrue(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) - 0.01f, gridTerrainCosts).Occupiable());
+        Assert.IsFalse(sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) + 0.01f, gridTerrainCosts).Occupiable());
     }
     
     [TestMethod]
     public void TestLargePathfinderPrefersCellCornerFarthestFromCornerObstacle()
     {
         gridTerrainCosts = gridTerrainCosts.Transpose();
-        PathfinderObstacleIntersector sut = new()
-        {
-            GridTerrainCosts = gridTerrainCosts
-        };
-        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) - 0.01f);
+        PathfinderObstacleIntersector sut = new();
+        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 2*MathF.Sqrt(2.0f) - 0.01f, gridTerrainCosts);
         Assert.IsTrue(occ.Occupiable());
         Assert.AreEqual(1, occ.CornersFarthestFromBlockages.Count);
         Assert.AreEqual((1.5f, 5.5f), occ.CornersFarthestFromBlockages[0]);
@@ -75,11 +69,8 @@ public class PathfinderObstacleIntersectorTests
     public void TestNoCornersFarthestFromBlockagesAndNoNearestBlockedCornersWhenFarFromBlockages()
     {
         gridTerrainCosts = gridTerrainCosts.Transpose();
-        PathfinderObstacleIntersector sut = new()
-        {
-            GridTerrainCosts = gridTerrainCosts
-        };
-        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(1, 7, 0.8f);
+        PathfinderObstacleIntersector sut = new();
+        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(1, 7, 0.8f, gridTerrainCosts);
         Assert.IsTrue(occ.Occupiable());
         Assert.AreEqual(0, occ.CornersFarthestFromBlockages.Count);
         Assert.AreEqual(0, occ.NearestBlockedCorners.Count);
@@ -89,11 +80,8 @@ public class PathfinderObstacleIntersectorTests
     public void TestNearestBlockedCornersFourCorners()
     {
         gridTerrainCosts = gridTerrainCosts.Transpose();
-        PathfinderObstacleIntersector sut = new()
-        {
-            GridTerrainCosts = gridTerrainCosts
-        };
-        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 8, 0.8f);
+        PathfinderObstacleIntersector sut = new();
+        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 8, 0.8f, gridTerrainCosts);
         Assert.IsTrue(occ.Occupiable());
         Assert.AreEqual(4, occ.NearestBlockedCorners.Count);
     }
@@ -102,11 +90,8 @@ public class PathfinderObstacleIntersectorTests
     public void TestNearestBlockedCornersOneCorner()
     {
         gridTerrainCosts = gridTerrainCosts.Transpose();
-        PathfinderObstacleIntersector sut = new()
-        {
-            GridTerrainCosts = gridTerrainCosts
-        };
-        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.8f);
+        PathfinderObstacleIntersector sut = new();
+        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(2, 5, 0.8f, gridTerrainCosts);
         Assert.IsTrue(occ.Occupiable());
         Assert.AreEqual(1, occ.NearestBlockedCorners.Count);
     }
@@ -115,11 +100,8 @@ public class PathfinderObstacleIntersectorTests
     public void TestLargePathfinderPrefersCellTwoCornersFarthestFromInLineObstacle()
     {
         gridTerrainCosts = gridTerrainCosts.Transpose();
-        PathfinderObstacleIntersector sut = new()
-        {
-            GridTerrainCosts = gridTerrainCosts
-        };
-        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(3, 6, 1.9f);
+        PathfinderObstacleIntersector sut = new();
+        OccupiableCellCoordinates occ = sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(3, 6, 1.9f, gridTerrainCosts);
         Assert.IsTrue(occ.Occupiable());
         Assert.AreEqual(2, occ.CornersFarthestFromBlockages.Count);
         Assert.Contains((2.5f, 6.5f), occ.CornersFarthestFromBlockages);
@@ -130,12 +112,12 @@ public class PathfinderObstacleIntersectorTests
     }
     
     [TestMethod]
-    public void TestCoordinateWherePathfinderDoesNotIntersectAnyObstacles_UninitialisedThrowsException()
+    public void TestCoordinateWherePathfinderDoesNotIntersectAnyObstacles_NullBlockageMapThrowsException()
     {
         PathfinderObstacleIntersector sut = new();
         TestHelpers.AssertThrowsExceptionWithMessage<IOException>(
-            () => sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 0.9f),
-            "GridTerrainCosts not yet initialised!");
+            () => sut.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(0, 0, 0.9f, null),
+            "gridTerrainCosts empty!");
     }
 }
 }
