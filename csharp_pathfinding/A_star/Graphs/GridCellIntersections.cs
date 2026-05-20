@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.ComTypes;
 
 namespace AStarNickNS
 {
@@ -27,45 +26,6 @@ namespace AStarNickNS
             }
         }
     }
-
-    // public class Line
-    // {
-    //     public float M { get; }
-    //     public float C { get; }
-    //     
-    //     public Line(float m, float c)
-    //     {
-    //         M = m;
-    //         C = c;
-    //     }
-    //     
-    //     public Line((int x, int y) start, (int x, int y) end)
-    //     {
-    //         if (end.x == start.x)
-    //         {
-    //             M = float.PositiveInfinity; // Vertical line
-    //             C = start.x; // Store x-intercept
-    //         }
-    //         else
-    //         {
-    //             M = (float)(end.y - start.y) / (end.x - start.x);
-    //             C = start.y - M * start.x;
-    //         }
-    //     }
-    //
-    //     public float X(float y)
-    //     {
-    //         if (float.IsPositiveInfinity(M)) return C; // Vertical line
-    //         if (M == 0) throw new InvalidOperationException("Cannot calculate Y for a horizontal line.");
-    //         return (y - C) / M;
-    //     }
-    //     
-    //     public float Y(float x)
-    //     {
-    //         if (float.IsPositiveInfinity(M)) throw new InvalidOperationException("Cannot calculate Y for a vertical line.");
-    //         return M * x + C;
-    //     }
-    // }
     
     /*
       Uses a grid traversal algorithm, which is a variant of the Amanatides and Woo algorithm commonly used in ray tracing for finding voxel intersections. Its purpose is

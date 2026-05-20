@@ -304,31 +304,6 @@ namespace AStarTests
             }
 
         [TestMethod]
-        public void TestGetDistanceToLineSegment()
-        {
-            ////////////// PROJECTION OF POINT IS WITHIN THE LINE SEGMENT
-            
-            // Horizontal line
-            Assert.AreEqual(10.0f, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (0.5f, 10)), 1e-6f);
-            Assert.AreEqual(10.0f, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (0.5f, -10)), 1e-6f);
-
-            // Vertical line
-            Assert.AreEqual(10.0f, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (0, 1), (10, 0.5f)), 1e-6f);
-            Assert.AreEqual(10.0f, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (0, 1), (-10, 0.5f)), 1e-6f);
-
-            // 45 degree line
-            // Point (0, 1) should be at distance 1/sqrt(2)
-            Assert.AreEqual(1/MathF.Sqrt(2.0f), GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 1), (0, 1)), 1e-6f);
-
-            // Line points are same
-            Assert.AreEqual(5.0f, GridPlaceGraph.GetDistanceToLineSegment((0, 0), (0, 0), (3, 4)), 1e-6f);
-            
-            ////////////// PROJECTION OF POINT IS BEYOND THE LINE SEGMENT
-            Assert.AreEqual(MathF.Sqrt(2.0f), GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (2, 1)), 1e-6f);
-            Assert.AreEqual(MathF.Sqrt(2.0f), GridPlaceGraph.GetDistanceToLineSegment((0, 0), (1, 0), (-1, 1)), 1e-6f);
-        }
-        
-        [TestMethod]
         public void TestSmoothPathAroundBlockages()
         {
             float pathfinderSize = 0.9f;

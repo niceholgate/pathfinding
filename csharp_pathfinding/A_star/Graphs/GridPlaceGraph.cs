@@ -9,8 +9,6 @@ namespace AStarNickNS
 {
     public class GridPlaceGraph : PlaceGraph<(int, int)>
     {
-        private static readonly float SQRT2 = MathF.Sqrt(2);
-        
         private bool DiagonalNeighbours { get; set; }
         
         // null bool means not yet calculated/cache invalidated
@@ -38,13 +36,8 @@ namespace AStarNickNS
         }
         
         public GridPlaceGraph(bool diagonalNeighbours, IPathfinderObstacleIntersector pathfinderObstacleIntersector)
+            : this(diagonalNeighbours, pathfinderObstacleIntersector, new HashSet<float> { 0.9f })
         {
-            DiagonalNeighbours = diagonalNeighbours;
-            _intersector = pathfinderObstacleIntersector;
-            PathfinderObstacleIntersectionsCache = new Dictionary<float, bool?[,]> { { 0.9f, null } };
-            PathfinderFitsCoords = new Dictionary<float, OccupiableCellCoordinates[,]>() { { 0.9f, null } };
-            _descendingOrderedPathfinderSizes = PathfinderObstacleIntersectionsCache.Keys
-                .OrderByDescending(k => k).ToList();
         }
 
         public GridPlaceGraph(bool diagonalNeighbours, IPathfinderObstacleIntersector pathfinderObstacleIntersector,
@@ -68,7 +61,7 @@ namespace AStarNickNS
             int dx = from.Item1 - to.Item1;
             int dy = from.Item2 - to.Item2;
             bool isDiagonal = dx * dx + dy * dy == 2;
-            if (isDiagonal) return GetTerrainCost(to) * SQRT2;
+            if (isDiagonal) return GetTerrainCost(to) * GeometryUtils.SQRT2;
             return GetTerrainCost(to);
         }
         
@@ -106,86 +99,13 @@ namespace AStarNickNS
                 return false;
             }
 
-            if (!PathfinderFitsOnBoundary(diagType, xFrom, yFrom, xTo, yTo, pathfinderSize))
+            if (!GeometryUtils.CircleFitsOnBoundary(diagType, xFrom, yFrom, xTo, yTo, pathfinderSize, _blockages))
             {
                 return false;
             }
             
             
             return PlaceExists(to) && PathfinderCanFitCached(xTo, yTo, pathfinderSize);
-        }
-
-        private bool PathfinderFitsOnBoundary(int diagType, int xFrom, int yFrom, int xTo, int yTo, float pathfinderSize)
-        {
-            float halfSize = pathfinderSize / 2.0f;
-
-            if (diagType != 0) // Diagonal
-            {
-                float vx = (xFrom + xTo) / 2.0f;
-                float vy = (yFrom + yTo) / 2.0f;
-                
-                int dx = xTo - xFrom;
-                int dy = yTo - yFrom;
-                
-                // Perpendicular diagonal direction
-                int px = dy;
-                int py = -dx;
-                
-                for (int k = 0; ; k++)
-                {
-                    float dist = k * SQRT2;
-                    if (dist > halfSize + 1e-6f) break;
-                    
-                    if (IsVertexBlocked(vx + k * px, vy + k * py)) return false;
-                    if (k > 0 && IsVertexBlocked(vx - k * px, vy - k * py)) return false;
-                }
-            }
-            else // Orthogonal
-            {
-                float mx = (xFrom + xTo) / 2.0f;
-                float my = (yFrom + yTo) / 2.0f;
-                
-                if (xFrom != xTo) // Horizontal
-                {
-                    for (int k = 0; ; k++)
-                    {
-                        float dist = k + 0.5f;
-                        if (dist > halfSize + 1e-6f) break;
-                        
-                        if (IsVertexBlocked(mx, my + dist)) return false;
-                        if (IsVertexBlocked(mx, my - dist)) return false;
-                    }
-                }
-                else // Vertical
-                {
-                    for (int k = 0; ; k++)
-                    {
-                        float dist = k + 0.5f;
-                        if (dist > halfSize + 1e-6f) break;
-                        
-                        if (IsVertexBlocked(mx + dist, my)) return false;
-                        if (IsVertexBlocked(mx - dist, my)) return false;
-                    }
-                }
-            }
-            
-            return true;
-        }
-
-        private bool IsCellBlocked(int x, int y)
-        {
-            if (x < 0 || x >= GetWidth() || y < 0 || y >= GetHeight()) return false;
-            return _gridTerrainCosts[x, y] <= 0;
-        }
-
-        private bool IsVertexBlocked(float vx, float vy)
-        {
-            int x1 = (int)(vx - 0.5f);
-            int x2 = (int)(vx + 0.5f);
-            int y1 = (int)(vy - 0.5f);
-            int y2 = (int)(vy + 0.5f);
-
-            return IsCellBlocked(x1, y1) || IsCellBlocked(x1, y2) || IsCellBlocked(x2, y1) || IsCellBlocked(x2, y2);
         }
 
         public float GetTerrainCost((int, int) label)
@@ -363,35 +283,6 @@ namespace AStarNickNS
             return (GridPlace)Places[label];
         }
 
-        public static float GetDistanceToLineSegment(
-            (float x, float y) p1,
-            (float x, float y) p2,
-            (float x, float y) p0)
-        {
-            (float x1, float y1) = p1;
-            (float x2, float y2) = p2;
-            (float x0, float y0) = p0;
-            
-            float dx = x2 - x1;
-            float dy = y2 - y1;
-
-            if (dx == 0 && dy == 0)
-            {
-                return MathF.Sqrt(MathF.Pow(x1 - x0, 2) + MathF.Pow(y1 - y0, 2));
-            }
-
-            // Calculate the t parameter of the projection of p3 onto the line segment p1-p2
-            // t = [(p3-p1) . (p2-p1)] / |p2-p1|^2
-            float t = ((x0 - x1) * dx + (y0 - y1) * dy) / (dx * dx + dy * dy);
-            if (t <= 0) return MathF.Sqrt(MathF.Pow(x1 - x0, 2) + MathF.Pow(y1 - y0, 2)); // p0 is closest to p1
-            if (t >= 1) return MathF.Sqrt(MathF.Pow(x2 - x0, 2) + MathF.Pow(y2 - y0, 2)); // p0 is closest to p2
-
-            // p0 is closest to the projection on the segment
-            float projX = x1 + t * dx;
-            float projY = y1 + t * dy;
-            return MathF.Sqrt(MathF.Pow(projX - x0, 2) + MathF.Pow(projY - y0, 2));
-        }
-
         /*
          * Turn a Dijkstra path (List<GridPlace> which only indicates which cells to visit - not which corners of those cells can+should be used)
          * into the actual path to follow wrt. where the pathfinder fits. This involves choosing cell corners which are accessible to the pathfinder (owing to its size)
@@ -507,7 +398,7 @@ namespace AStarNickNS
                 foreach ((float, float) blockedCorner in PathfinderFitsCoords[pathfinderSize][intersectedCell.x,
                              intersectedCell.y].NearestBlockedCorners)
                 {
-                    float distanceBetweenLineAndBlockedCorner = GetDistanceToLineSegment(start, end, blockedCorner);
+                    float distanceBetweenLineAndBlockedCorner = GeometryUtils.GetDistanceToLineSegment(start, end, blockedCorner);
                     if (distanceBetweenLineAndBlockedCorner < pathfinderSize / 2)
                     {
                         return true;
