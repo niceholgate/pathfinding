@@ -21,7 +21,6 @@ namespace AStarTests
         {
             GridPlaceGraph graph = new(
                 diagonalNeighbours,
-                new PathfinderObstacleIntersector(),
                 new HashSet<float>{pathfinderSize});
             graph.BuildFromFile($"../../../Resources/excel_mazes/{mazeFile}");
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);
@@ -41,7 +40,7 @@ namespace AStarTests
         [TestMethod]
         public override void TestExceptionIfGraphDisjoint()
         {
-            GridPlaceGraph graph = new GridPlaceGraph(false, new PathfinderObstacleIntersector());
+            GridPlaceGraph graph = new GridPlaceGraph(false);
             GridPlace A = new GridPlace((0, 0));
             GridPlace B = new GridPlace((0, 2));
             graph.Places.Add((0, 0), A);
@@ -55,7 +54,7 @@ namespace AStarTests
         [TestMethod]
         public override void TestExceptionIfStartNotOnGraph()
         {
-            GridPlaceGraph graph = new GridPlaceGraph(false, new PathfinderObstacleIntersector());
+            GridPlaceGraph graph = new GridPlaceGraph(false);
             graph.BuildFromFile("../../../Resources/excel_mazes/spiral_test.csv");
             GridPlace notOnGraph = new GridPlace((200, 200));
             var targetPlace = (GridPlace)graph.Places[(9, 9)];
@@ -68,7 +67,7 @@ namespace AStarTests
         [TestMethod]
         public override void TestExceptionIfTargetNotOnGraph()
         {
-            GridPlaceGraph graph = new GridPlaceGraph(false, new PathfinderObstacleIntersector());
+            GridPlaceGraph graph = new GridPlaceGraph(false);
             graph.BuildFromFile("../../../Resources/excel_mazes/spiral_test.csv");
             GridPlace notOnGraph = new GridPlace((200, 200));
             var startPlace = (GridPlace)graph.Places[(0, 0)];

@@ -11,17 +11,10 @@ namespace AStarNickNS
     {
         private bool DiagonalNeighbours { get; set; }
         
-        // null bool means not yet calculated/cache invalidated
-        private Dictionary<float, bool?[,]> PathfinderObstacleIntersectionsCache { get; set; }
-        
-        // don't need to worry about caching invalidation on this one
-        // - just stores the last seen coordinate where a pathfinder fits
-        public Dictionary<float, OccupiableCellCoordinates[,]> PathfinderFitsCoords { get; set; }
-
         private float[,] _gridTerrainCosts = new float[1,1];
         private bool[,] _blockages = new bool[1,1];
 
-        private readonly IPathfinderObstacleIntersector _intersector;
+        private CachingPathfinderObstacleIntersector _intersector;
 
         private readonly List<float> _descendingOrderedPathfinderSizes;
 
@@ -35,25 +28,15 @@ namespace AStarNickNS
             return _gridTerrainCosts.GetLength(1);
         }
         
-        public GridPlaceGraph(bool diagonalNeighbours, IPathfinderObstacleIntersector pathfinderObstacleIntersector)
-            : this(diagonalNeighbours, pathfinderObstacleIntersector, new HashSet<float> { 0.9f })
+        public GridPlaceGraph(bool diagonalNeighbours)
+            : this(diagonalNeighbours, new HashSet<float> { 0.9f })
         {
         }
 
-        public GridPlaceGraph(bool diagonalNeighbours, IPathfinderObstacleIntersector pathfinderObstacleIntersector,
-            HashSet<float> pathfinderSizes)
+        public GridPlaceGraph(bool diagonalNeighbours, HashSet<float> pathfinderSizes)
         {
             DiagonalNeighbours = diagonalNeighbours;
-            _intersector = pathfinderObstacleIntersector;
-            PathfinderObstacleIntersectionsCache = new Dictionary<float, bool?[,]>();
-            PathfinderFitsCoords = new Dictionary<float, OccupiableCellCoordinates[,]>();
-            foreach (float pathfinderSize in pathfinderSizes)
-            {
-                PathfinderObstacleIntersectionsCache.Add(pathfinderSize, null);
-                PathfinderFitsCoords.Add(pathfinderSize, null);
-            }
-            _descendingOrderedPathfinderSizes = PathfinderObstacleIntersectionsCache.Keys
-                .OrderByDescending(k => k).ToList();
+            _descendingOrderedPathfinderSizes = pathfinderSizes.OrderByDescending(k => k).ToList();
         }
         
         public override float CostToLeave((int, int) from, (int, int) to)
@@ -67,14 +50,12 @@ namespace AStarNickNS
         
         public bool PathfinderCanFitCached(int x, int y, float pathfinderSize)
         {
-            if (PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] == null)
-            {
-                OccupiableCellCoordinates fitCoordinates =
-                    _intersector.CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(x, y, pathfinderSize, _blockages);
-                PathfinderFitsCoords[pathfinderSize][x, y] = fitCoordinates;
-                PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] = !fitCoordinates.Occupiable();
-            }
-            return !PathfinderObstacleIntersectionsCache[pathfinderSize][x, y].Value;
+            return _intersector.IsOccupiable(pathfinderSize, x, y, _blockages);
+        }
+        
+        public OccupiableCellCoordinates PathfinderFitsCoords(int x, int y, float pathfinderSize)
+        {
+            return _intersector.GetOccupiableCellCoordinates(x, y, pathfinderSize, _blockages);
         }
         
         protected override bool PlaceAccessible((int, int) from, (int, int) to, float pathfinderSize)
@@ -131,7 +112,7 @@ namespace AStarNickNS
             // Only need to recompute PathfinderCanFitCached if there's a change in accessibility.
             if ((oldCost <= 0 && cost > 0) || (cost <= 0 && oldCost > 0))
             {
-                float? previousPathfinderSize = null;
+                // Assess pathfinders in descending order. If the next biggest pathfinder can fit in a certain place, so can the current one.
                 foreach (float pathfinderSize in _descendingOrderedPathfinderSizes)
                 {
                     float halfWidth = pathfinderSize / 2;
@@ -142,22 +123,10 @@ namespace AStarNickNS
                         for (int cellY = y - radius; cellY <= y + radius; cellY++)
                         {
                             if (cellY < 0 || cellY >= _gridTerrainCosts.GetLength(1)) continue;
-                            if (previousPathfinderSize != null &&
-                                !PathfinderObstacleIntersectionsCache[previousPathfinderSize.Value][cellX, cellY].Value &&
-                                PathfinderFitsCoords[previousPathfinderSize.Value][cellX, cellY].AllCoordsOccupiable)
-                            {
-                                PathfinderFitsCoords[pathfinderSize][cellX, cellY] =
-                                    PathfinderFitsCoords[previousPathfinderSize.Value][cellX, cellY];
-                                PathfinderObstacleIntersectionsCache[pathfinderSize][cellX, cellY] = false;
-                                continue;
-                            }
-
-                            PathfinderObstacleIntersectionsCache[pathfinderSize][cellX, cellY] = null;
+                            if (pathfinderSize.Equals(_descendingOrderedPathfinderSizes[0])) _intersector.Invalidate(cellX, cellY);
                             PathfinderCanFitCached(cellX, cellY, pathfinderSize);
                         }
                     }
-
-                    previousPathfinderSize = pathfinderSize;
                 }
             }
         }
@@ -238,30 +207,18 @@ namespace AStarNickNS
                 }
             }
             
+            _intersector = new CachingPathfinderObstacleIntersector(width, height, _descendingOrderedPathfinderSizes);
+            
             // Assess pathfinders in descending order. If the next biggest pathfinder can fit in a certain place, so can the current one.
-            float? previousPathfinderSize = null;
             foreach (float pathfinderSize in _descendingOrderedPathfinderSizes)
             {
-                PathfinderObstacleIntersectionsCache[pathfinderSize] = new bool?[width, height];
-                PathfinderFitsCoords[pathfinderSize] = new OccupiableCellCoordinates[width, height];
                 for (int y = 0; y < height; y++)
                 {
                     for (int x = 0; x < width; x++)
                     {
-                        if (previousPathfinderSize != null &&
-                            !PathfinderObstacleIntersectionsCache[previousPathfinderSize.Value][x, y].Value &&
-                            PathfinderFitsCoords[previousPathfinderSize.Value][x, y].AllCoordsOccupiable)
-                        {
-                            PathfinderFitsCoords[pathfinderSize][x, y] =
-                                PathfinderFitsCoords[previousPathfinderSize.Value][x, y];
-                            PathfinderObstacleIntersectionsCache[pathfinderSize][x, y] = false;
-                            continue;
-                        }
                         PathfinderCanFitCached(x, y, pathfinderSize);
                     }
                 }
-
-                previousPathfinderSize = pathfinderSize;
             }
         }
         
@@ -296,7 +253,7 @@ namespace AStarNickNS
             List<(float, float)> occPath = new();
             
             (int x, int y) = originalPath[0].Label;
-            OccupiableCellCoordinates firstPlace = PathfinderFitsCoords[pathfinderSize][x, y];
+            OccupiableCellCoordinates firstPlace = PathfinderFitsCoords(x, y, pathfinderSize);
             (x, y) = originalPath[0].Label;
             occPath.Add(GetBestNextPathPosition((x, y), firstPlace));
         
@@ -304,7 +261,7 @@ namespace AStarNickNS
             {
                 token.ThrowIfCancellationRequested();
                 (x, y) = originalPath[i].Label;
-                OccupiableCellCoordinates nextPlace = PathfinderFitsCoords[pathfinderSize][x, y];
+                OccupiableCellCoordinates nextPlace = PathfinderFitsCoords(x, y, pathfinderSize);
                 occPath.Add(GetBestNextPathPosition(occPath[^1], nextPlace));
             }
             
@@ -392,20 +349,11 @@ namespace AStarNickNS
         private bool LineSegmentGoesTooCloseToBlockage(List<CellIntersectionData> intersectedCells,
             float pathfinderSize, (float, float) start, (float, float) end)
         {
-            
-            foreach (CellIntersectionData intersectedCell in intersectedCells)
-            {
-                foreach ((float, float) blockedCorner in PathfinderFitsCoords[pathfinderSize][intersectedCell.x,
-                             intersectedCell.y].NearestBlockedCorners)
-                {
-                    float distanceBetweenLineAndBlockedCorner = GeometryUtils.GetDistanceToLineSegment(start, end, blockedCorner);
-                    if (distanceBetweenLineAndBlockedCorner < pathfinderSize / 2)
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return intersectedCells.Any(intersectedCell =>
+                PathfinderFitsCoords(intersectedCell.x, intersectedCell.y, pathfinderSize)
+                    .NearestBlockedCorners
+                    .Select(blockedCorner => GeometryUtils.GetDistanceToLineSegment(start, end, blockedCorner))
+                    .Any(distanceBetweenLineAndBlockedCorner => distanceBetweenLineAndBlockedCorner < pathfinderSize / 2));
         }
 
         // TODO: replace originalPathSegment cost with the intersection-data-cost of the occupiablePath?

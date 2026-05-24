@@ -137,7 +137,6 @@ namespace AStarTests {
         {
             GridPlaceGraph graph = new(
                 diagonalNeighbours,
-                new PathfinderObstacleIntersector(), 
                 new HashSet<float>{pathfinderSize});
             graph.BuildFromFile($"../../../Resources/excel_mazes/{mazeFile}");
             _sutGridPlace = new DijkstraSolver<GridPlace, (int, int)>(graph);

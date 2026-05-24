@@ -1,19 +1,103 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using NicUtils;
 
 namespace AStarNickNS
 {
 
-    public class PathfinderObstacleIntersector : IPathfinderObstacleIntersector
+    public class CachingPathfinderObstacleIntersector : IPathfinderObstacleIntersector
     {
+        // null bool means not yet calculated/cache invalidated
+        private readonly Dictionary<float, bool?[,]> _isOccupiableCache = new();
+        
+        // don't need to worry about caching invalidation on this one
+        // - just stores the last seen coordinate where a pathfinder fits
+        private readonly Dictionary<float, OccupiableCellCoordinates[,]> _fitsCoords = new();
+        
         private readonly List<(float, float)> GRID_CORNER_DELTAS = new()
         {
             (0.5f, 0.5f), (-0.5f, 0.5f), (-0.5f, -0.5f), (0.5f, -0.5f)
         };
+        
+        private readonly SortedList<float, float?> _descendingOrderedPathfinderSizesWithNextLargestSizes
+            = new(Comparer<float>.Create((x, y) => y.CompareTo(x)));
 
-        public OccupiableCellCoordinates CoordinatesWherePathfinderDoesNotIntersectAnyObstacles(int x, int y, float pathfinderSize, bool[,] blockages)
+        public CachingPathfinderObstacleIntersector(int width, int height, List<float> pathfinderSizes)
+        {
+            List<float> descendingSizes = pathfinderSizes.ToList();
+            descendingSizes.Sort((x, y) => y.CompareTo(x));
+            float? previousPathfinderSize = null;
+            foreach (var size in descendingSizes)
+            {
+                _isOccupiableCache[size] = new bool?[width, height];
+                _fitsCoords[size] = new OccupiableCellCoordinates[width, height];
+
+                _descendingOrderedPathfinderSizesWithNextLargestSizes.Add(size, previousPathfinderSize);
+                
+                previousPathfinderSize = size;
+            }
+        }
+        
+        public void Invalidate(int x, int y)
+        {
+            foreach (var size in _descendingOrderedPathfinderSizesWithNextLargestSizes.Keys)
+            {
+                _isOccupiableCache[size][x, y] = null;
+            }
+        }
+        
+        public bool IsOccupiable(float pathfinderSize, int x, int y, bool[,] blockages)
+        {
+            EnsureCached(x, y, pathfinderSize, blockages);
+            return _isOccupiableCache[pathfinderSize][x, y].Value;
+        }
+        
+        public OccupiableCellCoordinates GetOccupiableCellCoordinates(int x, int y,
+            float pathfinderSize, bool[,] blockages)
+        {
+            EnsureCached(x, y, pathfinderSize, blockages);
+            return _fitsCoords[pathfinderSize][x, y];
+        }
+        
+        private void EnsureCached(int x, int y, float pathfinderSize, bool[,] blockages)
+        {
+            if (!_isOccupiableCache.ContainsKey(pathfinderSize))
+            {
+                throw new IOException($"Pathfinder size {pathfinderSize} not initialized in cache!");
+            }
+
+            if (_isOccupiableCache[pathfinderSize][x, y] != null) return;
+            
+            // If the previous (larger) pathfinder fits here on all coordinates, then so will the
+            // current (smaller) pathfinder, so skip the expensive intersection check and just copy the
+            // previous pathfinder's results.
+            float? nextLargestPathfinderSize = _descendingOrderedPathfinderSizesWithNextLargestSizes[pathfinderSize];
+            if (nextLargestPathfinderSize != null)
+            {
+                if (!_isOccupiableCache[nextLargestPathfinderSize.Value][x, y].HasValue)
+                {
+                    EnsureCached(x, y, nextLargestPathfinderSize.Value, blockages);
+                }
+                
+                if (_isOccupiableCache[nextLargestPathfinderSize.Value][x, y].Value
+                    && _fitsCoords[nextLargestPathfinderSize.Value][x, y].AllCoordsOccupiable)
+                {
+                    _isOccupiableCache[pathfinderSize][x, y] = true;
+                    _fitsCoords[pathfinderSize][x, y] = _fitsCoords[nextLargestPathfinderSize.Value][x, y];
+                    return;
+                }
+            }
+
+            // Otherwise, need to do actual computation for this size and coords
+            OccupiableCellCoordinates fitCoordinates =
+                CoordinatesWherePathfinderDoesNotIntersectAnyObstaclesInner(x, y, pathfinderSize, blockages);
+            _fitsCoords[pathfinderSize][x, y] = fitCoordinates;
+            _isOccupiableCache[pathfinderSize][x, y] = fitCoordinates.Occupiable();
+        }
+        
+        private OccupiableCellCoordinates CoordinatesWherePathfinderDoesNotIntersectAnyObstaclesInner(int x, int y, float pathfinderSize, bool[,] blockages)
         {
             if (blockages == null || blockages.Length == 0)
             {
