@@ -70,11 +70,32 @@ public class CachingPathfinderObstacleIntersectorTests
             sut.GetOccupiableCellCoordinates(1, 2, 1.9f, blockages);
         Assert.IsTrue(bigger.Occupiable());
         Assert.IsTrue(bigger.AllCoordsOccupiable);
+        Assert.AreEqual(CachingPathfinderObstacleIntersector.CacheCheckResult.Miss, sut.LastCacheCheckResult);
         
         OccupiableCellCoordinates smaller =
             sut.GetOccupiableCellCoordinates(1, 2, 1.2f, blockages);
         Assert.IsTrue(smaller.Occupiable());
         Assert.IsTrue(smaller.AllCoordsOccupiable);
+        Assert.AreEqual(CachingPathfinderObstacleIntersector.CacheCheckResult.Implied, sut.LastCacheCheckResult);
+    }
+    
+    [TestMethod]
+    public void TestSkipsComputationIfRepeated()
+    {
+        blockages = blockages.Transpose();
+        CachingPathfinderObstacleIntersector sut = new(blockages.GetLength(0), blockages.GetLength(1), new List<float>{1.9f});
+
+        OccupiableCellCoordinates one =
+            sut.GetOccupiableCellCoordinates(1, 2, 1.9f, blockages);
+        Assert.IsTrue(one.Occupiable());
+        Assert.IsTrue(one.AllCoordsOccupiable);
+        Assert.AreEqual(CachingPathfinderObstacleIntersector.CacheCheckResult.Miss, sut.LastCacheCheckResult);
+        
+        OccupiableCellCoordinates oneAgain =
+            sut.GetOccupiableCellCoordinates(1, 2, 1.9f, blockages);
+        Assert.IsTrue(oneAgain.Occupiable());
+        Assert.IsTrue(oneAgain.AllCoordsOccupiable);
+        Assert.AreEqual(CachingPathfinderObstacleIntersector.CacheCheckResult.Hit, sut.LastCacheCheckResult);
     }
     
     [TestMethod]

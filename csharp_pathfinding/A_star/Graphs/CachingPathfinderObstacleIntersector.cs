@@ -9,6 +9,15 @@ namespace AStarNickNS
 
     public class CachingPathfinderObstacleIntersector : IPathfinderObstacleIntersector
     {
+        public enum CacheCheckResult
+        {
+            Hit,
+            Miss,
+            Implied
+        }
+        
+        public CacheCheckResult LastCacheCheckResult { get; private set; }
+
         // null bool means not yet calculated/cache invalidated
         private readonly Dictionary<float, bool?[,]> _isOccupiableCache = new();
         
@@ -50,25 +59,25 @@ namespace AStarNickNS
         
         public bool IsOccupiable(float pathfinderSize, int x, int y, bool[,] blockages)
         {
-            EnsureCached(x, y, pathfinderSize, blockages);
+            LastCacheCheckResult = EnsureCached(x, y, pathfinderSize, blockages);
             return _isOccupiableCache[pathfinderSize][x, y].Value;
         }
         
         public OccupiableCellCoordinates GetOccupiableCellCoordinates(int x, int y,
             float pathfinderSize, bool[,] blockages)
         {
-            EnsureCached(x, y, pathfinderSize, blockages);
+            LastCacheCheckResult = EnsureCached(x, y, pathfinderSize, blockages);
             return _fitsCoords[pathfinderSize][x, y];
         }
         
-        private void EnsureCached(int x, int y, float pathfinderSize, bool[,] blockages)
+        private CacheCheckResult EnsureCached(int x, int y, float pathfinderSize, bool[,] blockages)
         {
             if (!_isOccupiableCache.ContainsKey(pathfinderSize))
             {
                 throw new IOException($"Pathfinder size {pathfinderSize} not initialized in cache!");
             }
 
-            if (_isOccupiableCache[pathfinderSize][x, y] != null) return;
+            if (_isOccupiableCache[pathfinderSize][x, y] != null) return CacheCheckResult.Hit;
             
             // If the previous (larger) pathfinder fits here on all coordinates, then so will the
             // current (smaller) pathfinder, so skip the expensive intersection check and just copy the
@@ -86,7 +95,7 @@ namespace AStarNickNS
                 {
                     _isOccupiableCache[pathfinderSize][x, y] = true;
                     _fitsCoords[pathfinderSize][x, y] = _fitsCoords[nextLargestPathfinderSize.Value][x, y];
-                    return;
+                    return CacheCheckResult.Implied;
                 }
             }
 
@@ -95,6 +104,8 @@ namespace AStarNickNS
                 CoordinatesWherePathfinderDoesNotIntersectAnyObstaclesInner(x, y, pathfinderSize, blockages);
             _fitsCoords[pathfinderSize][x, y] = fitCoordinates;
             _isOccupiableCache[pathfinderSize][x, y] = fitCoordinates.Occupiable();
+            
+            return CacheCheckResult.Miss;
         }
         
         private OccupiableCellCoordinates CoordinatesWherePathfinderDoesNotIntersectAnyObstaclesInner(int x, int y, float pathfinderSize, bool[,] blockages)
