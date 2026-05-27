@@ -50,12 +50,12 @@ namespace AStarNickNS
         
         public bool PathfinderCanFitCached(int x, int y, float pathfinderSize)
         {
-            return _intersector.IsOccupiable(pathfinderSize, x, y, _blockages);
+            return _intersector.IsOccupiable(pathfinderSize, x, y, _blockages, "default");
         }
         
         public OccupiableCellCoordinates PathfinderFitsCoords(int x, int y, float pathfinderSize)
         {
-            return _intersector.GetOccupiableCellCoordinates(x, y, pathfinderSize, _blockages);
+            return _intersector.GetOccupiableCellCoordinates(x, y, pathfinderSize, _blockages, "default");
         }
         
         protected override bool PlaceAccessible((int, int) from, (int, int) to, float pathfinderSize)
