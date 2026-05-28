@@ -46,7 +46,7 @@ namespace AStarNickNS
                 
                 foreach (TPlace neighbour in current.Neighbours)
                 {
-                    if (_graph.IsBlocked(current.Label, neighbour.Label, pathfinderSize)) continue;
+                    if (_graph.IsBlocked(current.Label, neighbour.Label, new PathfinderAttributes(pathfinderSize, "default"))) continue;
                     
                     float newCostForNeighbour = costSoFar[current] + current.CostToLeave(neighbour, _graph);
 

@@ -7,46 +7,13 @@ using NicUtils;
 namespace AStarNickNS
 {
 
-    public class CachingPathfinderObstacleIntersector : IPathfinderObstacleIntersector
+    public class CachingPathfinderObstacleIntersector
     {
         public enum CacheCheckResult
         {
             Hit,
             Miss,
             Implied
-        }
-
-        public readonly struct PathfinderCacheKey : IEquatable<PathfinderCacheKey>
-        {
-            public float PathfinderSize { get; }
-            public string BlockageLayer { get; }
-
-            public PathfinderCacheKey(float pathfinderSize, string blockageLayer)
-            {
-                PathfinderSize = pathfinderSize;
-                BlockageLayer = blockageLayer;
-            }
-
-            public bool Equals(PathfinderCacheKey other)
-            {
-                return PathfinderSize.Equals(other.PathfinderSize) && BlockageLayer == other.BlockageLayer;
-            }
-
-            public override bool Equals(object obj)
-            {
-                return obj is PathfinderCacheKey other && Equals(other);
-            }
-
-            public override int GetHashCode()
-            {
-                unchecked
-                {
-                    int hash = 17;
-                    hash = hash * 23 + PathfinderSize.GetHashCode();
-                    hash = hash * 23 + (BlockageLayer?.GetHashCode() ?? 0);
-                    return hash;
-                }
-            }
         }
         
         public CacheCheckResult LastCacheCheckResult { get; private set; }
@@ -55,11 +22,11 @@ namespace AStarNickNS
         private readonly int _height;
 
         // null bool means not yet calculated/cache invalidated
-        private readonly Dictionary<PathfinderCacheKey, bool?[,]> _isOccupiableCache = new();
+        private readonly Dictionary<PathfinderAttributes, bool?[,]> _isOccupiableCache = new();
         
         // don't need to worry about caching invalidation on this one
         // - just stores the last seen coordinate where a pathfinder fits
-        private readonly Dictionary<PathfinderCacheKey, OccupiableCellCoordinates[,]> _fitsCoords = new();
+        private readonly Dictionary<PathfinderAttributes, OccupiableCellCoordinates[,]> _fitsCoords = new();
         
         private readonly List<(float, float)> GRID_CORNER_DELTAS = new()
         {
@@ -95,7 +62,7 @@ namespace AStarNickNS
         public bool IsOccupiable(float pathfinderSize, int x, int y, bool[,] blockages, string blockageLayer)
         {
             LastCacheCheckResult = EnsureCached(x, y, pathfinderSize, blockages, blockageLayer);
-            var key = new PathfinderCacheKey(pathfinderSize, blockageLayer);
+            var key = new PathfinderAttributes(pathfinderSize, blockageLayer);
             return _isOccupiableCache[key][x, y].Value;
         }
         
@@ -103,13 +70,13 @@ namespace AStarNickNS
             float pathfinderSize, bool[,] blockages, string blockageLayer)
         {
             LastCacheCheckResult = EnsureCached(x, y, pathfinderSize, blockages, blockageLayer);
-            var key = new PathfinderCacheKey(pathfinderSize, blockageLayer);
+            var key = new PathfinderAttributes(pathfinderSize, blockageLayer);
             return _fitsCoords[key][x, y];
         }
         
         private CacheCheckResult EnsureCached(int x, int y, float pathfinderSize, bool[,] blockages, string blockageLayer)
         {
-            var key = new PathfinderCacheKey(pathfinderSize, blockageLayer);
+            var key = new PathfinderAttributes(pathfinderSize, blockageLayer);
             if (!_isOccupiableCache.ContainsKey(key))
             {
                 _isOccupiableCache[key] = new bool?[_width, _height];
@@ -126,7 +93,7 @@ namespace AStarNickNS
             {
                 EnsureCached(x, y, nextLargestPathfinderSize.Value, blockages, blockageLayer);
                 
-                var nextKey = new PathfinderCacheKey(nextLargestPathfinderSize.Value, blockageLayer);
+                var nextKey = new PathfinderAttributes(nextLargestPathfinderSize.Value, blockageLayer);
                 if (_isOccupiableCache[nextKey][x, y].Value
                     && _fitsCoords[nextKey][x, y].AllCoordsOccupiable)
                 {

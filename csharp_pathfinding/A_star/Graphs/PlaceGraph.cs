@@ -20,9 +20,9 @@ namespace AStarNickNS
     {
         public readonly Dictionary<TCoord, IPlace<TCoord>> Places = new();
 
-        public bool IsBlocked(TCoord from, TCoord to, float pathfinderSize)
+        public bool IsBlocked(TCoord from, TCoord to, PathfinderAttributes pathfinderAttributes)
         {
-            return !PlaceAccessible(from, to, pathfinderSize) || CostToLeave(from, to) <= 0;
+            return !PlaceAccessible(from, to, pathfinderAttributes) || CostToLeave(from, to) <= 0;
         }
 
         protected bool PlaceExists(TCoord label)
@@ -31,7 +31,7 @@ namespace AStarNickNS
         }
 
         // TODO: replace pathfinderSize with a PathfinderAttributes data class?
-        protected abstract bool PlaceAccessible(TCoord from, TCoord to, float pathfinderSize);
+        protected abstract bool PlaceAccessible(TCoord from, TCoord to, PathfinderAttributes attrs);
 
         public float GetPathCost(IList<TCoord> path)
         {

@@ -8,13 +8,13 @@ namespace AStarNickNS
 {
     public partial class GenericPlaceGraph : PlaceGraph<string>
     {
-        private readonly Dictionary<PlacePair, float> costs = new Dictionary<PlacePair, float>();
+        private readonly Dictionary<PlacePair, float> _costs = new();
 
         //public override Dictionary<Place<string>, float> GetImplicitNeighboursWithCosts(Place<string> place) {
         //    return new Dictionary<Place<string>, float>();
         //}
 
-        protected override bool PlaceAccessible(string from, string to, float pathfinderSize)
+        protected override bool PlaceAccessible(string from, string to, PathfinderAttributes pathfinderAttributes)
         {
             return PlaceExists(to);
         }
@@ -55,7 +55,7 @@ namespace AStarNickNS
                     throw new ArgumentException($"Cannot specify the same pair of places more than once: {placePair}");
                 }
 
-                costs[placePair] = cost;
+                _costs[placePair] = cost;
                 var place1 = GetPlaceOrCreate(placePair.Place1);
                 var place2 = GetPlaceOrCreate(placePair.Place2);
 
@@ -82,11 +82,11 @@ namespace AStarNickNS
 
         private float GetCost(PlacePair placePair)
         {
-            return costs.GetValueOrDefault(placePair, -1.0f);
+            return _costs.GetValueOrDefault(placePair, -1.0f);
         }
 
         // Ensure there is no duplication due to reversed labels by sorting pairs upon creation
-        private readonly struct PlacePair
+        private readonly record struct PlacePair
         {
             public string Place1 { get; init; }
             public string Place2 { get; init; }

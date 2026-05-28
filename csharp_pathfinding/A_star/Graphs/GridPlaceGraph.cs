@@ -1,6 +1,7 @@
 using NicUtils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using NicUtils.ExtensionMethods;
@@ -12,7 +13,7 @@ namespace AStarNickNS
         private bool DiagonalNeighbours { get; set; }
         
         private float[,] _gridTerrainCosts = new float[1,1];
-        private bool[,] _blockages = new bool[1,1];
+        private Dictionary<string, bool[,]> _blockages = new();
 
         private CachingPathfinderObstacleIntersector _intersector;
 
@@ -48,17 +49,17 @@ namespace AStarNickNS
             return GetTerrainCost(to);
         }
         
-        public bool PathfinderCanFitCached(int x, int y, float pathfinderSize)
+        public bool PathfinderCanFitCached(int x, int y, PathfinderAttributes attrs)
         {
-            return _intersector.IsOccupiable(pathfinderSize, x, y, _blockages, "default");
+            return _intersector.IsOccupiable(attrs.Size, x, y, _blockages[attrs.BlockageLayer], attrs.BlockageLayer);
         }
         
-        public OccupiableCellCoordinates PathfinderFitsCoords(int x, int y, float pathfinderSize)
+        public OccupiableCellCoordinates PathfinderFitsCoords(int x, int y, PathfinderAttributes attrs)
         {
-            return _intersector.GetOccupiableCellCoordinates(x, y, pathfinderSize, _blockages, "default");
+            return _intersector.GetOccupiableCellCoordinates(x, y, attrs.Size, _blockages[attrs.BlockageLayer], attrs.BlockageLayer);
         }
         
-        protected override bool PlaceAccessible((int, int) from, (int, int) to, float pathfinderSize)
+        protected override bool PlaceAccessible((int, int) from, (int, int) to, PathfinderAttributes attrs)
         {
             (int xTo, int yTo) = to;
             (int xFrom, int yFrom) = from;
@@ -80,13 +81,12 @@ namespace AStarNickNS
                 return false;
             }
 
-            if (!GeometryUtils.CircleFitsOnBoundary(diagType, xFrom, yFrom, xTo, yTo, pathfinderSize, _blockages))
+            if (!GeometryUtils.CircleFitsOnBoundary(diagType, xFrom, yFrom, xTo, yTo, attrs.Size, _blockages[attrs.BlockageLayer]))
             {
                 return false;
             }
             
-            
-            return PlaceExists(to) && PathfinderCanFitCached(xTo, yTo, pathfinderSize);
+            return PlaceExists(to) && PathfinderCanFitCached(xTo, yTo, attrs);
         }
 
         public float GetTerrainCost((int, int) label)
@@ -107,7 +107,7 @@ namespace AStarNickNS
 
             float oldCost = _gridTerrainCosts[x, y];
             _gridTerrainCosts[x, y] = cost;
-            _blockages[x, y] = cost <= 0;
+            _blockages["default"][x, y] = cost <= 0;
             
             // Only need to recompute PathfinderCanFitCached if there's a change in accessibility.
             if ((oldCost <= 0 && cost > 0) || (cost <= 0 && oldCost > 0))
@@ -124,7 +124,7 @@ namespace AStarNickNS
                         {
                             if (cellY < 0 || cellY >= _gridTerrainCosts.GetLength(1)) continue;
                             if (pathfinderSize.Equals(_descendingOrderedPathfinderSizes[0])) _intersector.Invalidate(cellX, cellY);
-                            PathfinderCanFitCached(cellX, cellY, pathfinderSize);
+                            PathfinderCanFitCached(cellX, cellY, new PathfinderAttributes(pathfinderSize, "default"));
                         }
                     }
                 }
@@ -169,13 +169,13 @@ namespace AStarNickNS
             _gridTerrainCosts = gridCosts;
             int height = gridCosts.GetLength(1);
             int width = gridCosts.GetLength(0);
-            _blockages = new bool[width, height];
+            _blockages["default"] = new bool[width, height];
             
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    _blockages[x, y] = _gridTerrainCosts[x, y] <= 0;
+                    _blockages["default"][x, y] = _gridTerrainCosts[x, y] <= 0;
                     // Create this Place
                     GridPlace here = GetPlaceOrCreate((x, y));
 
@@ -216,7 +216,7 @@ namespace AStarNickNS
                 {
                     for (int x = 0; x < width; x++)
                     {
-                        PathfinderCanFitCached(x, y, pathfinderSize);
+                        PathfinderCanFitCached(x, y, new PathfinderAttributes(pathfinderSize, "default"));
                     }
                 }
             }
@@ -246,14 +246,14 @@ namespace AStarNickNS
          * and which will help prevent it from sliding along corner obstacles due to over-smoothing - this is achieved by choosing corners that are maximally
          * distant from their nearest obstacle (pre-calculated inside the GridPlaceGraph, according to pathfinder size).
          */
-        public List<(float, float)> GetOccupiablePath(List<GridPlace> originalPath, float pathfinderSize,
+        public List<(float, float)> GetOccupiablePath(List<GridPlace> originalPath, PathfinderAttributes attrs,
             CancellationToken token=new())
         {
             // TODO: what to do if the original path is only 1 long?
             List<(float, float)> occPath = new();
             
             (int x, int y) = originalPath[0].Label;
-            OccupiableCellCoordinates firstPlace = PathfinderFitsCoords(x, y, pathfinderSize);
+            OccupiableCellCoordinates firstPlace = PathfinderFitsCoords(x, y, attrs);
             (x, y) = originalPath[0].Label;
             occPath.Add(GetBestNextPathPosition((x, y), firstPlace));
         
@@ -261,14 +261,14 @@ namespace AStarNickNS
             {
                 token.ThrowIfCancellationRequested();
                 (x, y) = originalPath[i].Label;
-                OccupiableCellCoordinates nextPlace = PathfinderFitsCoords(x, y, pathfinderSize);
+                OccupiableCellCoordinates nextPlace = PathfinderFitsCoords(x, y, attrs);
                 occPath.Add(GetBestNextPathPosition(occPath[^1], nextPlace));
             }
             
             return occPath;
         }
         
-        private (float, float) GetBestNextPathPosition((float, float) refCoords,
+        private static (float, float) GetBestNextPathPosition((float, float) refCoords,
             OccupiableCellCoordinates nextPlace)
         {
             if (nextPlace.Centre != null)
@@ -300,7 +300,7 @@ namespace AStarNickNS
         }
         
         public List<(float, float)> SmoothPath(List<(float, float)> occupiablePath, List<GridPlace> originalPath,
-            float pathfinderSize, CancellationToken token=new())
+            PathfinderAttributes attrs, CancellationToken token=new())
         {
             // If the original path has 2 or fewer nodes, it can't be smoothed
             if (occupiablePath.Count <= 2) return new List<(float, float)>(occupiablePath);
@@ -332,9 +332,9 @@ namespace AStarNickNS
                 // or if the line segment becomes slower (due to terrain costs) than the original path segment,
                 // then the previous path location needs to become a node on the smoothed path...
                
-                bool lineSegmentBlocked = intersectedCells.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, pathfinderSize));
+                bool lineSegmentBlocked = intersectedCells.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, attrs));
                 if (lineSegmentBlocked ||
-                    LineSegmentGoesTooCloseToBlockage(intersectedCells, pathfinderSize, start, end) ||
+                    LineSegmentGoesTooCloseToBlockage(intersectedCells, attrs, start, end) ||
                     IsLineSegmentSlowerThanOriginalPathSegment(intersectedCells, originalPath.GetRange(latestNodeIdx, idx - latestNodeIdx + 1)))
                 {
                     latestNodeIdx = idx - 1;
@@ -347,13 +347,13 @@ namespace AStarNickNS
         }
 
         private bool LineSegmentGoesTooCloseToBlockage(List<CellIntersectionData> intersectedCells,
-            float pathfinderSize, (float, float) start, (float, float) end)
+            PathfinderAttributes attrs, (float, float) start, (float, float) end)
         {
             return intersectedCells.Any(intersectedCell =>
-                PathfinderFitsCoords(intersectedCell.x, intersectedCell.y, pathfinderSize)
+                PathfinderFitsCoords(intersectedCell.x, intersectedCell.y, attrs)
                     .NearestBlockedCorners
                     .Select(blockedCorner => GeometryUtils.GetDistanceToLineSegment(start, end, blockedCorner))
-                    .Any(distanceBetweenLineAndBlockedCorner => distanceBetweenLineAndBlockedCorner < pathfinderSize / 2));
+                    .Any(distanceBetweenLineAndBlockedCorner => distanceBetweenLineAndBlockedCorner < attrs.Size / 2));
         }
 
         // TODO: replace originalPathSegment cost with the intersection-data-cost of the occupiablePath?
