@@ -143,7 +143,7 @@ namespace AStarTests {
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];
 
-            List<GridPlace> path = _sutGridPlace.SolvePath(startPlace, targetPlace, CancellationToken.None, pathfinderSize).ToList();
+            List<GridPlace> path = _sutGridPlace.SolvePath(startPlace, targetPlace, CancellationToken.None, new PathfinderAttributes(pathfinderSize, "default")).ToList();
 
             TestHelpers.AssertEqualWithinTolerance(
                 expectedPathCost,

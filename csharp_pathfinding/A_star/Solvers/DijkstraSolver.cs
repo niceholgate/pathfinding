@@ -1,4 +1,4 @@
-﻿using FibonacciHeap;
+using FibonacciHeap;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -16,8 +16,15 @@ namespace AStarNickNS
             _graph = graph;
         }
         
-        public IEnumerable<TPlace> SolvePath(IPlace<TCoord> start, IPlace<TCoord> target, CancellationToken token=new(), float pathfinderSize=0.9f)
+        public IEnumerable<TPlace> SolvePath(IPlace<TCoord> start, IPlace<TCoord> target, CancellationToken token = default, PathfinderAttributes pathfinderAttributes = default)
         {
+            if (string.IsNullOrEmpty(pathfinderAttributes.BlockageLayer))
+            {
+                pathfinderAttributes = new PathfinderAttributes(
+                    pathfinderAttributes.Size <= 0.0f ? 0.9f : pathfinderAttributes.Size,
+                    "default");
+            }
+
             _graph.CheckDisjoint();
             if (!_graph.Places.ContainsKey(start.Label))
             {
@@ -46,7 +53,7 @@ namespace AStarNickNS
                 
                 foreach (TPlace neighbour in current.Neighbours)
                 {
-                    if (_graph.IsBlocked(current.Label, neighbour.Label, new PathfinderAttributes(pathfinderSize, "default"))) continue;
+                    if (_graph.IsBlocked(current.Label, neighbour.Label, pathfinderAttributes)) continue;
                     
                     float newCostForNeighbour = costSoFar[current] + current.CostToLeave(neighbour, _graph);
 
