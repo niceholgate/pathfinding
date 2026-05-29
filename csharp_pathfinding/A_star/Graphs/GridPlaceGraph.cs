@@ -379,39 +379,6 @@ namespace AStarNickNS
             
             return lineSegmentCost > originalPathSegmentCost;
         }
-
-        // public (float, float) GetThirdPointThatMinimisesAcuteAngle((float, float) pointA, (float, float) pointB, List<(float, float)> candidates)
-        // {
-        //     Vector2 A = new Vector2(pointA.Item1, pointA.Item2);
-        //     Vector2 B = new Vector2(pointB.Item1, pointB.Item2);
-        //     
-        //     List<Vector2> candidateVectors = candidates
-        //         .Select(c => new Vector2(c.Item1, c.Item2))
-        //         .ToList();
-        //     
-        //     Vector2 vBA = A - B;
-        //     float magBA = vBA.Length(); // Or use vBA.magnitude in Unity
-        //
-        //     Vector2 bestPoint = candidateVectors[0];
-        //     float maxScore = -2f; // Cosine ranges from -1 to 1
-        //
-        //     foreach (var C in candidateVectors)
-        //     {
-        //         Vector2 vBC = C - B;
-        //         float magBC = vBC.Length();
-        //
-        //         // Dot product divided by magnitudes gives the Cosine of the angle
-        //         float score = Vector2.Dot(vBA, vBC) / (magBA * magBC);
-        //
-        //         if (score > maxScore)
-        //         {
-        //             maxScore = score;
-        //             bestPoint = C;
-        //         }
-        //     }
-        //     return (bestPoint.X, bestPoint.Y);
-        // }
-            
     }
 }
     
