@@ -48,14 +48,14 @@ namespace AStarNickNS
             return GetTerrainCost(to);
         }
         
-        public bool PathfinderCanFitCached(int x, int y, PathfinderAttributes attrs)
+        private bool PathfinderCanFit(int x, int y, PathfinderAttributes attrs)
         {
-            return _intersector.IsOccupiable(attrs.Size, x, y, _blockages[attrs.BlockageLayer], attrs.BlockageLayer);
+            return _intersector.IsOccupiable(x, y, attrs, _blockages[attrs.BlockageLayer]);
         }
         
-        public OccupiableCellCoordinates PathfinderFitsCoords(int x, int y, PathfinderAttributes attrs)
+        private OccupiableCellCoordinates PathfinderFitsCoords(int x, int y, PathfinderAttributes attrs)
         {
-            return _intersector.GetOccupiableCellCoordinates(x, y, attrs.Size, _blockages[attrs.BlockageLayer], attrs.BlockageLayer);
+            return _intersector.GetOccupiableCellCoordinates(x, y, attrs, _blockages[attrs.BlockageLayer]);
         }
         
         protected override bool PlaceAccessible((int, int) from, (int, int) to, PathfinderAttributes attrs)
@@ -85,7 +85,7 @@ namespace AStarNickNS
                 return false;
             }
             
-            return PlaceExists(to) && PathfinderCanFitCached(xTo, yTo, attrs);
+            return PlaceExists(to) && PathfinderCanFit(xTo, yTo, attrs);
         }
 
         public float GetTerrainCost((int, int) label)
@@ -123,7 +123,7 @@ namespace AStarNickNS
                         {
                             if (cellY < 0 || cellY >= _gridTerrainCosts.GetLength(1)) continue;
                             if (pathfinderSize.Equals(_descendingOrderedPathfinderSizes[0])) _intersector.Invalidate(cellX, cellY);
-                            PathfinderCanFitCached(cellX, cellY, new PathfinderAttributes(pathfinderSize, "default"));
+                            PathfinderCanFit(cellX, cellY, new PathfinderAttributes(pathfinderSize, "default"));
                         }
                     }
                 }
@@ -208,17 +208,18 @@ namespace AStarNickNS
             
             _intersector = new CachingPathfinderObstacleIntersector(width, height, _descendingOrderedPathfinderSizes);
             
-            // Assess pathfinders in descending order. If the next biggest pathfinder can fit in a certain place, so can the current one.
-            foreach (float pathfinderSize in _descendingOrderedPathfinderSizes)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        PathfinderCanFitCached(x, y, new PathfinderAttributes(pathfinderSize, "default"));
-                    }
-                }
-            }
+            // // Assess pathfinders in descending order
+            // // (efficient because if the next biggest pathfinder can fit in a certain place, so can the current one)
+            // foreach (float pathfinderSize in _descendingOrderedPathfinderSizes)
+            // {
+            //     for (int y = 0; y < height; y++)
+            //     {
+            //         for (int x = 0; x < width; x++)
+            //         {
+            //             PathfinderCanFitCached(x, y, new PathfinderAttributes(pathfinderSize, "default"));
+            //         }
+            //     }
+            // }
         }
         
         protected override void BuildFromFileCore(string dataFile)
@@ -331,7 +332,7 @@ namespace AStarNickNS
                 // or if the line segment becomes slower (due to terrain costs) than the original path segment,
                 // then the previous path location needs to become a node on the smoothed path...
                
-                bool lineSegmentBlocked = intersectedCells.Any(cell => !PathfinderCanFitCached(cell.x, cell.y, attrs));
+                bool lineSegmentBlocked = intersectedCells.Any(cell => !PathfinderCanFit(cell.x, cell.y, attrs));
                 if (lineSegmentBlocked ||
                     LineSegmentGoesTooCloseToBlockage(intersectedCells, attrs, start, end) ||
                     IsLineSegmentSlowerThanOriginalPathSegment(intersectedCells, originalPath.GetRange(latestNodeIdx, idx - latestNodeIdx + 1)))

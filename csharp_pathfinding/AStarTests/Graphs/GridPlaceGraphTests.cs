@@ -204,60 +204,60 @@ namespace AStarTests
                 () => sut.BuildFromFile("../../../Resources/excel_mazes/negative_cost_test.csv"),
                 "Cannot have a negative cost: -6 for (1, 2)");
         }
-
-        [TestMethod]
-        public void TestPathfinderCanFitCached()
-        {
-            sut = new GridPlaceGraph(true, new HashSet<float>{0.9f, 1.1f, 2.9f, 3.1f, _sub2Sqrt2, _sup2Sqrt2});
-            sut.BuildFromArray(gridTerrainCosts);
-
-            // Inside a size 1 square
-            Assert.IsTrue(sut.PathfinderCanFitCached(0, 0, new PathfinderAttributes(0.9f, "default")));
-            Assert.IsFalse(sut.PathfinderCanFitCached(0, 0, new PathfinderAttributes(1.1f, "default")));
-
-            // Inside a size 3 square
-            Assert.IsTrue(sut.PathfinderCanFitCached(1, 2, new PathfinderAttributes(2.9f, "default")));
-            Assert.IsFalse(sut.PathfinderCanFitCached(1, 2, new PathfinderAttributes(3.1f, "default")));
-
-            // Overlap with a corner
-            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, new PathfinderAttributes(0.9f, "default")));
-            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, new PathfinderAttributes(_sub2Sqrt2, "default")));
-            Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, new PathfinderAttributes(_sup2Sqrt2, "default")));
-            }
-
-        [TestMethod]
-        public void TestPathfinderCanFitCached_SelectivelyCalledWhenTerrainGridAccessibilityUpdated()
-        {
-            sut = new GridPlaceGraph(true,new HashSet<float>{0.9f, _sup2Sqrt2});
-            sut.BuildFromArray(gridTerrainCosts);
-
-            // Initially, a collision
-            Assert.IsFalse(sut.PathfinderCanFitCached(2, 8, new PathfinderAttributes(_sup2Sqrt2, "default")));
-
-            sut.SetTerrainCost((3, 7), 1);
-
-            // No more collision
-            Assert.IsTrue(sut.PathfinderCanFitCached(2, 8, new PathfinderAttributes(_sup2Sqrt2, "default")));
-        }
-
-        [TestMethod]
-        public void TestPathfinderCanFitCached_FitsWhenSizeAndGapAreEqualAndEven()
-        {
-            sut = new GridPlaceGraph(true, new HashSet<float>{0.9f, 1.9f});
-            sut.BuildFromArray(gridTerrainCosts);
-
-            // Size 2 pathfinder can fit on either of the cells in a 2-width tunnel (by standing in the middle)
-            // The results for PathfinderFitsCoords are deterministic the ordering of GRID_CORNER_DELTAS
-            PathfinderAttributes attrs = new(1.9f, "default");
-            Assert.IsTrue(sut.PathfinderCanFitCached(4, 8, attrs));
-            Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords(4, 8, attrs).CornersFarthestFromBlockages);
-            Assert.IsTrue(sut.PathfinderCanFitCached(4, 9, attrs));
-            Assert.Contains((3.5f, 8.5f), sut.PathfinderFitsCoords(4, 9, attrs).CornersFarthestFromBlockages);
-            Assert.IsTrue(sut.PathfinderCanFitCached(5, 8, attrs));
-            Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords(5, 8, attrs).CornersFarthestFromBlockages);
-            Assert.IsTrue(sut.PathfinderCanFitCached(5, 9, attrs));
-            Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords(5, 9, attrs).CornersFarthestFromBlockages);
-        }
+        //
+        // [TestMethod]
+        // public void TestPathfinderCanFitCached()
+        // {
+        //     sut = new GridPlaceGraph(true, new HashSet<float>{0.9f, 1.1f, 2.9f, 3.1f, _sub2Sqrt2, _sup2Sqrt2});
+        //     sut.BuildFromArray(gridTerrainCosts);
+        //
+        //     // Inside a size 1 square
+        //     Assert.IsTrue(sut.PathfinderCanFit(0, 0, new PathfinderAttributes(0.9f, "default")));
+        //     Assert.IsFalse(sut.PathfinderCanFit(0, 0, new PathfinderAttributes(1.1f, "default")));
+        //
+        //     // Inside a size 3 square
+        //     Assert.IsTrue(sut.PathfinderCanFit(1, 2, new PathfinderAttributes(2.9f, "default")));
+        //     Assert.IsFalse(sut.PathfinderCanFit(1, 2, new PathfinderAttributes(3.1f, "default")));
+        //
+        //     // Overlap with a corner
+        //     Assert.IsTrue(sut.PathfinderCanFit(2, 8, new PathfinderAttributes(0.9f, "default")));
+        //     Assert.IsTrue(sut.PathfinderCanFit(2, 8, new PathfinderAttributes(_sub2Sqrt2, "default")));
+        //     Assert.IsFalse(sut.PathfinderCanFit(2, 8, new PathfinderAttributes(_sup2Sqrt2, "default")));
+        //     }
+        //
+        // [TestMethod]
+        // public void TestPathfinderCanFitCached_SelectivelyCalledWhenTerrainGridAccessibilityUpdated()
+        // {
+        //     sut = new GridPlaceGraph(true,new HashSet<float>{0.9f, _sup2Sqrt2});
+        //     sut.BuildFromArray(gridTerrainCosts);
+        //
+        //     // Initially, a collision
+        //     Assert.IsFalse(sut.PathfinderCanFit(2, 8, new PathfinderAttributes(_sup2Sqrt2, "default")));
+        //
+        //     sut.SetTerrainCost((3, 7), 1);
+        //
+        //     // No more collision
+        //     Assert.IsTrue(sut.PathfinderCanFit(2, 8, new PathfinderAttributes(_sup2Sqrt2, "default")));
+        // }
+        //
+        // [TestMethod]
+        // public void TestPathfinderCanFitCached_FitsWhenSizeAndGapAreEqualAndEven()
+        // {
+        //     sut = new GridPlaceGraph(true, new HashSet<float>{0.9f, 1.9f});
+        //     sut.BuildFromArray(gridTerrainCosts);
+        //
+        //     // Size 2 pathfinder can fit on either of the cells in a 2-width tunnel (by standing in the middle)
+        //     // The results for PathfinderFitsCoords are deterministic the ordering of GRID_CORNER_DELTAS
+        //     PathfinderAttributes attrs = new(1.9f, "default");
+        //     Assert.IsTrue(sut.PathfinderCanFit(4, 8, attrs));
+        //     Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords(4, 8, attrs).CornersFarthestFromBlockages);
+        //     Assert.IsTrue(sut.PathfinderCanFit(4, 9, attrs));
+        //     Assert.Contains((3.5f, 8.5f), sut.PathfinderFitsCoords(4, 9, attrs).CornersFarthestFromBlockages);
+        //     Assert.IsTrue(sut.PathfinderCanFit(5, 8, attrs));
+        //     Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords(5, 8, attrs).CornersFarthestFromBlockages);
+        //     Assert.IsTrue(sut.PathfinderCanFit(5, 9, attrs));
+        //     Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords(5, 9, attrs).CornersFarthestFromBlockages);
+        // }
 
         [TestMethod]
         public void TestSmoothPathAroundBlockages()

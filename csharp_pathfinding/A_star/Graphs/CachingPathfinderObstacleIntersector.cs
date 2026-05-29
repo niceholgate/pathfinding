@@ -59,55 +59,52 @@ namespace AStarNickNS
             }
         }
         
-        public bool IsOccupiable(float pathfinderSize, int x, int y, bool[,] blockages, string blockageLayer)
+        public bool IsOccupiable(int x, int y, PathfinderAttributes attrs, bool[,] blockages)
         {
-            LastCacheCheckResult = EnsureCached(x, y, pathfinderSize, blockages, blockageLayer);
-            var key = new PathfinderAttributes(pathfinderSize, blockageLayer);
-            return _isOccupiableCache[key][x, y].Value;
+            LastCacheCheckResult = EnsureCached(x, y, attrs, blockages);
+            return _isOccupiableCache[attrs][x, y].Value;
         }
         
         public OccupiableCellCoordinates GetOccupiableCellCoordinates(int x, int y,
-            float pathfinderSize, bool[,] blockages, string blockageLayer)
+            PathfinderAttributes attrs, bool[,] blockages)
         {
-            LastCacheCheckResult = EnsureCached(x, y, pathfinderSize, blockages, blockageLayer);
-            var key = new PathfinderAttributes(pathfinderSize, blockageLayer);
-            return _fitsCoords[key][x, y];
+            LastCacheCheckResult = EnsureCached(x, y, attrs, blockages);
+            return _fitsCoords[attrs][x, y];
         }
         
-        private CacheCheckResult EnsureCached(int x, int y, float pathfinderSize, bool[,] blockages, string blockageLayer)
+        private CacheCheckResult EnsureCached(int x, int y, PathfinderAttributes attrs, bool[,] blockages)
         {
-            var key = new PathfinderAttributes(pathfinderSize, blockageLayer);
-            if (!_isOccupiableCache.ContainsKey(key))
+            if (!_isOccupiableCache.ContainsKey(attrs))
             {
-                _isOccupiableCache[key] = new bool?[_width, _height];
-                _fitsCoords[key] = new OccupiableCellCoordinates[_width, _height];
+                _isOccupiableCache[attrs] = new bool?[_width, _height];
+                _fitsCoords[attrs] = new OccupiableCellCoordinates[_width, _height];
             }
 
-            if (_isOccupiableCache[key][x, y] != null) return CacheCheckResult.Hit;
+            if (_isOccupiableCache[attrs][x, y] != null) return CacheCheckResult.Hit;
             
             // If the previous (larger) pathfinder fits here on all coordinates, then so will the
             // current (smaller) pathfinder, so skip the expensive intersection check and just copy the
             // previous pathfinder's results.
-            float? nextLargestPathfinderSize = _descendingOrderedPathfinderSizesWithNextLargestSizes[pathfinderSize];
+            float? nextLargestPathfinderSize = _descendingOrderedPathfinderSizesWithNextLargestSizes[attrs.Size];
             if (nextLargestPathfinderSize != null)
             {
-                EnsureCached(x, y, nextLargestPathfinderSize.Value, blockages, blockageLayer);
+                var nextAttrs = new PathfinderAttributes(nextLargestPathfinderSize.Value, attrs.BlockageLayer);
+                EnsureCached(x, y, nextAttrs, blockages);
                 
-                var nextKey = new PathfinderAttributes(nextLargestPathfinderSize.Value, blockageLayer);
-                if (_isOccupiableCache[nextKey][x, y].Value
-                    && _fitsCoords[nextKey][x, y].AllCoordsOccupiable)
+                if (_isOccupiableCache[nextAttrs][x, y].Value
+                    && _fitsCoords[nextAttrs][x, y].AllCoordsOccupiable)
                 {
-                    _isOccupiableCache[key][x, y] = true;
-                    _fitsCoords[key][x, y] = _fitsCoords[nextKey][x, y];
+                    _isOccupiableCache[attrs][x, y] = true;
+                    _fitsCoords[attrs][x, y] = _fitsCoords[nextAttrs][x, y];
                     return CacheCheckResult.Implied;
                 }
             }
 
             // Otherwise, need to do actual computation for this size and coords
             OccupiableCellCoordinates fitCoordinates =
-                CoordinatesWherePathfinderDoesNotIntersectAnyObstaclesInner(x, y, pathfinderSize, blockages);
-            _fitsCoords[key][x, y] = fitCoordinates;
-            _isOccupiableCache[key][x, y] = fitCoordinates.Occupiable();
+                CoordinatesWherePathfinderDoesNotIntersectAnyObstaclesInner(x, y, attrs.Size, blockages);
+            _fitsCoords[attrs][x, y] = fitCoordinates;
+            _isOccupiableCache[attrs][x, y] = fitCoordinates.Occupiable();
             
             return CacheCheckResult.Miss;
         }
