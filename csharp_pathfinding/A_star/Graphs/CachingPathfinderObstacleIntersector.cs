@@ -50,13 +50,27 @@ namespace AStarNickNS
                 previousPathfinderSize = size;
             }
         }
-        
-        public void Invalidate(int x, int y, string blockageLayer)
+
+        public void Invalidate(int x, int y, string blockageLayer, bool[,] blockages)
         {
-            var keysToRemove = _isOccupiableCache.Keys.Where(k => k.BlockageLayer == blockageLayer).ToList();
-            foreach (var key in keysToRemove)
+            var keysToUpdate = _isOccupiableCache.Keys.Where(k => k.BlockageLayer == blockageLayer).ToList();
+            foreach (var key in keysToUpdate)
             {
-                _isOccupiableCache[key][x, y] = null;
+                // We need to invalidate + recalc not only the cell whose blockage changed, but also nearby cells
+                // where pathfinders of various sizes may have lost or gained the ability to fit there due to
+                // this blockage change.
+                float halfWidth = key.Size / 2;
+                int radius = (int)MathF.Ceiling(halfWidth);
+                for (int cellX = x - radius; cellX <= x + radius; cellX++)
+                {
+                    if (cellX < 0 || cellX >= _width) continue;
+                    for (int cellY = y - radius; cellY <= y + radius; cellY++)
+                    {
+                        if (cellY < 0 || cellY >= _height) continue;
+                        _isOccupiableCache[key][cellX, cellY] = null;
+                        EnsureCached(cellX, cellY, key, blockages);
+                    }
+                }
             }
         }
 

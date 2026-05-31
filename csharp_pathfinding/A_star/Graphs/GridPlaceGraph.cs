@@ -143,23 +143,7 @@ namespace AStarNickNS
             if (oldBlocked != isBlocked)
             {
                 layer[x, y] = isBlocked;
-                
-                var largestSize = _descendingOrderedPathfinderSizes[0];
-                foreach (float pathfinderSize in _descendingOrderedPathfinderSizes)
-                {
-                    float halfWidth = pathfinderSize / 2;
-                    int radius = (int)MathF.Ceiling(halfWidth);
-                    for (int cellX = x - radius; cellX <= x + radius; cellX++)
-                    {
-                        if (cellX < 0 || cellX >= GetWidth()) continue;
-                        for (int cellY = y - radius; cellY <= y + radius; cellY++)
-                        {
-                            if (cellY < 0 || cellY >= GetHeight()) continue;
-                            if (pathfinderSize.Equals(largestSize)) _intersector.Invalidate(cellX, cellY, blockageLayer);
-                            PathfinderCanFit(cellX, cellY, new PathfinderAttributes(pathfinderSize, blockageLayer));
-                        }
-                    }
-                }
+                _intersector.Invalidate(x, y, blockageLayer, _blockages[blockageLayer]);
             }
         }
 

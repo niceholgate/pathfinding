@@ -55,8 +55,9 @@ public class CachingPathfinderObstacleIntersectorTests
         Assert.IsFalse(sut.IsOccupiable(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages));
         
         // Respond to changes in the blockages
+        // TODO: this class should own all blockage layer grids, and then it can handle its own invalidation
         blockages[3, 4] = false;
-        sut.Invalidate(2, 5, "default");
+        sut.Invalidate(2, 5, "default", blockages);
         Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(0.9f, "default"), blockages).Occupiable());
         Assert.IsTrue(sut.IsOccupiable(2, 5, new PathfinderAttributes(0.9f, "default"), blockages));
         Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(_sub2Sqrt2, "default"), blockages).Occupiable());
@@ -64,11 +65,21 @@ public class CachingPathfinderObstacleIntersectorTests
         Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages).Occupiable());
         Assert.IsTrue(sut.IsOccupiable(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages));
         blockages[3, 4] = true;
-        sut.Invalidate(2, 5, "default");
+        sut.Invalidate(2, 5, "default", blockages);
         Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(0.9f, "default"), blockages).Occupiable());
         Assert.IsTrue(sut.IsOccupiable(2, 5, new PathfinderAttributes(0.9f, "default"), blockages));
         Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(_sub2Sqrt2, "default"), blockages).Occupiable());
         Assert.IsTrue(sut.IsOccupiable(2, 5, new PathfinderAttributes(_sub2Sqrt2, "default"), blockages));
+        Assert.IsFalse(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages).Occupiable());
+        Assert.IsFalse(sut.IsOccupiable(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages));
+        
+        // --- Un/setting blockage in one coord affects large pathfinders trying to fit in neighbour coords
+        blockages[3, 4] = false;
+        sut.Invalidate(2, 5, "default", blockages);
+        Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages).Occupiable());
+        Assert.IsTrue(sut.IsOccupiable(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages));
+        blockages[3, 4] = true;
+        sut.Invalidate(2, 5, "default", blockages);
         Assert.IsFalse(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages).Occupiable());
         Assert.IsFalse(sut.IsOccupiable(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages));
     }

@@ -99,6 +99,21 @@ namespace AStarTests
                 () => sut.SetBlockage("default", (sut.GetWidth(), 0), true));
             AssertThrowsException<ArgumentOutOfRangeException>(
                 () => sut.SetBlockage("default", (0, sut.GetHeight()), true));
+            
+            // --- Test 6: Un/setting blockage in one coord affects large pathfinders trying to fit in neighbour coords
+            // Initially not blocked
+            sut.SetBlockage("newLayer2", (5, 5), false);
+            Assert.IsFalse(sut.IsBlocked((3, 5), (4, 5), new PathfinderAttributes(2.1f, "newLayer2")));
+            
+            // Blocked by a neighbour cell becoming blocked
+            sut.SetBlockage("newLayer2", (5, 5), true);
+            Assert.IsTrue(sut.IsBlocked((3, 5), (4, 5), new PathfinderAttributes(2.1f, "newLayer2")));
+            // (but a small pathfinder is not blocked by that neighbour cell)
+            Assert.IsFalse(sut.IsBlocked((3, 5), (4, 5), new PathfinderAttributes(0.9f, "newLayer2")));
+            
+            // Unblocked again when that neighbour cell changes back to unblocked
+            sut.SetBlockage("newLayer2", (5, 5), false);
+            Assert.IsFalse(sut.IsBlocked((3, 5), (4, 5), new PathfinderAttributes(2.1f, "newLayer2")));
         }
 
         [TestMethod]
