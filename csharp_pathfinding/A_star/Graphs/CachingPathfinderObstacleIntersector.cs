@@ -51,11 +51,22 @@ namespace AStarNickNS
             }
         }
         
-        public void Invalidate(int x, int y)
+        public void Invalidate(int x, int y, string blockageLayer)
         {
-            foreach (var cache in _isOccupiableCache.Values)
+            var keysToRemove = _isOccupiableCache.Keys.Where(k => k.BlockageLayer == blockageLayer).ToList();
+            foreach (var key in keysToRemove)
             {
-                cache[x, y] = null;
+                _isOccupiableCache[key][x, y] = null;
+            }
+        }
+
+        public void InvalidateEntireLayer(string blockageLayer)
+        {
+            var keysToRemove = _isOccupiableCache.Keys.Where(k => k.BlockageLayer == blockageLayer).ToList();
+            foreach (var key in keysToRemove)
+            {
+                _isOccupiableCache.Remove(key);
+                _fitsCoords.Remove(key);
             }
         }
         

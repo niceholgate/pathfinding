@@ -23,6 +23,7 @@ namespace AStarTests
                 diagonalNeighbours,
                 new HashSet<float>{pathfinderSize});
             graph.BuildFromFile($"../../../Resources/excel_mazes/{mazeFile}");
+            SetupBlockagesFromTerrainCosts(graph);
             _sut = new AStarSolver<GridPlace, (int, int)>(graph);
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];

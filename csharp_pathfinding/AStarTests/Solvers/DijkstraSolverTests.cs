@@ -130,6 +130,21 @@ namespace AStarTests {
             yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 87.84f, true, 1.9f };
         }
 
+        protected void SetupBlockagesFromTerrainCosts(GridPlaceGraph graph, string layerName = "default")
+        {
+            int width = graph.GetWidth();
+            int height = graph.GetHeight();
+            bool[,] blockages = new bool[width, height];
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    blockages[x, y] = graph.GetTerrainCost((x, y)) <= 0;
+                }
+            }
+            graph.SetBlockageLayer(layerName, blockages);
+        }
+
         [TestMethod]
         [DynamicData(nameof(PathfinderTestData))]
         public virtual void TestFindsShortestPathGridPlaceGraph(string mazeFile, (int, int) start, (int, int) target,
@@ -139,6 +154,7 @@ namespace AStarTests {
                 diagonalNeighbours,
                 new HashSet<float>{pathfinderSize});
             graph.BuildFromFile($"../../../Resources/excel_mazes/{mazeFile}");
+            SetupBlockagesFromTerrainCosts(graph);
             _sutGridPlace = new DijkstraSolver<GridPlace, (int, int)>(graph);
             var startPlace = (GridPlace)graph.Places[start];
             var targetPlace = (GridPlace)graph.Places[target];

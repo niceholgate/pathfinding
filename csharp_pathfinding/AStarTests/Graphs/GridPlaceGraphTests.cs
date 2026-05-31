@@ -39,11 +39,74 @@ namespace AStarTests
             gridTerrainCosts = gridTerrainCosts.Transpose();
         }
 
+        private static void SetupBlockagesFromTerrainCosts(GridPlaceGraph graph, string layerName = "default")
+        {
+            int width = graph.GetWidth();
+            int height = graph.GetHeight();
+            bool[,] blockages = new bool[width, height];
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    blockages[x, y] = graph.GetTerrainCost((x, y)) <= 0;        
+                }
+            }
+            graph.SetBlockageLayer(layerName, blockages);
+        }
+
+        [TestMethod]
+        public void TestSetBlockage()
+        {
+            sut = new GridPlaceGraph(true, new HashSet<float> { 0.9f, 1.6f, 2.1f });
+            sut.BuildFromArray(gridTerrainCosts);
+            SetupBlockagesFromTerrainCosts(sut);
+
+            PathfinderAttributes attrs = new(0.9f, "default");
+
+            // --- Test 1: Block a walkable cell, then unblock it ---
+            sut.SetBlockage("default", (0, 0), true);
+            Assert.IsTrue(sut.IsBlocked((0, 1), (0, 0), attrs));
+            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), attrs));
+
+            sut.SetBlockage("default", (0, 0), false);
+            Assert.IsFalse(sut.IsBlocked((0, 1), (0, 0), attrs));
+            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), attrs));
+
+            // --- Test 2: Unblock a terrain-blocked cell, then re-block it ---
+            sut.SetBlockage("default", (0, 7), false);
+            Assert.IsFalse(sut.IsBlocked((0, 8), (0, 7), attrs));
+            Assert.IsFalse(sut.IsBlocked((0, 7), (0, 8), attrs));
+
+            sut.SetBlockage("default", (0, 7), true);
+            Assert.IsTrue(sut.IsBlocked((0, 8), (0, 7), attrs));
+            Assert.IsFalse(sut.IsBlocked((0, 7), (0, 8), attrs));
+
+            // --- Test 3: Non-existent layer is created automatically, places are unblocked by default ---
+            sut.SetBlockage("newLayer", (5, 5), true);
+            Assert.IsTrue(sut.IsBlocked((4, 5), (5, 5), new PathfinderAttributes(0.9f, "newLayer")));
+            Assert.IsFalse(sut.IsBlocked((3, 3), (3, 4), new PathfinderAttributes(0.9f, "newLayer")));
+
+            // --- Test 4: Setting the same value is a no-op ---
+            sut.SetBlockage("newLayer", (5, 5), true);
+            Assert.IsTrue(sut.IsBlocked((5, 5), (6, 5), new PathfinderAttributes(0.9f, "newLayer")));
+
+            // --- Test 5: Out of bounds throws ArgumentOutOfRangeException ---
+            AssertThrowsException<ArgumentOutOfRangeException>(
+                () => sut.SetBlockage("default", (-1, 0), true));
+            AssertThrowsException<ArgumentOutOfRangeException>(
+                () => sut.SetBlockage("default", (0, -1), true));
+            AssertThrowsException<ArgumentOutOfRangeException>(
+                () => sut.SetBlockage("default", (sut.GetWidth(), 0), true));
+            AssertThrowsException<ArgumentOutOfRangeException>(
+                () => sut.SetBlockage("default", (0, sut.GetHeight()), true));
+        }
+
         [TestMethod]
         public void TestIsBlocked()
         {
             sut = new GridPlaceGraph(true, new HashSet<float>{0.9f, 1.6f, 2.1f});
             sut.BuildFromArray(gridTerrainCosts);
+            SetupBlockagesFromTerrainCosts(sut);
 
             // Moving to a non-existent place is blocked
             Assert.IsTrue(sut.IsBlocked((0, 0), (-1, 0), new PathfinderAttributes(0.9f, "default")));
@@ -64,7 +127,7 @@ namespace AStarTests
             Assert.IsFalse(sut.IsBlocked((0, 7), (0, 8), new PathfinderAttributes(0.9f, "default")));
             Assert.IsFalse(sut.IsBlocked((0, 8), (0, 7), new PathfinderAttributes(0.9f, "default")));
 
-            // Moving to a place where the pathfinder can't fit is blocked
+            // Moving to a place where the pathfinder can't fit is blocked      
             Assert.IsFalse(sut.IsBlocked((1, 3), (1, 2), new PathfinderAttributes(2.1f, "default")));
             Assert.IsTrue(sut.IsBlocked((1, 2), (2, 1), new PathfinderAttributes(2.1f, "default")));
 
@@ -84,6 +147,7 @@ namespace AStarTests
             };
             GridPlaceGraph sut2 = new(true, new HashSet<float>{_sub2Sqrt2, _sup2Sqrt2});
             sut2.BuildFromArray(gridTerrainCosts2);
+            SetupBlockagesFromTerrainCosts(sut2);
             Assert.IsFalse(sut2.IsBlocked((2, 2), (3, 3), new PathfinderAttributes(_sub2Sqrt2, "default")));
             Assert.IsTrue(sut2.IsBlocked((2, 2), (3, 3), new PathfinderAttributes(_sup2Sqrt2, "default")));
         }
@@ -92,7 +156,8 @@ namespace AStarTests
         public void TestBuild_SucceedsForGoodGraphWithDiagonals()
         {
             sut = new GridPlaceGraph(true);
-            sut.BuildFromFile("../../../Resources/excel_mazes/3x3_test.csv");
+            sut.BuildFromFile("../../../Resources/excel_mazes/3x3_test.csv");   
+            SetupBlockagesFromTerrainCosts(sut);
 
             // Check the costs
             Dictionary<(int, int), float> expectedCosts = new()
@@ -109,13 +174,13 @@ namespace AStarTests
 
             GridPlace place00 = sut.GetPlaceOrCreate((0, 0));
             HashSet<(int, int)> expectedNeighbourLabels00 =
-                new HashSet<(int, int)> { place00.E, place00.SE, place00.S };
+                new HashSet<(int, int)> { place00.E, place00.SE, place00.S };   
             HashSet<(int, int)> neighbourLabels00 = place00.Neighbours.Select(x => x.Label).ToHashSet();
             Assert.IsTrue(expectedNeighbourLabels00.SetEquals(neighbourLabels00));
 
             GridPlace place10 = sut.GetPlaceOrCreate((1, 0));
             HashSet<(int, int)> expectedNeighbourLabels10 = new HashSet<(int, int)>
-                { place10.E, place10.SE, place10.S, place10.SW, place10.W };
+                { place10.E, place10.SE, place10.S, place10.SW, place10.W };    
             HashSet<(int, int)> neighbourLabels10 = place10.Neighbours.Select(x => x.Label).ToHashSet();
             Assert.IsTrue(expectedNeighbourLabels10.SetEquals(neighbourLabels10));
 
@@ -138,7 +203,8 @@ namespace AStarTests
         public void TestBuild_SucceedsForGoodGraphWithoutDiagonals()
         {
             sut = new GridPlaceGraph(false);
-            sut.BuildFromFile("../../../Resources/excel_mazes/3x3_test.csv");
+            sut.BuildFromFile("../../../Resources/excel_mazes/3x3_test.csv");   
+            SetupBlockagesFromTerrainCosts(sut);
 
             // Check the costs
             Dictionary<(int, int), float> expectedCosts = new()
@@ -182,16 +248,16 @@ namespace AStarTests
         public void TestBuild_ExceptionOnBadFileType()
         {
             sut = new GridPlaceGraph(false);
-            TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
+            TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(    
                 () => sut.BuildFromFile("../../../Resources/excel_mazes/3x3_test.txt"),
-                "GridPlaceGraph only supports building from .csv files");
+                "GridPlaceGraph only supports building from .csv files");       
         }
 
         [TestMethod]
         public void TestBuild_ExceptionNonRectangularGrid()
         {
             sut = new GridPlaceGraph(true);
-            TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
+            TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(    
                 () => sut.BuildFromFile("../../../Resources/excel_mazes/non-rectangular_test.csv"),
                 "Cannot have a non-rectangular grid (row 0 has length 3 but row 1 has length 2).");
         }
@@ -200,16 +266,17 @@ namespace AStarTests
         public void TestBuild_ExceptionOnNegativeCost()
         {
             sut = new GridPlaceGraph(true);
-            TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(
+            TestHelpers.AssertThrowsExceptionWithMessage<ArgumentException>(    
                 () => sut.BuildFromFile("../../../Resources/excel_mazes/negative_cost_test.csv"),
                 "Cannot have a negative cost: -6 for (1, 2)");
         }
-        //
+
         // [TestMethod]
-        // public void TestPathfinderCanFitCached()
+        // public void TestPathfinderCanFit()
         // {
         //     sut = new GridPlaceGraph(true, new HashSet<float>{0.9f, 1.1f, 2.9f, 3.1f, _sub2Sqrt2, _sup2Sqrt2});
         //     sut.BuildFromArray(gridTerrainCosts);
+        //     SetupBlockagesFromTerrainCosts(sut);
         //
         //     // Inside a size 1 square
         //     Assert.IsTrue(sut.PathfinderCanFit(0, 0, new PathfinderAttributes(0.9f, "default")));
@@ -223,48 +290,56 @@ namespace AStarTests
         //     Assert.IsTrue(sut.PathfinderCanFit(2, 8, new PathfinderAttributes(0.9f, "default")));
         //     Assert.IsTrue(sut.PathfinderCanFit(2, 8, new PathfinderAttributes(_sub2Sqrt2, "default")));
         //     Assert.IsFalse(sut.PathfinderCanFit(2, 8, new PathfinderAttributes(_sup2Sqrt2, "default")));
-        //     }
+        // }
         //
         // [TestMethod]
-        // public void TestPathfinderCanFitCached_SelectivelyCalledWhenTerrainGridAccessibilityUpdated()
+        // public void TestPathfinderCanFit_SelectivelyCalledWhenBlockageUpdated()
         // {
         //     sut = new GridPlaceGraph(true,new HashSet<float>{0.9f, _sup2Sqrt2});
         //     sut.BuildFromArray(gridTerrainCosts);
+        //     SetupBlockagesFromTerrainCosts(sut);
         //
         //     // Initially, a collision
         //     Assert.IsFalse(sut.PathfinderCanFit(2, 8, new PathfinderAttributes(_sup2Sqrt2, "default")));
         //
-        //     sut.SetTerrainCost((3, 7), 1);
+        //     sut.SetBlockage("default", (3, 7), false);
         //
         //     // No more collision
         //     Assert.IsTrue(sut.PathfinderCanFit(2, 8, new PathfinderAttributes(_sup2Sqrt2, "default")));
         // }
         //
         // [TestMethod]
-        // public void TestPathfinderCanFitCached_FitsWhenSizeAndGapAreEqualAndEven()
+        // public void TestPathfinderCanFit_FitsWhenSizeAndGapAreEqualAndEven()
         // {
-        //     sut = new GridPlaceGraph(true, new HashSet<float>{0.9f, 1.9f});
+        //     sut = new GridPlaceGraph(true, new HashSet<float>{0.9f, 1.9f});  
         //     sut.BuildFromArray(gridTerrainCosts);
+        //     SetupBlockagesFromTerrainCosts(sut);
         //
         //     // Size 2 pathfinder can fit on either of the cells in a 2-width tunnel (by standing in the middle)
         //     // The results for PathfinderFitsCoords are deterministic the ordering of GRID_CORNER_DELTAS
         //     PathfinderAttributes attrs = new(1.9f, "default");
         //     Assert.IsTrue(sut.PathfinderCanFit(4, 8, attrs));
-        //     Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords(4, 8, attrs).CornersFarthestFromBlockages);
+        //     Assert.IsTrue(sut.PathfinderFitsCoords(4, 8, attrs).CornersFarthestFromBlockages.Contains((4.5f, 8.5f)));
         //     Assert.IsTrue(sut.PathfinderCanFit(4, 9, attrs));
-        //     Assert.Contains((3.5f, 8.5f), sut.PathfinderFitsCoords(4, 9, attrs).CornersFarthestFromBlockages);
+        //     Assert.IsTrue(sut.PathfinderFitsCoords(4, 9, attrs).CornersFarthestFromBlockages.Contains((3.5f, 8.5f)));
         //     Assert.IsTrue(sut.PathfinderCanFit(5, 8, attrs));
-        //     Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords(5, 8, attrs).CornersFarthestFromBlockages);
+        //     Assert.IsTrue(sut.PathfinderFitsCoords(5, 8, attrs).CornersFarthestFromBlockages.Contains((4.5f, 8.5f)));
         //     Assert.IsTrue(sut.PathfinderCanFit(5, 9, attrs));
-        //     Assert.Contains((4.5f, 8.5f), sut.PathfinderFitsCoords(5, 9, attrs).CornersFarthestFromBlockages);
+        //     Assert.IsTrue(sut.PathfinderFitsCoords(5, 9, attrs).CornersFarthestFromBlockages.Contains((4.5f, 8.5f)));
         // }
+
+        private static void AssertThrowsException<T>(Action action) where T : Exception
+        {
+            Assert.ThrowsException<T>(action);
+        }
 
         [TestMethod]
         public void TestSmoothPathAroundBlockages()
         {
             float pathfinderSize = 0.9f;
-            sut = new GridPlaceGraph(true, new HashSet<float>{pathfinderSize});
-            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
+            sut = new GridPlaceGraph(true, new HashSet<float>{pathfinderSize}); 
+            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv"); 
+            SetupBlockagesFromTerrainCosts(sut);
 
             List<GridPlace> originalPath = new()
             {
@@ -284,19 +359,20 @@ namespace AStarTests
                 (0f, 2f), (2f, 8f), (22f, 9f), (22f, 12f), (19f, 13f)
             };
 
-            PathfinderAttributes attrs = new(pathfinderSize, "default");
+            PathfinderAttributes attrs = new(pathfinderSize, "default");        
             List<(float, float)> occupiablePath = sut.GetOccupiablePath(originalPath, attrs);
             List<(float, float)> actualSmoothPath = sut.SmoothPath(occupiablePath, originalPath, attrs);
 
-            CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
+            CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);    
         }
 
         [TestMethod]
         public void TestSmoothPathAroundBlockages2()
         {
             float pathfinderSize = 1.9f;
-            sut = new GridPlaceGraph(true, new HashSet<float>{pathfinderSize});
-            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv");
+            sut = new GridPlaceGraph(true, new HashSet<float>{pathfinderSize}); 
+            sut.BuildFromFile("../../../Resources/excel_mazes/walls_test.csv"); 
+            SetupBlockagesFromTerrainCosts(sut);
 
             List<GridPlace> originalPath = new()
             {
@@ -307,22 +383,23 @@ namespace AStarTests
 
             List<(float, float)> expectedSmoothPath = new()
             {
-                (25.5f, 5.5f), (25.5f, 3.5f), (28.5f, 3.5f), (31.0f, 8.0f)
+                (25.5f, 5.5f), (25.5f, 3.5f), (28.5f, 3.5f), (31.0f, 8.0f)      
             };
 
-            PathfinderAttributes attrs = new(pathfinderSize, "default");
+            PathfinderAttributes attrs = new(pathfinderSize, "default");        
             List<(float, float)> occupiablePath = sut.GetOccupiablePath(originalPath, attrs);
             List<(float, float)> actualSmoothPath = sut.SmoothPath(occupiablePath, originalPath, attrs);
 
-            CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
+            CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);    
         }
 
         [TestMethod]
         public void TestSmoothPathAroundSwamps()
         {
             float pathfinderSize = 0.9f;
-            sut = new GridPlaceGraph(true, new HashSet<float>{pathfinderSize});
+            sut = new GridPlaceGraph(true, new HashSet<float>{pathfinderSize}); 
             sut.BuildFromFile("../../../Resources/excel_mazes/walls_and_swamps_test.csv");
+            SetupBlockagesFromTerrainCosts(sut);
 
             List<GridPlace> originalPath = new()
             {
@@ -335,12 +412,12 @@ namespace AStarTests
                 (4f, 4f), (8f, 5f), (9f, 6f), (8f, 8f)
             };
 
-            PathfinderAttributes attrs = new(pathfinderSize, "default");
+            PathfinderAttributes attrs = new(pathfinderSize, "default");        
 
             List<(float, float)> occupiablePath = sut.GetOccupiablePath(originalPath, attrs);
             List<(float, float)> actualSmoothPath = sut.SmoothPath(occupiablePath, originalPath, attrs);
 
-            CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);
+            CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);    
         }
     }
 }

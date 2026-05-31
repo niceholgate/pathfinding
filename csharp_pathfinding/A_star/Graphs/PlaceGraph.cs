@@ -22,7 +22,7 @@ namespace AStarNickNS
 
         public bool IsBlocked(TCoord from, TCoord to, PathfinderAttributes pathfinderAttributes)
         {
-            return !PlaceAccessible(from, to, pathfinderAttributes) || CostToLeave(from, to) <= 0;
+            return !PlaceAccessible(from, to, pathfinderAttributes);
         }
 
         protected bool PlaceExists(TCoord label)

@@ -56,7 +56,7 @@ public class CachingPathfinderObstacleIntersectorTests
         
         // Respond to changes in the blockages
         blockages[3, 4] = false;
-        sut.Invalidate(2, 5);
+        sut.Invalidate(2, 5, "default");
         Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(0.9f, "default"), blockages).Occupiable());
         Assert.IsTrue(sut.IsOccupiable(2, 5, new PathfinderAttributes(0.9f, "default"), blockages));
         Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(_sub2Sqrt2, "default"), blockages).Occupiable());
@@ -64,7 +64,7 @@ public class CachingPathfinderObstacleIntersectorTests
         Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages).Occupiable());
         Assert.IsTrue(sut.IsOccupiable(2, 5, new PathfinderAttributes(_sup2Sqrt2, "default"), blockages));
         blockages[3, 4] = true;
-        sut.Invalidate(2, 5);
+        sut.Invalidate(2, 5, "default");
         Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(0.9f, "default"), blockages).Occupiable());
         Assert.IsTrue(sut.IsOccupiable(2, 5, new PathfinderAttributes(0.9f, "default"), blockages));
         Assert.IsTrue(sut.GetOccupiableCellCoordinates(2, 5, new PathfinderAttributes(_sub2Sqrt2, "default"), blockages).Occupiable());

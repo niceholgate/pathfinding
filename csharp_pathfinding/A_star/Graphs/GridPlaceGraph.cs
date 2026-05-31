@@ -47,12 +47,12 @@ namespace AStarNickNS
             if (isDiagonal) return GetTerrainCost(to) * GeometryUtils.SQRT2;
             return GetTerrainCost(to);
         }
-        
+
         private bool PathfinderCanFit(int x, int y, PathfinderAttributes attrs)
         {
             return _intersector.IsOccupiable(x, y, attrs, _blockages[attrs.BlockageLayer]);
         }
-        
+
         private OccupiableCellCoordinates PathfinderFitsCoords(int x, int y, PathfinderAttributes attrs)
         {
             return _intersector.GetOccupiableCellCoordinates(x, y, attrs, _blockages[attrs.BlockageLayer]);
@@ -95,35 +95,68 @@ namespace AStarNickNS
             return _gridTerrainCosts[x, y];
         }
         
-        // If the grid changes, recompute PathfinderCanFitCached.
+        // If the grid changes, recompute PathfinderCanFit.
         // Only need to recompute it around cells with newly changed accessibility within a radius equal to half the largest pathfinder size.
         // TODO: if multiple updates are happening nearby to each other, it would be more efficient to make one bigger bounding box
         // and do just a single intersections update to avoid rework. If a player is just placing building in series, can neglect this.
         // But it would be significant if a map underwent a significant terrain change e.g. from an earthquake or flood.
-        public void SetTerrainCost((int, int) label, float cost)
-        {
-            (int x, int y) = label;
+        // public void SetTerrainCost((int, int) label, float cost)
+        // {
+        //     (int x, int y) = label;
+        //     _gridTerrainCosts[x, y] = cost;
+        // }
 
-            float oldCost = _gridTerrainCosts[x, y];
-            _gridTerrainCosts[x, y] = cost;
-            _blockages["default"][x, y] = cost <= 0;
-            
-            // Only need to recompute PathfinderCanFitCached if there's a change in accessibility.
-            if ((oldCost <= 0 && cost > 0) || (cost <= 0 && oldCost > 0))
+        public void SetBlockageLayer(string name, bool[,] blockageGrid)
+        {
+            if (blockageGrid == null)
             {
-                // Assess pathfinders in descending order. If the next biggest pathfinder can fit in a certain place, so can the current one.
+                throw new ArgumentNullException(nameof(blockageGrid));
+            }
+            if (blockageGrid.GetLength(0) != GetWidth() || blockageGrid.GetLength(1) != GetHeight())
+            {
+                throw new ArgumentException("Blockage grid size must match terrain costs grid size.");
+            }
+
+            _blockages[name] = blockageGrid;
+
+            if (_intersector != null)
+            {
+                _intersector.InvalidateEntireLayer(name);
+            }
+        }
+
+        public void SetBlockage(string blockageLayer, (int, int) coord, bool isBlocked)
+        {
+            (int x, int y) = coord;
+            if (x < 0 || x >= GetWidth() || y < 0 || y >= GetHeight())
+            {
+                throw new ArgumentOutOfRangeException(nameof(coord), "Coordinate is out of bounds.");
+            }
+
+            if (!_blockages.TryGetValue(blockageLayer, out var layer))
+            {
+                layer = new bool[GetWidth(), GetHeight()];
+                _blockages[blockageLayer] = layer;
+            }
+
+            bool oldBlocked = layer[x, y];
+            if (oldBlocked != isBlocked)
+            {
+                layer[x, y] = isBlocked;
+                
+                var largestSize = _descendingOrderedPathfinderSizes[0];
                 foreach (float pathfinderSize in _descendingOrderedPathfinderSizes)
                 {
                     float halfWidth = pathfinderSize / 2;
                     int radius = (int)MathF.Ceiling(halfWidth);
                     for (int cellX = x - radius; cellX <= x + radius; cellX++)
                     {
-                        if (cellX < 0 || cellX >= _gridTerrainCosts.GetLength(0)) continue;
+                        if (cellX < 0 || cellX >= GetWidth()) continue;
                         for (int cellY = y - radius; cellY <= y + radius; cellY++)
                         {
-                            if (cellY < 0 || cellY >= _gridTerrainCosts.GetLength(1)) continue;
-                            if (pathfinderSize.Equals(_descendingOrderedPathfinderSizes[0])) _intersector.Invalidate(cellX, cellY);
-                            PathfinderCanFit(cellX, cellY, new PathfinderAttributes(pathfinderSize, "default"));
+                            if (cellY < 0 || cellY >= GetHeight()) continue;
+                            if (pathfinderSize.Equals(largestSize)) _intersector.Invalidate(cellX, cellY, blockageLayer);
+                            PathfinderCanFit(cellX, cellY, new PathfinderAttributes(pathfinderSize, blockageLayer));
                         }
                     }
                 }
@@ -168,13 +201,11 @@ namespace AStarNickNS
             _gridTerrainCosts = gridCosts;
             int height = gridCosts.GetLength(1);
             int width = gridCosts.GetLength(0);
-            _blockages["default"] = new bool[width, height];
             
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    _blockages["default"][x, y] = _gridTerrainCosts[x, y] <= 0;
                     // Create this Place
                     GridPlace here = GetPlaceOrCreate((x, y));
 
