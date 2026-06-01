@@ -21,6 +21,8 @@ namespace AStarNickNS
         private readonly int _width;
         private readonly int _height;
 
+        private readonly Dictionary<string, bool[,]> _blockages = new();
+
         // null bool means not yet calculated/cache invalidated
         private readonly Dictionary<PathfinderAttributes, bool?[,]> _isOccupiableCache = new();
         
@@ -51,7 +53,43 @@ namespace AStarNickNS
             }
         }
 
-        public void Invalidate(int x, int y, string blockageLayer, bool[,] blockages)
+        public bool[,] GetBlockages(string blockageLayer)
+        {
+            if (!_blockages.TryGetValue(blockageLayer, out var layer))
+            {
+                throw new IOException("blockages empty!");
+            }
+            return layer;
+        }
+
+        public void SetBlockageLayer(string name, bool[,] blockageGrid)
+        {
+            if (blockageGrid == null) throw new ArgumentNullException(nameof(blockageGrid));
+            _blockages[name] = blockageGrid;
+            InvalidateEntireLayer(name);
+        }
+
+        public void SetBlockage(string blockageLayer, int x, int y, bool isBlocked)
+        {
+            if (!_blockages.TryGetValue(blockageLayer, out var layer))
+            {
+                layer = new bool[_width, _height];
+                _blockages[blockageLayer] = layer;
+            }
+
+            if (x < 0 || x >= _width || y < 0 || y >= _height)
+            {
+                throw new ArgumentOutOfRangeException("Coordinate is out of bounds.");
+            }
+            bool oldBlocked = layer[x, y];
+            if (oldBlocked != isBlocked)
+            {
+                layer[x, y] = isBlocked;
+                Invalidate(x, y, blockageLayer);
+            }
+        }
+
+        private void Invalidate(int x, int y, string blockageLayer)
         {
             var keysToUpdate = _isOccupiableCache.Keys.Where(k => k.BlockageLayer == blockageLayer).ToList();
             foreach (var key in keysToUpdate)
@@ -68,7 +106,7 @@ namespace AStarNickNS
                     {
                         if (cellY < 0 || cellY >= _height) continue;
                         _isOccupiableCache[key][cellX, cellY] = null;
-                        EnsureCached(cellX, cellY, key, blockages);
+                        EnsureCached(cellX, cellY, key);
                     }
                 }
             }
@@ -84,20 +122,20 @@ namespace AStarNickNS
             }
         }
         
-        public bool IsOccupiable(int x, int y, PathfinderAttributes attrs, bool[,] blockages)
+        public bool IsOccupiable(int x, int y, PathfinderAttributes attrs)
         {
-            LastCacheCheckResult = EnsureCached(x, y, attrs, blockages);
+            LastCacheCheckResult = EnsureCached(x, y, attrs);
             return _isOccupiableCache[attrs][x, y].Value;
         }
         
         public OccupiableCellCoordinates GetOccupiableCellCoordinates(int x, int y,
-            PathfinderAttributes attrs, bool[,] blockages)
+            PathfinderAttributes attrs)
         {
-            LastCacheCheckResult = EnsureCached(x, y, attrs, blockages);
+            LastCacheCheckResult = EnsureCached(x, y, attrs);
             return _fitsCoords[attrs][x, y];
         }
         
-        private CacheCheckResult EnsureCached(int x, int y, PathfinderAttributes attrs, bool[,] blockages)
+        private CacheCheckResult EnsureCached(int x, int y, PathfinderAttributes attrs)
         {
             if (!_isOccupiableCache.ContainsKey(attrs))
             {
@@ -114,7 +152,7 @@ namespace AStarNickNS
             if (nextLargestPathfinderSize != null)
             {
                 var nextAttrs = new PathfinderAttributes(nextLargestPathfinderSize.Value, attrs.BlockageLayer);
-                EnsureCached(x, y, nextAttrs, blockages);
+                EnsureCached(x, y, nextAttrs);
                 
                 if (_isOccupiableCache[nextAttrs][x, y].Value
                     && _fitsCoords[nextAttrs][x, y].AllCoordsOccupiable)
@@ -127,7 +165,7 @@ namespace AStarNickNS
 
             // Otherwise, need to do actual computation for this size and coords
             OccupiableCellCoordinates fitCoordinates =
-                CoordinatesWherePathfinderDoesNotIntersectAnyObstaclesInner(x, y, attrs.Size, blockages);
+                CoordinatesWherePathfinderDoesNotIntersectAnyObstaclesInner(x, y, attrs.Size, GetBlockages(attrs.BlockageLayer));
             _fitsCoords[attrs][x, y] = fitCoordinates;
             _isOccupiableCache[attrs][x, y] = fitCoordinates.Occupiable();
             

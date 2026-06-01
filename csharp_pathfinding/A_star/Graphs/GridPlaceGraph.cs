@@ -12,7 +12,6 @@ namespace AStarNickNS
         private bool DiagonalNeighbours { get; set; }
         
         private float[,] _gridTerrainCosts = new float[1,1];
-        private Dictionary<string, bool[,]> _blockages = new();
 
         private CachingPathfinderObstacleIntersector _intersector;
 
@@ -50,12 +49,12 @@ namespace AStarNickNS
 
         private bool PathfinderCanFit(int x, int y, PathfinderAttributes attrs)
         {
-            return _intersector.IsOccupiable(x, y, attrs, _blockages[attrs.BlockageLayer]);
+            return _intersector.IsOccupiable(x, y, attrs);
         }
 
         private OccupiableCellCoordinates PathfinderFitsCoords(int x, int y, PathfinderAttributes attrs)
         {
-            return _intersector.GetOccupiableCellCoordinates(x, y, attrs, _blockages[attrs.BlockageLayer]);
+            return _intersector.GetOccupiableCellCoordinates(x, y, attrs);
         }
         
         protected override bool PlaceAccessible((int, int) from, (int, int) to, PathfinderAttributes attrs)
@@ -80,7 +79,8 @@ namespace AStarNickNS
                 return false;
             }
 
-            if (!GeometryUtils.CircleFitsOnBoundary(diagType, xFrom, yFrom, xTo, yTo, attrs.Size, _blockages[attrs.BlockageLayer]))
+            // TODO: can this be moved to intersector somehow?
+            if (!GeometryUtils.CircleFitsOnBoundary(diagType, xFrom, yFrom, xTo, yTo, attrs.Size, _intersector.GetBlockages(attrs.BlockageLayer)))
             {
                 return false;
             }
@@ -117,12 +117,7 @@ namespace AStarNickNS
                 throw new ArgumentException("Blockage grid size must match terrain costs grid size.");
             }
 
-            _blockages[name] = blockageGrid;
-
-            if (_intersector != null)
-            {
-                _intersector.InvalidateEntireLayer(name);
-            }
+            _intersector.SetBlockageLayer(name, blockageGrid);
         }
 
         public void SetBlockage(string blockageLayer, (int, int) coord, bool isBlocked)
@@ -133,18 +128,7 @@ namespace AStarNickNS
                 throw new ArgumentOutOfRangeException(nameof(coord), "Coordinate is out of bounds.");
             }
 
-            if (!_blockages.TryGetValue(blockageLayer, out var layer))
-            {
-                layer = new bool[GetWidth(), GetHeight()];
-                _blockages[blockageLayer] = layer;
-            }
-
-            bool oldBlocked = layer[x, y];
-            if (oldBlocked != isBlocked)
-            {
-                layer[x, y] = isBlocked;
-                _intersector.Invalidate(x, y, blockageLayer, _blockages[blockageLayer]);
-            }
+            _intersector.SetBlockage(blockageLayer, x, y, isBlocked);
         }
 
         public void BuildFromString(string csvString)
