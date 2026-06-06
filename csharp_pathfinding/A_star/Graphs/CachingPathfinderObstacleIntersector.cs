@@ -35,6 +35,11 @@ namespace AStarNickNS
             (0.5f, 0.5f), (-0.5f, 0.5f), (-0.5f, -0.5f), (0.5f, -0.5f)
         };
         
+        private readonly List<(float, float)> GRID_EDGE_DELTAS = new()
+        {
+            (0.5f, 0.0f), (-0.5f, 0.0f), (0.0f, -0.5f), (0.0f, 0.5f)
+        };
+        
         private readonly SortedList<float, float?> _descendingOrderedPathfinderSizesWithNextLargestSizes
             = new(Comparer<float>.Create((x, y) => y.CompareTo(x)));
 
@@ -184,33 +189,40 @@ namespace AStarNickNS
                 CornersFarthestFromBlockages = new List<(float, float)>(),
                 NearestBlockedCorners = new List<(float, float)>(),
                 OtherCorners = new List<(float, float)>(),
-                AllCoordsOccupiable = false
+                AllCoordsOccupiable = false,
+                OccupiableEdges = new List<(float, float)>()
             };
             
             if (IsBlocked(x, y, blockages)) return occ;
+            
+            float halfWidth = pathfinderSize / 2;
+            float radiusSq = halfWidth * halfWidth;
+            (float cx, float cy) = (x, y);
+            int radius = (int)MathF.Ceiling(halfWidth);
+            List<(int, int)> candidateCells = new();
+            for (int cellX = x - radius; cellX <= x + radius; cellX++)
+            {
+                for (int cellY = y - radius; cellY <= y + radius; cellY++) candidateCells.Add((cellX, cellY));
+            }
+            
+            foreach ((float, float) edgeDelta in GRID_EDGE_DELTAS)
+            {
+                float circleCentreX = cx + edgeDelta.Item1;
+                float circleCentreY = cy + edgeDelta.Item2;
+                if (!CircleIntersectsWithAnyObstacle(candidateCells, circleCentreX, circleCentreY, radiusSq, blockages))
+                {
+                    // We found an edge (circleCentreX, circleCentreY) of this cell (x, y) where the pathfinder fits
+                    occ.OccupiableEdges.Add((circleCentreX, circleCentreY));
+                }
+            }
             
             List<(int, int)> nearestObstructedCells = FindNearestObstructedCells(x, y, pathfinderSize, blockages);
             occ.NearestBlockedCorners = FindNearestObstructedCorners(nearestObstructedCells, x, y);
             
             // Sub-cell pathfinders just go to the center
-            if (pathfinderSize <= 1.0f)
-            {
-                occ.Centre = (x, y);
-                return occ;
-            }
-                
-            float halfWidth = pathfinderSize / 2;
-            float radiusSq = halfWidth * halfWidth;
-            (float cx, float cy) = (x, y);
-            int radius = (int)MathF.Ceiling(halfWidth);
-            List<(int, int)> cells = new();
-            for (int cellX = x - radius; cellX <= x + radius; cellX++)
-            {
-                for (int cellY = y - radius; cellY <= y + radius; cellY++) cells.Add((cellX, cellY));
-            }
             
             // The pathfinder fits in this cell if it can stand on any part of the cell with no intersections with obstacles.
-            occ.Centre = CircleIntersectsWithAnyObstacle(cells, cx, cy, radiusSq, blockages)
+            occ.Centre = CircleIntersectsWithAnyObstacle(candidateCells, cx, cy, radiusSq, blockages)
                 ? null : (cx, cy);
 
             List<(float, float)> cornersWithoutIntersections = new();
@@ -218,7 +230,7 @@ namespace AStarNickNS
             {
                 float circleCentreX = cx + cornerDelta.Item1;
                 float circleCentreY = cy + cornerDelta.Item2;
-                if (!CircleIntersectsWithAnyObstacle(cells, circleCentreX, circleCentreY, radiusSq, blockages))
+                if (!CircleIntersectsWithAnyObstacle(candidateCells, circleCentreX, circleCentreY, radiusSq, blockages))
                 {
                     // We found a corner (circleCentreX, circleCentreY) of this cell (x, y) where the pathfinder fits
                     cornersWithoutIntersections.Add((circleCentreX, circleCentreY));
@@ -234,7 +246,7 @@ namespace AStarNickNS
                 return occ;
             }
             
-            occ.AllCoordsOccupiable = cornersWithoutIntersections.Count == 4;
+            occ.AllCoordsOccupiable = cornersWithoutIntersections.Count == 4 && occ.OccupiableEdges.Count == 4;
 
             // If there are multiple corners to choose from, find the one/s maximally distant
             // from the cell's nearest obstructed cell(s).
@@ -266,10 +278,10 @@ namespace AStarNickNS
             return occ;
         }
 
-        private bool CircleIntersectsWithAnyObstacle(List<(int, int)> cells, float circleCentreX, float circleCentreY,
-            float circleRadiusSquared, bool[,] blockages)
+        private bool CircleIntersectsWithAnyObstacle(List<(int, int)> candidateCells, float circleCentreX,
+            float circleCentreY, float circleRadiusSquared, bool[,] blockages)
         {
-            foreach ((int cellCentreX, int cellCentreY) in cells)
+            foreach ((int cellCentreX, int cellCentreY) in candidateCells)
             {
                 // If this cell is an obstacle, check for intersection with the pathfinder's circle.
                 if (IsBlocked(cellCentreX, cellCentreY, blockages)
@@ -283,7 +295,7 @@ namespace AStarNickNS
             return false;
         }
 
-        private bool CircleIntersectsCell(int cellCentreX, int cellCentreY, float circleCentreX, float circleCentreY,
+        private static bool CircleIntersectsCell(int cellCentreX, int cellCentreY, float circleCentreX, float circleCentreY,
             float circleRadiusSquared)
         {
             // Find the closest point on the cell's square to the circle's center.
@@ -298,19 +310,19 @@ namespace AStarNickNS
             return distanceSquared <= circleRadiusSquared;
         }
 
-        private bool IsBlocked(int x, int y, bool[,] blockages)
+        private static bool IsBlocked(int x, int y, bool[,] blockages)
         {
             if (CoordinateOutOfBounds(x, y, blockages)) return true;
             return blockages[x, y];
         }
 
-        private bool CoordinateOutOfBounds(int x, int y, bool[,] blockages)
+        private static bool CoordinateOutOfBounds(int x, int y, bool[,] blockages)
         {
             return x < 0 || x >= blockages.GetLength(0)
                          || y < 0 || y >= blockages.GetLength(1);
         }
 
-        private List<(float, float)> FindNearestObstructedCorners(List<(int, int)> nearestObstructedCells, int x, int y)
+        private static List<(float, float)> FindNearestObstructedCorners(List<(int, int)> nearestObstructedCells, int x, int y)
         {
             List<(float, float)> nearestObstructedCorners = new List<(float, float)>();
             foreach ((int x, int y) obstructedCell in nearestObstructedCells)
@@ -350,7 +362,7 @@ namespace AStarNickNS
             return nearestObstructedCorners;
         }
         
-        private List<(int, int)> FindNearestObstructedCells(int x, int y, float pathfinderSize, bool[,] blockages)
+        private static List<(int, int)> FindNearestObstructedCells(int x, int y, float pathfinderSize, bool[,] blockages)
         {
             List<(int, int)> closestCells = new List<(int, int)>();
             if (IsBlocked(x, y, blockages))
@@ -437,5 +449,7 @@ namespace AStarNickNS
             return Centre != null || CornersFarthestFromBlockages.Count > 0;
         }
         public bool AllCoordsOccupiable { get; set; }
+        
+        public List<(float, float)> OccupiableEdges { get; set; }
     }
 }

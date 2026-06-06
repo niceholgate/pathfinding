@@ -52,6 +52,20 @@ namespace AStarNickNS
             return _intersector.IsOccupiable(x, y, attrs);
         }
 
+        private bool PathfinderCanFitOnEdge(int x, int y, float xEdge, float yEdge, PathfinderAttributes attrs)
+        {
+            OccupiableCellCoordinates occ = PathfinderFitsCoords(x, y, attrs);
+            return occ.OccupiableEdges.Contains((xEdge, yEdge));
+        }
+        
+        private bool PathfinderCanFitOnCorner(int x, int y, float xCorner, float yCorner, PathfinderAttributes attrs)
+        {
+            OccupiableCellCoordinates occ = PathfinderFitsCoords(x, y, attrs);
+            if (occ.NearestBlockedCorners.Contains((xCorner, yCorner))) return false;
+            return occ.CornersFarthestFromBlockages.Contains((xCorner, yCorner))
+                   || occ.OtherCorners.Contains((xCorner, yCorner));
+        }
+
         private OccupiableCellCoordinates PathfinderFitsCoords(int x, int y, PathfinderAttributes attrs)
         {
             return _intersector.GetOccupiableCellCoordinates(x, y, attrs);
@@ -63,6 +77,7 @@ namespace AStarNickNS
             (int xFrom, int yFrom) = from;
             
             // Prevent weird corner cutting for diagonal movements near to obstacle corners
+            // TODO: convert this to use blockages - or is it no longer neede due to the below logic?
             int diagType = (xTo - xFrom) * (yTo - yFrom);
             bool principalDiag = diagType == 1;
             bool secondaryDiag = diagType == -1;
@@ -79,10 +94,19 @@ namespace AStarNickNS
                 return false;
             }
 
-            // TODO: can this be moved to intersector somehow?
-            if (!GeometryUtils.CircleFitsOnBoundary(diagType, xFrom, yFrom, xTo, yTo, attrs.Size, _intersector.GetBlockages(attrs.BlockageLayer)))
+            // We need to check that the pathfinder can actually fit during its transition between cells - not just on the starting and destination cells themselves.
+            // Otherwise, pathfinders can think that they can fit through certain impossible gaps.
+            if (principalDiag || secondaryDiag)
             {
-                return false;
+                float vx = (xFrom + xTo) / 2.0f;
+                float vy = (yFrom + yTo) / 2.0f;
+                if (!PathfinderCanFitOnCorner(xFrom, yFrom, vx, vy, attrs)) return false;
+            }
+            else
+            {
+                float vx = (xFrom + xTo) / 2.0f;
+                float vy = (yFrom + yTo) / 2.0f;
+                if (!PathfinderCanFitOnEdge(xFrom, yFrom, vx, vy, attrs)) return false;
             }
             
             return PlaceExists(to) && PathfinderCanFit(xTo, yTo, attrs);

@@ -127,7 +127,7 @@ namespace AStarTests {
             
             // Test larger pathfinders.
             yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 36.24f, true, 0.9f };
-            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 87.84f, true, 1.9f };
+            yield return new object[] { "walls_test.csv", (0, 1), (24, 15), 95.05f, true, 1.9f };
         }
 
         protected void SetupBlockagesFromTerrainCosts(GridPlaceGraph graph, string layerName = "default")

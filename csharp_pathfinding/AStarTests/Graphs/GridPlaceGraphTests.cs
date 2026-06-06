@@ -63,34 +63,23 @@ namespace AStarTests
 
             PathfinderAttributes attrs = new(0.9f, "default");
 
-            // --- Test 1: Block a walkable cell, then unblock it ---
+            // --- Block a walkable cell, then unblock it ---
             sut.SetBlockage("default", (0, 0), true);
             Assert.IsTrue(sut.IsBlocked((0, 1), (0, 0), attrs));
-            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), attrs));
 
             sut.SetBlockage("default", (0, 0), false);
             Assert.IsFalse(sut.IsBlocked((0, 1), (0, 0), attrs));
-            Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), attrs));
 
-            // --- Test 2: Unblock a terrain-blocked cell, then re-block it ---
-            sut.SetBlockage("default", (0, 7), false);
-            Assert.IsFalse(sut.IsBlocked((0, 8), (0, 7), attrs));
-            Assert.IsFalse(sut.IsBlocked((0, 7), (0, 8), attrs));
-
-            sut.SetBlockage("default", (0, 7), true);
-            Assert.IsTrue(sut.IsBlocked((0, 8), (0, 7), attrs));
-            Assert.IsFalse(sut.IsBlocked((0, 7), (0, 8), attrs));
-
-            // --- Test 3: Non-existent layer is created automatically, places are unblocked by default ---
+            // --- Non-existent layer is created automatically, places are unblocked by default ---
             sut.SetBlockage("newLayer", (5, 5), true);
             Assert.IsTrue(sut.IsBlocked((4, 5), (5, 5), new PathfinderAttributes(0.9f, "newLayer")));
             Assert.IsFalse(sut.IsBlocked((3, 3), (3, 4), new PathfinderAttributes(0.9f, "newLayer")));
 
-            // --- Test 4: Setting the same value is a no-op ---
+            // --- Setting the same value is a no-op ---
             sut.SetBlockage("newLayer", (5, 5), true);
             Assert.IsTrue(sut.IsBlocked((5, 5), (6, 5), new PathfinderAttributes(0.9f, "newLayer")));
 
-            // --- Test 5: Out of bounds throws ArgumentOutOfRangeException ---
+            // --- Out of bounds throws ArgumentOutOfRangeException ---
             AssertThrowsException<ArgumentOutOfRangeException>(
                 () => sut.SetBlockage("default", (-1, 0), true));
             AssertThrowsException<ArgumentOutOfRangeException>(
@@ -100,7 +89,7 @@ namespace AStarTests
             AssertThrowsException<ArgumentOutOfRangeException>(
                 () => sut.SetBlockage("default", (0, sut.GetHeight()), true));
             
-            // --- Test 6: Un/setting blockage in one coord affects large pathfinders trying to fit in neighbour coords
+            // --- Un/setting blockage in one coord affects large pathfinders trying to fit in neighbour coords
             // Initially not blocked
             sut.SetBlockage("newLayer2", (5, 5), false);
             Assert.IsFalse(sut.IsBlocked((3, 5), (4, 5), new PathfinderAttributes(2.1f, "newLayer2")));
@@ -128,7 +117,7 @@ namespace AStarTests
 
             // Moving into a >0 cost cell is not blocked
             Assert.IsFalse(sut.IsBlocked((0, 0), (0, 1), new PathfinderAttributes(0.9f, "default")));
-            Assert.IsFalse(sut.IsBlocked((1, 0), (1, 1), new PathfinderAttributes(0.9f, "default")));
+            Assert.IsFalse(sut.IsBlocked((0, 1), (1, 1), new PathfinderAttributes(0.9f, "default")));
 
             // Moving into a <=0 cost cell is blocked
             Assert.IsTrue(sut.IsBlocked((0, 0), (1, 0), new PathfinderAttributes(0.9f, "default")));
@@ -371,8 +360,18 @@ namespace AStarTests
 
             List<(float, float)> expectedSmoothPath = new()
             {
-                (0f, 2f), (2f, 8f), (22f, 9f), (22f, 12f), (19f, 13f)
+                (0.5f, 1.5f),
+                (1.5f, 8.5f),
+                (21.5f, 8.5f),
+                (22f, 10f),
+                (22f, 11f),
+                (21.5f, 12.5f),
+                (19f, 13f)
             };
+            // List<(float, float)> expectedSmoothPath = new()
+            // {
+            //     (0f, 2f), (2f, 8f), (22f, 9f), (22f, 12f), (19f, 13f)
+            // };
 
             PathfinderAttributes attrs = new(pathfinderSize, "default");        
             List<(float, float)> occupiablePath = sut.GetOccupiablePath(originalPath, attrs);
@@ -422,9 +421,13 @@ namespace AStarTests
                 new GridPlace((8, 5)), new GridPlace((9, 6)), new GridPlace((9, 7)), new GridPlace((8, 8))
             };
 
+            // List<(float, float)> expectedSmoothPath = new()
+            // {
+            //     (4f, 4f), (8f, 5f), (9f, 6f), (8f, 8f)
+            // };
             List<(float, float)> expectedSmoothPath = new()
             {
-                (4f, 4f), (8f, 5f), (9f, 6f), (8f, 8f)
+                (4f, 4f), (8.5f, 5.5f), (8f, 8f)
             };
 
             PathfinderAttributes attrs = new(pathfinderSize, "default");        

@@ -141,7 +141,7 @@ public class CachingPathfinderObstacleIntersectorTests
     }
 
     [TestMethod]
-    public void TestNoCornersFarthestFromBlockagesAndNoNearestBlockedCornersWhenFarFromBlockages()
+    public void TestFourCornersFarthestFromBlockagesAndZeroNearestBlockedCornersWhenFarFromBlockages()
     {
         bool[,] transposedBlockages = blockages.Transpose();
         CachingPathfinderObstacleIntersector sut = new(transposedBlockages.GetLength(0), transposedBlockages.GetLength(1), new List<float>{0.8f});      
@@ -150,7 +150,7 @@ public class CachingPathfinderObstacleIntersectorTests
         OccupiableCellCoordinates occ = sut.GetOccupiableCellCoordinates(1, 7, new PathfinderAttributes(0.8f, "default"));
         Assert.IsTrue(occ.Occupiable());
         Assert.IsTrue(sut.IsOccupiable(1, 7, new PathfinderAttributes(0.8f, "default")));
-        Assert.AreEqual(0, occ.CornersFarthestFromBlockages.Count);
+        Assert.AreEqual(4, occ.CornersFarthestFromBlockages.Count);
         Assert.AreEqual(0, occ.NearestBlockedCorners.Count);      
     }
 
