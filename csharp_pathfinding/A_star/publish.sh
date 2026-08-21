@@ -5,6 +5,10 @@
 # Set the project file path
 PROJECT_FILE="AStar.csproj"
 
+# Use the dotnet install that actually contains an SDK
+# (the one first on PATH, C:\Program Files\dotnet, has none)
+DOTNET="C:/Users/niceh/.dotnet/dotnet.exe"
+
 # Set the output directory paths
 RELEASE_DIR="./publish/Release"
 DEBUG_DIR="./publish/Debug"
@@ -24,7 +28,7 @@ rm -rf ./publish
 
 # Publish for Release configuration
 echo "Publishing Release version..."
-dotnet publish "$PROJECT_FILE" -c Release -o "$RELEASE_DIR"
+"$DOTNET" publish "$PROJECT_FILE" -c Release -o "$RELEASE_DIR"
 
 # Check if the publish command was successful
 if [ $? -ne 0 ]; then
@@ -34,7 +38,7 @@ fi
 
 # Publish for Debug configuration
 echo "Publishing Debug version..."
-dotnet publish "$PROJECT_FILE" -c Debug -o "$DEBUG_DIR"
+"$DOTNET" publish "$PROJECT_FILE" -c Debug -o "$DEBUG_DIR"
 
 # Check if the publish command was successful
 if [ $? -ne 0 ]; then

@@ -336,6 +336,44 @@ namespace AStarTests
         {
             Assert.ThrowsException<T>(action);
         }
+        
+        [TestMethod]
+        public void TestSmoothPathAroundOneBlockage()
+        {
+            float[,] costs = {
+                { 1, 1, 1, 1, 1, 1 }, // 0
+                { 1, 1, 1, 1, 1, 1 }, // 1
+                { 1, 1, 1, 1, 1, 1 }, // 2
+                { 1, 1, 1, 1, 1, 1 }, // 3
+                { 1, 1, 1, 0, 1, 1 }, // 4
+                { 1, 1, 1, 1, 1, 1 }, // 5
+                { 1, 1, 1, 1, 1, 1 }, // 6
+                { 1, 1, 1, 1, 1, 1 }  // 7
+            };
+            costs = costs.Transpose();
+            sut = new GridPlaceGraph(true, new HashSet<float> { 0.9f });
+            sut.BuildFromArray(costs);
+            SetupBlockagesFromTerrainCosts(sut);
+            
+            List<GridPlace> originalPath = new()
+            {
+                new GridPlace((3, 0)), new GridPlace((3, 1)), new GridPlace((3, 2)), new GridPlace((2, 3)),
+                new GridPlace((2, 4)), new GridPlace((2, 5)), new GridPlace((3, 6))
+            };
+            
+            List<(float, float)> expectedSmoothPath = new()
+            {
+                (2.5f, 0.5f),
+                (1.5f, 5.5f),
+                (3f, 6f)
+            };
+
+            PathfinderAttributes attrs = new(0.9f, "default");        
+            List<(float, float)> occupiablePath = sut.GetOccupiablePath(originalPath, attrs);
+            List<(float, float)> actualSmoothPath = sut.SmoothPath(occupiablePath, originalPath, attrs);
+
+            CollectionAssert.AreEqual(expectedSmoothPath, actualSmoothPath);  
+        }
 
         [TestMethod]
         public void TestSmoothPathAroundBlockages()
@@ -427,7 +465,7 @@ namespace AStarTests
             // };
             List<(float, float)> expectedSmoothPath = new()
             {
-                (4f, 4f), (8.5f, 5.5f), (8f, 8f)
+                (4f, 4f), (8.5f, 5.5f), (8.5f, 6.5f), (8f, 8f)
             };
 
             PathfinderAttributes attrs = new(pathfinderSize, "default");        

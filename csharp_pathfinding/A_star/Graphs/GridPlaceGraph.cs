@@ -17,12 +17,12 @@ namespace AStarNickNS
 
         private readonly List<float> _descendingOrderedPathfinderSizes;
 
-        public int GetWidth()
+        public virtual int GetWidth()
         {
             return _gridTerrainCosts.GetLength(0);
         }
         
-        public int GetHeight()
+        public virtual int GetHeight()
         {
             return _gridTerrainCosts.GetLength(1);
         }
@@ -230,19 +230,6 @@ namespace AStarNickNS
             }
             
             _intersector = new CachingPathfinderObstacleIntersector(width, height, _descendingOrderedPathfinderSizes);
-            
-            // // Assess pathfinders in descending order
-            // // (efficient because if the next biggest pathfinder can fit in a certain place, so can the current one)
-            // foreach (float pathfinderSize in _descendingOrderedPathfinderSizes)
-            // {
-            //     for (int y = 0; y < height; y++)
-            //     {
-            //         for (int x = 0; x < width; x++)
-            //         {
-            //             PathfinderCanFitCached(x, y, new PathfinderAttributes(pathfinderSize, "default"));
-            //         }
-            //     }
-            // }
         }
         
         protected override void BuildFromFileCore(string dataFile)
@@ -333,17 +320,11 @@ namespace AStarNickNS
             List<(float, float)> smoothedPath = new() { occupiablePath[0] };
        
             int idx = 0;
-            while (idx < occupiablePath.Count)
+            while (idx < occupiablePath.Count - 1)
             {
                 token.ThrowIfCancellationRequested();
                 
                 idx++;
-                // The smoothed path ends at the same place as the original path 
-                if (idx == occupiablePath.Count - 1)
-                {
-                    smoothedPath.Add(occupiablePath[idx]);
-                    break;
-                }
                
                 (float, float) start = occupiablePath[latestNodeIdx];
                 (float, float) end = occupiablePath[idx];
@@ -365,6 +346,8 @@ namespace AStarNickNS
                 }
                 // ... otherwise continue
             }
+            // The smoothed path ends at the same place as the original path 
+            smoothedPath.Add(occupiablePath[idx]);
            
             return smoothedPath;
         }

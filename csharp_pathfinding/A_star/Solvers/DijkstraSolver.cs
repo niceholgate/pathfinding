@@ -18,6 +18,7 @@ namespace AStarNickNS
         
         public IEnumerable<TPlace> SolvePath(IPlace<TCoord> start, IPlace<TCoord> target, CancellationToken token = default, PathfinderAttributes pathfinderAttributes = default)
         {
+            // TODO: mandate supply of valid attrs - no defaults
             if (string.IsNullOrEmpty(pathfinderAttributes.BlockageLayer))
             {
                 pathfinderAttributes = new PathfinderAttributes(
