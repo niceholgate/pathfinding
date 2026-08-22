@@ -111,7 +111,6 @@ namespace AStarNickNS
                     {
                         if (cellY < 0 || cellY >= _height) continue;
                         _isOccupiableCache[key][cellX, cellY] = null;
-                        EnsureCached(cellX, cellY, key);
                     }
                 }
             }
