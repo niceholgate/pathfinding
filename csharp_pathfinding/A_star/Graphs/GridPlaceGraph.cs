@@ -76,23 +76,23 @@ namespace AStarNickNS
             (int xTo, int yTo) = to;
             (int xFrom, int yFrom) = from;
             
-            // Prevent weird corner cutting for diagonal movements near to obstacle corners
-            // TODO: convert this to use blockages - or is it no longer neede due to the below logic?
+            // Prevent weird corner cutting for diagonal movements near to obstacle corners (probably not needed
+            // following addition of PathfinderCanFitOnCorner and PathfinderCanFitOnEdge checks below)
             int diagType = (xTo - xFrom) * (yTo - yFrom);
             bool principalDiag = diagType == 1;
             bool secondaryDiag = diagType == -1;
-            if (principalDiag &&
-                (_gridTerrainCosts[Math.Max(xTo, xFrom), Math.Min(yTo, yFrom)] <= 0
-                    || _gridTerrainCosts[Math.Min(xTo, xFrom), Math.Max(yTo, yFrom)] <= 0))
-            {
-                return false;
-            }
-            if (secondaryDiag &&
-                (_gridTerrainCosts[Math.Max(xTo, xFrom), Math.Max(yTo, yFrom)] <= 0
-                 || _gridTerrainCosts[Math.Min(xTo, xFrom), Math.Min(yTo, yFrom)] <= 0))
-            {
-                return false;
-            }
+            // if (principalDiag &&
+            //     (!PathfinderCanFit(Math.Max(xTo, xFrom), Math.Min(yTo, yFrom), attrs)
+            //      || !PathfinderCanFit(Math.Min(xTo, xFrom), Math.Max(yTo, yFrom), attrs)))
+            // {
+            //     return false;
+            // }
+            // if (secondaryDiag &&
+            //     (!PathfinderCanFit(Math.Max(xTo, xFrom), Math.Max(yTo, yFrom), attrs)
+            //      || !PathfinderCanFit(Math.Min(xTo, xFrom), Math.Min(yTo, yFrom), attrs)))
+            // {
+            //     return false;
+            // }
 
             // We need to check that the pathfinder can actually fit during its transition between cells - not just on the starting and destination cells themselves.
             // Otherwise, pathfinders can think that they can fit through certain impossible gaps.
